@@ -29,12 +29,17 @@
     .topbar{height:54px;border-bottom:1px solid var(--border);display:flex;align-items:center;
       padding:0 24px;gap:16px;background:rgba(13,17,23,0.94);backdrop-filter:blur(12px);
       position:sticky;top:0;z-index:100;}
-    .logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px;}
+    .logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text);}
     .logo span{color:var(--turk);}
     .logo-dot{width:7px;height:7px;background:var(--turk);border-radius:50%;
       box-shadow:0 0 10px var(--turk);animation:pulse 2s ease-in-out infinite;}
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
     .topbar-sep{flex:1;}
+    .topbar-nav{display:flex;align-items:center;gap:8px;}
+    .btn-dash{display:flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid var(--border2);
+      border-radius:var(--radius-sm);color:var(--text-dim);font-size:12px;font-weight:500;
+      text-decoration:none;transition:all 0.15s;background:transparent;}
+    .btn-dash:hover{border-color:var(--turk-border);color:var(--turk);background:var(--turk-dim);}
     .steps{display:flex;align-items:center;gap:8px;}
     .stp{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;
       border:1px solid var(--border);color:var(--text-muted);transition:all 0.3s;}
@@ -42,6 +47,14 @@
     .stp.done{border-color:rgba(63,185,80,0.3);color:var(--success);background:rgba(63,185,80,0.07);}
     .stp-arr{color:var(--text-muted);font-size:10px;}
     .main{flex:1;display:flex;}
+
+    /* ── USER BADGE ── */
+    .user-badge{display:flex;align-items:center;gap:8px;padding:4px 10px;
+      background:var(--bg2);border:1px solid var(--border);border-radius:20px;}
+    .user-avatar{width:22px;height:22px;background:var(--turk-dim);border:1px solid var(--turk-border);
+      border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:700;color:var(--turk);}
+    .user-name{font-size:11px;color:var(--text-dim);}
 
     /* ── ADIM 1: UPLOAD ── */
     #step1{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
@@ -97,7 +110,6 @@
     #step2{flex:1;display:none;}
     #step2.ac{display:flex;}
 
-    /* Sol panel */
     .ed-left{width:290px;min-width:290px;background:var(--bg2);border-right:1px solid var(--border);
       display:flex;flex-direction:column;overflow-y:auto;
       height:calc(100vh - 54px);position:sticky;top:54px;}
@@ -131,7 +143,6 @@
       font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;text-align:center;}
     .btn-sec:hover{border-color:var(--turk-border);color:var(--turk);background:var(--turk-dim);}
 
-    /* Materyal listesi */
     .mat-hint{font-size:11px;color:var(--text-muted);line-height:1.5;}
     .mat-list{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;}
     .mat-item{display:flex;align-items:center;gap:8px;padding:7px 10px;
@@ -148,7 +159,6 @@
     .mat-hide-btn:hover{color:var(--error);}
     .mat-item.hidden-mat .mat-hide-btn{color:var(--success);}
 
-    /* Materyal editör */
     .mat-editor{display:none;flex-direction:column;gap:10px;padding:12px;
       background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--turk-border);
       margin-top:4px;}
@@ -158,7 +168,6 @@
       cursor:pointer;flex-shrink:0;transition:transform 0.1s;}
     .big-color:hover{transform:scale(1.05);}
 
-    /* Kaydet */
     .save-area{padding:16px;margin-top:auto;border-top:1px solid var(--border);}
     .btn-save{width:100%;padding:13px;background:linear-gradient(135deg,var(--turk),var(--turk2));
       color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;
@@ -169,7 +178,6 @@
     .btn-save:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
     .save-hint{font-size:10px;color:var(--text-muted);text-align:center;margin-top:7px;}
 
-    /* Sağ: viewer */
     .ed-right{flex:1;display:flex;flex-direction:column;}
     .ed-topbar{padding:10px 18px;border-bottom:1px solid var(--border);
       display:flex;align-items:center;gap:12px;}
@@ -188,31 +196,37 @@
     /* ── ADIM 3: SONUÇ ── */
     #step3{flex:1;display:none;align-items:center;justify-content:center;padding:40px 20px;}
     #step3.ac{display:flex;}
-    .result-wrap{width:100%;max-width:460px;display:flex;flex-direction:column;gap:20px;}
+    .result-wrap{width:100%;max-width:480px;display:flex;flex-direction:column;gap:16px;}
     .result-card{background:var(--bg2);border:1px solid rgba(63,185,80,0.2);
-      border-radius:var(--radius);padding:28px;display:flex;flex-direction:column;gap:18px;
+      border-radius:var(--radius);padding:32px;display:flex;flex-direction:column;gap:20px;
       box-shadow:0 0 40px rgba(63,185,80,0.06);animation:fadeUp 0.4s ease;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
-    .result-icon{font-size:40px;text-align:center;}
-    .result-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;text-align:center;}
-    .result-sub{font-size:13px;color:var(--text-dim);text-align:center;}
-    .link-box{background:var(--bg3);border:1px solid var(--border);
-      border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;gap:10px;}
+    .result-icon{font-size:44px;text-align:center;}
+    .result-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;text-align:center;letter-spacing:-0.3px;}
+    .result-sub{font-size:13px;color:var(--text-dim);text-align:center;line-height:1.6;}
+    .link-box{background:var(--bg3);border:1px solid var(--turk-border);
+      border-radius:var(--radius-sm);padding:14px;display:flex;align-items:center;gap:10px;}
     .link-text{font-size:11px;color:var(--turk);font-weight:500;word-break:break-all;
       flex:1;font-family:monospace;}
     .btn-copy{background:var(--turk-dim);border:1px solid var(--turk-border);border-radius:6px;
-      padding:6px 12px;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
+      padding:7px 14px;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
       color:var(--turk);cursor:pointer;white-space:nowrap;transition:background 0.15s;}
     .btn-copy:hover{background:rgba(25,176,199,0.2);}
     .btn-copy.copied{color:var(--success);border-color:rgba(63,185,80,0.3);background:rgba(63,185,80,0.08);}
     .result-btns{display:flex;gap:10px;}
-    .btn-preview{flex:1;padding:11px;background:linear-gradient(135deg,var(--turk),var(--turk2));
+    .btn-preview{flex:1;padding:12px;background:linear-gradient(135deg,var(--turk),var(--turk2));
       color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;
-      font-weight:700;font-size:12px;cursor:pointer;box-shadow:0 3px 12px rgba(25,176,199,0.3);}
-    .btn-new{flex:1;padding:11px;background:transparent;border:1px solid var(--border);
+      font-weight:700;font-size:12px;cursor:pointer;box-shadow:0 3px 12px rgba(25,176,199,0.3);
+      text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .btn-new{flex:1;padding:12px;background:transparent;border:1px solid var(--border);
       border-radius:var(--radius-sm);color:var(--text-dim);font-family:'Syne',sans-serif;
       font-weight:700;font-size:12px;cursor:pointer;transition:all 0.15s;}
     .btn-new:hover{border-color:var(--turk-border);color:var(--turk);}
+    .btn-dashboard{width:100%;padding:12px;background:transparent;
+      border:1px solid rgba(63,185,80,0.3);border-radius:var(--radius-sm);
+      color:var(--success);font-family:'Syne',sans-serif;font-weight:700;font-size:12px;
+      cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .btn-dashboard:hover{background:rgba(63,185,80,0.07);}
 
     ::-webkit-scrollbar{width:4px;}
     ::-webkit-scrollbar-track{background:transparent;}
@@ -224,9 +238,18 @@
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo"><div class="logo-dot"></div>pepper<span>AR</span></div>
+    <a href="dashboard.html" class="logo"><div class="logo-dot"></div>pepper<span>AR</span></a>
     <div class="topbar-sep"></div>
-    <div class="steps">
+    <div class="topbar-nav">
+      <div class="user-badge">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <span class="user-name" id="userName">Yükleniyor…</span>
+      </div>
+      <a href="dashboard.html" class="btn-dash">
+        ← Dashboard
+      </a>
+    </div>
+    <div class="steps" style="margin-left:16px;">
       <div class="stp active" id="stp1">1 · Yükle</div>
       <div class="stp-arr">›</div>
       <div class="stp" id="stp2">2 · Düzenle</div>
@@ -286,11 +309,7 @@
 
     <!-- ADIM 2: EDITOR -->
     <div id="step2">
-
-      <!-- Sol Panel -->
       <div class="ed-left">
-
-        <!-- Işık -->
         <div class="ed-sec">
           <div class="sec-title">💡 Işık &amp; Ortam</div>
           <div class="sl-row">
@@ -311,8 +330,6 @@
             <button class="env-btn" data-env="city">Şehir</button>
           </div>
         </div>
-
-        <!-- Arka plan -->
         <div class="ed-sec">
           <div class="sec-title">🎨 Arka Plan</div>
           <div class="color-row">
@@ -321,8 +338,6 @@
             <div><div class="color-lbl">Arka plan rengi</div><div class="color-hex" id="bgHex">#f7f5f2</div></div>
           </div>
         </div>
-
-        <!-- Boyut -->
         <div class="ed-sec">
           <div class="sec-title">📐 Boyut &amp; Döndür</div>
           <div class="sl-row">
@@ -338,15 +353,12 @@
             <button class="btn-sec" id="btnCenter">⊙ Ortala</button>
           </div>
         </div>
-
-        <!-- Materyaller -->
         <div class="ed-sec" style="flex:1;min-height:0;">
           <div class="sec-title">🎭 Materyaller</div>
           <div class="mat-hint">Listeden veya modele tıklayarak parça seç</div>
           <div class="mat-list" id="matList">
             <div style="font-size:11px;color:var(--text-muted);padding:8px 0">Model yüklenince görünür.</div>
           </div>
-          <!-- Materyal editör -->
           <div class="mat-editor" id="matEditor">
             <div class="mat-ed-title" id="matEdTitle">—</div>
             <div class="color-row">
@@ -364,15 +376,12 @@
             </div>
           </div>
         </div>
-
-        <!-- Kaydet -->
         <div class="save-area">
           <button class="btn-save" id="btnSave">💾 Kaydet ve Link Oluştur</button>
           <div class="save-hint">Ayarlar Supabase'e kaydedilir, viewer'da uygulanır.</div>
         </div>
       </div>
 
-      <!-- Sağ: Viewer -->
       <div class="ed-right">
         <div class="ed-topbar">
           <div class="model-badge" id="edModelName">—</div>
@@ -390,7 +399,6 @@
           <div class="viewer-hint" id="viewerHint">Modele tıklayarak parça seçebilirsin</div>
         </div>
       </div>
-
     </div>
 
     <!-- ADIM 3: SONUÇ -->
@@ -400,14 +408,20 @@
           <div class="result-icon">🎉</div>
           <div class="result-title">Yayına Hazır!</div>
           <div class="result-sub" id="resultSub">Model kaydedildi, AR linki oluşturuldu.</div>
+
           <div class="link-box">
             <div class="link-text" id="resultLink"></div>
             <button class="btn-copy" id="btnCopy">Kopyala</button>
           </div>
+
           <div class="result-btns">
-            <button class="btn-preview" id="btnPreview">🔍 Önizle</button>
+            <a class="btn-preview" id="btnPreview" href="#" target="_blank">🔍 Önizle</a>
             <button class="btn-new" id="btnNew">↑ Yeni Model</button>
           </div>
+
+          <button class="btn-dashboard" onclick="window.location.href='dashboard.html'">
+            📊 Dashboard'a Git
+          </button>
         </div>
       </div>
     </div>
@@ -415,13 +429,44 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 (function(){
 
-  /* ══ AYARLAR ══ */
   var SUPABASE_URL  = 'https://vdqumssdodfihuovytbs.supabase.co';
   var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkcXVtc3Nkb2RmaWh1b3Z5dGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzI1NDgsImV4cCI6MjA4OTc0ODU0OH0.SpKRUbrPmKQtcEDUCwthD-74heZMxTl2R9m9LXN0WQI';
-  var VIEWER_BASE   = 'https://project-w9khd.vercel.app/viewer.html';
+  var VIEWER_BASE   = window.location.origin + '/viewer.html';
+
+  /* Supabase client */
+  var _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  /* ── AUTH KONTROLÜ ── */
+  var currentUser = null;
+
+  async function initAuth() {
+    var { data: { session } } = await _sb.auth.getSession();
+    if (!session) {
+      window.location.href = '/login.html?redirect=upload';
+      return;
+    }
+    currentUser = session.user;
+
+    /* Profil bilgisini göster */
+    var { data: profile } = await _sb.from('profiles').select('full_name, username, plan').eq('id', currentUser.id).single();
+    var displayName = profile?.full_name || profile?.username || currentUser.email.split('@')[0];
+    document.getElementById('userName').textContent = displayName;
+    document.getElementById('userAvatar').textContent = displayName.charAt(0).toUpperCase();
+
+    /* Plan limiti kontrolü */
+    var { count } = await _sb.from('models').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id);
+    var limit = profile?.plan === 'pro' ? 999 : 3;
+    if (count >= limit) {
+      document.getElementById('errBox').textContent = '⚠ ' + profile.plan + ' planında maksimum ' + limit + ' model yükleyebilirsiniz. Dashboard\'dan planınızı yükseltin.';
+      document.getElementById('errBox').classList.add('ac');
+      document.getElementById('btnUpload').disabled = true;
+    }
+  }
+  initAuth();
 
   /* ── ELEMENTLER ── */
   var mv           = document.getElementById('editorMV');
@@ -436,21 +481,18 @@
   var progTxt      = document.getElementById('progTxt');
   var progPct      = document.getElementById('progPct');
   var errBox       = document.getElementById('errBox');
-
-  var slExp    = document.getElementById('slExp');
-  var slShd    = document.getElementById('slShd');
-  var slScale  = document.getElementById('slScale');
-  var slRot    = document.getElementById('slRot');
-  var slRough  = document.getElementById('slRough');
-  var slMetal  = document.getElementById('slMetal');
-  var bgPick   = document.getElementById('bgPick');
+  var slExp        = document.getElementById('slExp');
+  var slShd        = document.getElementById('slShd');
+  var slScale      = document.getElementById('slScale');
+  var slRot        = document.getElementById('slRot');
+  var slRough      = document.getElementById('slRough');
+  var slMetal      = document.getElementById('slMetal');
+  var bgPick       = document.getElementById('bgPick');
   var matColorPick = document.getElementById('matColorPick');
 
-  /* ── DURUM ── */
-  var currentModel  = '';
-  var selectedIdx   = -1;
-  /* matData[i] = { name, color, roughness, metalness, hidden } */
-  var matData       = [];
+  var currentModel = '';
+  var selectedIdx  = -1;
+  var matData      = [];
 
   /* ── ADIM YÖNETİMİ ── */
   function goStep(n){
@@ -494,6 +536,7 @@
   }
 
   btnUpload.onclick=function(){
+    if (!currentUser) { showErr('Lütfen önce giriş yapın.'); return; }
     var name=productName.value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
     if(!name){ showErr('Geçerli bir ürün adı girin.'); return; }
     hideErr(); btnUpload.disabled=true; progWrap.classList.add('ac'); setProg(0,'GLB yükleniyor…');
@@ -518,69 +561,43 @@
     mv.addEventListener('load',onMVLoad,{once:true});
   }
 
-  function onMVLoad(){
-    scanMaterials();
-  }
+  function onMVLoad(){ scanMaterials(); }
 
-  /* ── MATERYAL TARAMA ── */
-  var mvClickHandler = null; /* click handler referansı — tekrar eklemeyi önle */
+  var mvClickHandler = null;
 
   function scanMaterials(){
     var list=document.getElementById('matList');
-    list.innerHTML='';
-    matData=[];
-    selectedIdx=-1;
+    list.innerHTML=''; matData=[]; selectedIdx=-1;
     document.getElementById('matEditor').classList.remove('ac');
-
     var model=mv.model;
     if(!model||!model.materials||model.materials.length===0){
       list.innerHTML='<div style="font-size:11px;color:var(--text-muted);padding:8px 0">Düzenlenebilir materyal bulunamadı.</div>';
       return;
     }
-
     model.materials.forEach(function(mat,i){
       var bc   = mat.pbrMetallicRoughness.baseColorFactor || [1,1,1,1];
       var hex  = rgbToHex(bc[0],bc[1],bc[2]);
       var roug = mat.pbrMetallicRoughness.roughnessFactor != null ? mat.pbrMetallicRoughness.roughnessFactor : 0.5;
       var meta = mat.pbrMetallicRoughness.metallicFactor  != null ? mat.pbrMetallicRoughness.metallicFactor  : 0.0;
-
-      matData.push({
-        name:     mat.name || ('Materyal '+(i+1)),
-        color:    hex,
-        roughness:roug,
-        metalness:meta,
-        hidden:   false,
-        origBC:   [bc[0],bc[1],bc[2],bc[3]||1]
-      });
-
+      matData.push({ name: mat.name || ('Materyal '+(i+1)), color:hex, roughness:roug, metalness:meta, hidden:false, origBC:[bc[0],bc[1],bc[2],bc[3]||1] });
       renderMatItem(i);
     });
-
-    /* Model viewer'a tıklayınca ilgili materyali seç — INDEX BAZLI */
     if(mvClickHandler) mv.removeEventListener('click', mvClickHandler);
     var pointerMoved = false;
     mv.addEventListener('pointerdown', function(){ pointerMoved = false; });
     mv.addEventListener('pointermove', function(){ pointerMoved = true; });
     mvClickHandler = function(e){
-      if(pointerMoved) return; /* sürükleme ise atla */
+      if(pointerMoved) return;
       var hit = mv.positionAndNormalFromPoint(e.clientX, e.clientY);
       if(!hit) return;
-      /* İsim bazlı eşleştirmeyi dene, bulamazsa atla */
       var mName = hit.materialName;
       if(mName){
-        var model2 = mv.model;
-        if(!model2) return;
+        var model2 = mv.model; if(!model2) return;
         var found = false;
-        model2.materials.forEach(function(mat2,j){
-          if(mat2.name === mName && !found){ found=true; selectMat(j); }
-        });
+        model2.materials.forEach(function(mat2,j){ if(mat2.name===mName&&!found){ found=true; selectMat(j); } });
         if(found) return;
       }
-      /* İsim eşleşmezse (aynı isimli materyaller) — hit position'a en yakın materyali tahmin et */
-      /* En basit fallback: ilk gizli olmayan materyali seç */
-      for(var k=0;k<matData.length;k++){
-        if(!matData[k].hidden){ selectMat(k); break; }
-      }
+      for(var k=0;k<matData.length;k++){ if(!matData[k].hidden){ selectMat(k); break; } }
     };
     mv.addEventListener('click', mvClickHandler);
   }
@@ -591,139 +608,70 @@
     var item = document.createElement('div');
     item.className = 'mat-item' + (d.hidden ? ' hidden-mat' : '');
     item.dataset.idx = i;
-
-    var dot  = '<div class="mat-dot" style="background:'+d.color+'"></div>';
-    var lbl  = '<div class="mat-label">'+d.name+'</div>';
-    var hide = '<button class="mat-hide-btn" title="'+(d.hidden?'Göster':'Gizle')+'" data-hide="'+i+'">'+(d.hidden?'👁':'🚫')+'</button>';
-    item.innerHTML = dot + lbl + hide;
-
-    item.addEventListener('click', function(e){
-      if(e.target.dataset.hide !== undefined) return; /* hide butonuna tıklandıysa atla */
-      selectMat(i);
-    });
-
-    item.querySelector('.mat-hide-btn').addEventListener('click', function(e){
-      e.stopPropagation();
-      toggleHide(i);
-    });
-
+    item.innerHTML = '<div class="mat-dot" style="background:'+d.color+'"></div><div class="mat-label">'+d.name+'</div><button class="mat-hide-btn" title="'+(d.hidden?'Göster':'Gizle')+'" data-hide="'+i+'">'+(d.hidden?'👁':'🚫')+'</button>';
+    item.addEventListener('click', function(e){ if(e.target.dataset.hide!==undefined) return; selectMat(i); });
+    item.querySelector('.mat-hide-btn').addEventListener('click', function(e){ e.stopPropagation(); toggleHide(i); });
     list.appendChild(item);
   }
 
-  /* ── PARÇA GİZLE / GÖSTER ── */
   function toggleHide(i){
     matData[i].hidden = !matData[i].hidden;
     var model = mv.model;
     if(model && model.materials[i]){
       var mat = model.materials[i];
       var pbr = mat.pbrMetallicRoughness;
-      if(matData[i].hidden){
-        /* Alpha'yı 0 yaparak gizle */
-        var bc = pbr.baseColorFactor;
-        pbr.setBaseColorFactor([bc[0],bc[1],bc[2],0]);
-      } else {
-        /* Orijinal renge ve alpha'ya geri dön */
-        var rgb = hexToRgb(matData[i].color);
-        pbr.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]);
-      }
+      if(matData[i].hidden){ var bc=pbr.baseColorFactor; pbr.setBaseColorFactor([bc[0],bc[1],bc[2],0]); }
+      else { var rgb=hexToRgb(matData[i].color); pbr.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]); }
     }
-    /* Listeyi yeniden çiz */
-    var list = document.getElementById('matList');
-    list.innerHTML='';
+    var list=document.getElementById('matList'); list.innerHTML='';
     matData.forEach(function(_,j){ renderMatItem(j); });
-    /* Seçili ise seçimi güncelle */
     if(selectedIdx===i) selectMat(i);
   }
 
-  /* ── MATERYAL SEÇ ── */
   function selectMat(i){
-    if(!matData[i] || matData[i].hidden) return;
-
-    selectedIdx = i;
-
-    /* Listedeki seçim güncelle + scroll into view */
+    if(!matData[i]||matData[i].hidden) return;
+    selectedIdx=i;
     document.querySelectorAll('.mat-item').forEach(function(el){
-      var isThis = +el.dataset.idx === i;
-      el.classList.toggle('selected', isThis);
+      var isThis=+el.dataset.idx===i; el.classList.toggle('selected',isThis);
       if(isThis) el.scrollIntoView({block:'nearest',behavior:'smooth'});
     });
-
-    var d = matData[i];
-    document.getElementById('matEdTitle').textContent = d.name + ' (#' + i + ')';
-    matColorPick.value = d.color;
-    document.getElementById('matColorPrev').style.background = d.color;
-    document.getElementById('matColorHex').textContent = d.color;
-    slRough.value = d.roughness;
-    document.getElementById('vRough').textContent = d.roughness.toFixed(2);
-    slMetal.value = d.metalness;
-    document.getElementById('vMetal').textContent = d.metalness.toFixed(2);
+    var d=matData[i];
+    document.getElementById('matEdTitle').textContent=d.name+' (#'+i+')';
+    matColorPick.value=d.color;
+    document.getElementById('matColorPrev').style.background=d.color;
+    document.getElementById('matColorHex').textContent=d.color;
+    slRough.value=d.roughness; document.getElementById('vRough').textContent=d.roughness.toFixed(2);
+    slMetal.value=d.metalness; document.getElementById('vMetal').textContent=d.metalness.toFixed(2);
     document.getElementById('matEditor').classList.add('ac');
-
-    /* Buz mavisi highlight: 600ms */
     try{
-      var mat = mv.model.materials[i];
-      var bc  = mat.pbrMetallicRoughness.baseColorFactor;
-      var hR  = bc[0]*0.6 + 0.18*0.4;
-      var hG  = bc[1]*0.6 + 0.72*0.4;
-      var hB  = bc[2]*0.6 + 0.83*0.4;
+      var mat=mv.model.materials[i]; var bc=mat.pbrMetallicRoughness.baseColorFactor;
+      var hR=bc[0]*0.6+0.18*0.4, hG=bc[1]*0.6+0.72*0.4, hB=bc[2]*0.6+0.83*0.4;
       mat.pbrMetallicRoughness.setBaseColorFactor([hR,hG,hB,bc[3]||1]);
-      setTimeout(function(){
-        if(selectedIdx!==i) return;
-        var rgb=hexToRgb(d.color);
-        mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]);
-      },600);
+      setTimeout(function(){ if(selectedIdx!==i) return; var rgb=hexToRgb(d.color); mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]); },600);
     }catch(e){}
   }
 
-  /* ── MATERYAL RENK / ÖZELLIK DEĞİŞTİR ── */
   matColorPick.addEventListener('input', function(){
     if(selectedIdx<0) return;
-    var hex = this.value;
-    matData[selectedIdx].color = hex;
-    document.getElementById('matColorPrev').style.background = hex;
-    document.getElementById('matColorHex').textContent = hex;
-    /* INDEX ile sadece seçili materyale uygula */
-    try{
-      var rgb = hexToRgb(hex);
-      mv.model.materials[selectedIdx].pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]);
-    }catch(e){ console.warn('Color apply error:',e); }
-    /* Listedeki dot rengini güncelle */
-    var allItems = document.querySelectorAll('.mat-item');
-    allItems.forEach(function(el){
-      if(+el.dataset.idx === selectedIdx) el.querySelector('.mat-dot').style.background = hex;
-    });
+    var hex=this.value; matData[selectedIdx].color=hex;
+    document.getElementById('matColorPrev').style.background=hex;
+    document.getElementById('matColorHex').textContent=hex;
+    try{ var rgb=hexToRgb(hex); mv.model.materials[selectedIdx].pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]); }catch(e){}
+    document.querySelectorAll('.mat-item').forEach(function(el){ if(+el.dataset.idx===selectedIdx) el.querySelector('.mat-dot').style.background=hex; });
   });
 
-  slRough.addEventListener('input', function(){
-    var v=+this.value;
-    document.getElementById('vRough').textContent=v.toFixed(2);
-    if(selectedIdx<0) return;
-    matData[selectedIdx].roughness=v;
-    try{ mv.model.materials[selectedIdx].pbrMetallicRoughness.setRoughnessFactor(v); }catch(e){}
-  });
-
-  slMetal.addEventListener('input', function(){
-    var v=+this.value;
-    document.getElementById('vMetal').textContent=v.toFixed(2);
-    if(selectedIdx<0) return;
-    matData[selectedIdx].metalness=v;
-    try{ mv.model.materials[selectedIdx].pbrMetallicRoughness.setMetallicFactor(v); }catch(e){}
-  });
-
-  /* ── IŞIK ── */
+  slRough.addEventListener('input',function(){ var v=+this.value; document.getElementById('vRough').textContent=v.toFixed(2); if(selectedIdx<0) return; matData[selectedIdx].roughness=v; try{mv.model.materials[selectedIdx].pbrMetallicRoughness.setRoughnessFactor(v);}catch(e){} });
+  slMetal.addEventListener('input',function(){ var v=+this.value; document.getElementById('vMetal').textContent=v.toFixed(2); if(selectedIdx<0) return; matData[selectedIdx].metalness=v; try{mv.model.materials[selectedIdx].pbrMetallicRoughness.setMetallicFactor(v);}catch(e){} });
   slExp.addEventListener('input',function(){ document.getElementById('vExp').textContent=(+this.value).toFixed(2); mv.setAttribute('exposure',this.value); });
   slShd.addEventListener('input',function(){ document.getElementById('vShd').textContent=(+this.value).toFixed(1); mv.setAttribute('shadow-intensity',this.value); });
 
-  /* ── ORTAM ── */
   document.querySelectorAll('.env-btn').forEach(function(btn){
     btn.onclick=function(){
       document.querySelectorAll('.env-btn').forEach(function(b){ b.classList.remove('active'); });
-      this.classList.add('active');
-      mv.setAttribute('environment-image',this.dataset.env);
+      this.classList.add('active'); mv.setAttribute('environment-image',this.dataset.env);
     };
   });
 
-  /* ── ARKA PLAN ── */
   bgPick.addEventListener('input',function(){
     var hex=this.value;
     document.getElementById('bgPrev').style.background=hex;
@@ -731,47 +679,31 @@
     mv.style.background=hex;
   });
 
-  /* ── BOYUT ── */
-  slScale.addEventListener('input',function(){
-    var v=+this.value;
-    document.getElementById('vScale').textContent=v+'%';
-    var s=v/100;
-    mv.setAttribute('scale',s+' '+s+' '+s);
-  });
-  slRot.addEventListener('input',function(){
-    var v=+this.value;
-    document.getElementById('vRot').textContent=v+'°';
-    mv.setAttribute('orientation','0deg '+v+'deg 0deg');
-  });
+  slScale.addEventListener('input',function(){ var v=+this.value; document.getElementById('vScale').textContent=v+'%'; var s=v/100; mv.setAttribute('scale',s+' '+s+' '+s); });
+  slRot.addEventListener('input',function(){ var v=+this.value; document.getElementById('vRot').textContent=v+'°'; mv.setAttribute('orientation','0deg '+v+'deg 0deg'); });
 
   document.getElementById('btnReset').onclick=function(){
     slScale.value=100; document.getElementById('vScale').textContent='100%'; mv.setAttribute('scale','1 1 1');
-    slRot.value=0;    document.getElementById('vRot').textContent='0°';    mv.setAttribute('orientation','0deg 0deg 0deg');
+    slRot.value=0; document.getElementById('vRot').textContent='0°'; mv.setAttribute('orientation','0deg 0deg 0deg');
     slExp.value=0.95; document.getElementById('vExp').textContent='0.95'; mv.setAttribute('exposure','0.95');
-    slShd.value=1.5;  document.getElementById('vShd').textContent='1.5';  mv.setAttribute('shadow-intensity','1.5');
+    slShd.value=1.5; document.getElementById('vShd').textContent='1.5'; mv.setAttribute('shadow-intensity','1.5');
     bgPick.value='#f7f5f2'; document.getElementById('bgPrev').style.background='#f7f5f2'; document.getElementById('bgHex').textContent='#f7f5f2'; mv.style.background='#f7f5f2';
   };
   document.getElementById('btnCenter').onclick=function(){ mv.cameraOrbit='auto auto auto'; };
 
-  /* ── KAYDET ── */
-  document.getElementById('btnSave').onclick=function(){
+  /* ── KAYDET — user_id ile ── */
+  document.getElementById('btnSave').onclick = async function(){
+    if (!currentUser) { showErr('Oturum bulunamadı, lütfen tekrar giriş yapın.'); return; }
     var btn=this; btn.disabled=true; btn.textContent='Kaydediliyor…';
     var env=document.querySelector('.env-btn.active');
 
-    /* INDEX ile kaydet — isim aynı olsa bile doğru çalışır */
-    var mats = matData.map(function(d, i){
-      return {
-        index:     i,
-        name:      d.name,
-        color:     d.color,
-        roughness: d.roughness,
-        metalness: d.metalness,
-        hidden:    d.hidden
-      };
+    var mats = matData.map(function(d,i){
+      return { index:i, name:d.name, color:d.color, roughness:d.roughness, metalness:d.metalness, hidden:d.hidden };
     });
 
-    var payload={
+    var payload = {
       name:             currentModel,
+      user_id:          currentUser.id,
       exposure:         +slExp.value,
       shadow_intensity: +slShd.value,
       environment:      env ? env.dataset.env : 'neutral',
@@ -781,42 +713,31 @@
       materials:        mats
     };
 
-    fetch(SUPABASE_URL+'/rest/v1/models?on_conflict=name',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Bearer '+SUPABASE_ANON,
-        'apikey':SUPABASE_ANON,
-        'Prefer':'resolution=merge-duplicates'
-      },
-      body:JSON.stringify(payload)
-    }).then(function(r){
-      if(r.ok||r.status===201||r.status===200){
-        btn.textContent='✓ Kaydedildi!';
-        setTimeout(function(){ showResult(currentModel); },600);
-      } else {
-        r.text().then(function(t){ showErr('Kayıt hatası: '+t); });
-        btn.disabled=false; btn.textContent='💾 Kaydet ve Link Oluştur';
-      }
-    }).catch(function(e){
-      showErr('Hata: '+e);
+    try {
+      var { error } = await _sb.from('models').upsert(payload, { onConflict: 'name' });
+      if (error) throw error;
+      btn.textContent='✓ Kaydedildi!';
+      setTimeout(function(){ showResult(currentModel); }, 600);
+    } catch(e) {
+      showErr('Kayıt hatası: ' + (e.message || e));
       btn.disabled=false; btn.textContent='💾 Kaydet ve Link Oluştur';
-    });
+    }
   };
 
   function showResult(name){
-    var link=VIEWER_BASE+'?model='+name;
-    document.getElementById('resultLink').textContent=link;
-    document.getElementById('resultSub').textContent='"'+name+'" modeli kaydedildi ve AR linki hazır.';
-    goStep(3);
-    document.getElementById('btnPreview').onclick=function(){ window.open(link,'_blank'); };
-    document.getElementById('btnCopy').onclick=function(){
+    var link = VIEWER_BASE + '?model=' + name;
+    document.getElementById('resultLink').textContent = link;
+    document.getElementById('resultSub').textContent = '"' + name + '" modeli kaydedildi ve AR linki hazır.';
+    document.getElementById('btnPreview').href = link;
+
+    document.getElementById('btnCopy').onclick = function(){
       var b=this;
       navigator.clipboard.writeText(link).then(function(){
         b.textContent='✓ Kopyalandı'; b.classList.add('copied');
-        setTimeout(function(){ b.textContent='Kopyala'; b.classList.remove('copied'); },2000);
+        setTimeout(function(){ b.textContent='Kopyala'; b.classList.remove('copied'); }, 2000);
       });
     };
+    goStep(3);
   }
 
   document.getElementById('btnNew').onclick=function(){
@@ -833,14 +754,8 @@
     goStep(1);
   };
 
-  /* ── YARDIMCILAR ── */
-  function rgbToHex(r,g,b){
-    function c(x){ var h=Math.round(x*255).toString(16); return h.length===1?'0'+h:h; }
-    return '#'+c(r)+c(g)+c(b);
-  }
-  function hexToRgb(hex){
-    return {r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)};
-  }
+  function rgbToHex(r,g,b){ function c(x){ var h=Math.round(x*255).toString(16); return h.length===1?'0'+h:h; } return '#'+c(r)+c(g)+c(b); }
+  function hexToRgb(hex){ return {r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)}; }
 
 })();
 </script>
