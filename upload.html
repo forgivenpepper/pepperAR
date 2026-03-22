@@ -24,15 +24,12 @@
         linear-gradient(90deg,rgba(25,176,199,0.025) 1px,transparent 1px);
       background-size:40px 40px;pointer-events:none;}
     .app{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh;}
-
-    /* ── TOPBAR ── */
     .topbar{height:54px;border-bottom:1px solid var(--border);display:flex;align-items:center;
       padding:0 24px;gap:16px;background:rgba(13,17,23,0.94);backdrop-filter:blur(12px);
       position:sticky;top:0;z-index:100;}
     .logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text);}
     .logo span{color:var(--turk);}
-    .logo-dot{width:7px;height:7px;background:var(--turk);border-radius:50%;
-      box-shadow:0 0 10px var(--turk);animation:pulse 2s ease-in-out infinite;}
+    .logo-dot{width:7px;height:7px;background:var(--turk);border-radius:50%;box-shadow:0 0 10px var(--turk);animation:pulse 2s ease-in-out infinite;}
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
     .topbar-sep{flex:1;}
     .topbar-nav{display:flex;align-items:center;gap:8px;}
@@ -41,50 +38,35 @@
       text-decoration:none;transition:all 0.15s;background:transparent;}
     .btn-dash:hover{border-color:var(--turk-border);color:var(--turk);background:var(--turk-dim);}
     .steps{display:flex;align-items:center;gap:8px;}
-    .stp{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;
-      border:1px solid var(--border);color:var(--text-muted);transition:all 0.3s;}
+    .stp{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:1px solid var(--border);color:var(--text-muted);transition:all 0.3s;}
     .stp.active{border-color:var(--turk-border);color:var(--turk);background:var(--turk-dim);}
     .stp.done{border-color:rgba(63,185,80,0.3);color:var(--success);background:rgba(63,185,80,0.07);}
     .stp-arr{color:var(--text-muted);font-size:10px;}
     .main{flex:1;display:flex;}
-
-    /* ── USER BADGE ── */
-    .user-badge{display:flex;align-items:center;gap:8px;padding:4px 10px;
-      background:var(--bg2);border:1px solid var(--border);border-radius:20px;}
-    .user-avatar{width:22px;height:22px;background:var(--turk-dim);border:1px solid var(--turk-border);
-      border-radius:50%;display:flex;align-items:center;justify-content:center;
-      font-size:10px;font-weight:700;color:var(--turk);}
+    .user-badge{display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;}
+    .user-avatar{width:22px;height:22px;background:var(--turk-dim);border:1px solid var(--turk-border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--turk);}
     .user-name{font-size:11px;color:var(--text-dim);}
-
-    /* ── ADIM 1: UPLOAD ── */
     #step1{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
     .upload-wrap{width:100%;max-width:480px;display:flex;flex-direction:column;gap:22px;}
     .upload-wrap h2{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-0.5px;}
     .upload-wrap h2 span{color:var(--turk);}
     .upload-wrap p{font-size:13px;color:var(--text-dim);line-height:1.6;}
-    .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
-      padding:24px;display:flex;flex-direction:column;gap:16px;}
-    .card-lbl{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
-      letter-spacing:1.3px;text-transform:uppercase;color:var(--text-muted);}
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:16px;}
+    .card-lbl{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:var(--text-muted);}
     .field{display:flex;flex-direction:column;gap:6px;}
     .field label{font-size:12px;font-weight:500;color:var(--text-dim);}
-    .field input[type=text]{background:var(--bg3);border:1px solid var(--border);
-      border-radius:var(--radius-sm);padding:10px 14px;font-family:'DM Sans',sans-serif;
-      font-size:14px;color:var(--text);outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+    .field input[type=text]{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
     .field input[type=text]:focus{border-color:var(--turk-border);box-shadow:0 0 0 3px rgba(25,176,199,0.08);}
     .field input::placeholder{color:var(--text-muted);}
     .field-hint{font-size:11px;color:var(--text-muted);}
     .files-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-    .drop-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-sm);
-      padding:18px 12px;display:flex;flex-direction:column;align-items:center;
-      gap:7px;cursor:pointer;transition:all 0.2s;position:relative;text-align:center;}
+    .drop-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-sm);padding:18px 12px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:all 0.2s;position:relative;text-align:center;}
     .drop-zone:hover,.drop-zone.drag{border-color:var(--turk-border);background:var(--turk-dim);}
     .drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
     .drop-icon{font-size:22px;}
     .drop-lbl{font-size:11px;font-weight:500;color:var(--text-dim);}
     .drop-lbl strong{color:var(--turk);}
-    .drop-ext{font-size:10px;color:var(--text-muted);background:var(--bg3);
-      border:1px solid var(--border);border-radius:4px;padding:2px 7px;}
+    .drop-ext{font-size:10px;color:var(--text-muted);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 7px;}
     .drop-zone.has-file{border-color:rgba(63,185,80,0.35);background:rgba(63,185,80,0.05);}
     .file-name{font-size:10px;color:var(--success);display:none;word-break:break-all;}
     .drop-zone.has-file .file-name{display:block;}
@@ -94,140 +76,85 @@
     .prog-info{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);}
     .prog-bg{height:3px;background:var(--bg3);border-radius:3px;overflow:hidden;}
     .prog-fill{height:100%;background:linear-gradient(90deg,var(--turk),var(--turk2));width:0%;transition:width 0.3s;}
-    .err-box{display:none;padding:10px 14px;background:rgba(248,81,73,0.08);
-      border:1px solid rgba(248,81,73,0.2);border-radius:var(--radius-sm);
-      font-size:12px;color:var(--error);}
+    .err-box{display:none;padding:10px 14px;background:rgba(248,81,73,0.08);border:1px solid rgba(248,81,73,0.2);border-radius:var(--radius-sm);font-size:12px;color:var(--error);}
     .err-box.ac{display:block;}
-    .btn-primary{background:linear-gradient(135deg,var(--turk),var(--turk2));color:#fff;border:none;
-      border-radius:var(--radius-sm);padding:12px;width:100%;font-family:'Syne',sans-serif;
-      font-weight:700;font-size:13px;letter-spacing:0.4px;cursor:pointer;
-      box-shadow:0 4px 16px rgba(25,176,199,0.3);transition:opacity 0.15s,transform 0.1s,box-shadow 0.2s;}
+    .btn-primary{background:linear-gradient(135deg,var(--turk),var(--turk2));color:#fff;border:none;border-radius:var(--radius-sm);padding:12px;width:100%;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.4px;cursor:pointer;box-shadow:0 4px 16px rgba(25,176,199,0.3);transition:opacity 0.15s,transform 0.1s,box-shadow 0.2s;}
     .btn-primary:hover{box-shadow:0 4px 24px rgba(25,176,199,0.5);}
     .btn-primary:active{transform:scale(0.98);}
     .btn-primary:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
-
-    /* ── ADIM 2: EDITOR ── */
     #step2{flex:1;display:none;}
     #step2.ac{display:flex;}
-
-    .ed-left{width:290px;min-width:290px;background:var(--bg2);border-right:1px solid var(--border);
-      display:flex;flex-direction:column;overflow-y:auto;
-      height:calc(100vh - 54px);position:sticky;top:54px;}
+    .ed-left{width:290px;min-width:290px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;height:calc(100vh - 54px);position:sticky;top:54px;}
     .ed-sec{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px;}
-    .sec-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
-      letter-spacing:1.3px;text-transform:uppercase;color:var(--text-muted);}
+    .sec-title{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:var(--text-muted);}
     .sl-row{display:flex;flex-direction:column;gap:4px;}
     .sl-hdr{display:flex;justify-content:space-between;align-items:center;}
     .sl-lbl{font-size:11px;color:var(--text-dim);}
     .sl-val{font-size:11px;font-weight:700;color:var(--turk);min-width:36px;text-align:right;}
-    input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:3px;
-      border-radius:3px;background:var(--bg4);cursor:pointer;outline:none;}
-    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
-      border-radius:50%;background:var(--turk);box-shadow:0 0 6px rgba(25,176,199,0.4);cursor:pointer;}
+    input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:3px;border-radius:3px;background:var(--bg4);cursor:pointer;outline:none;}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--turk);box-shadow:0 0 6px rgba(25,176,199,0.4);cursor:pointer;}
     .env-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;}
-    .env-btn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-xs);
-      padding:6px 4px;font-size:10px;font-weight:600;color:var(--text-dim);cursor:pointer;
-      text-align:center;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+    .env-btn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:6px 4px;font-size:10px;font-weight:600;color:var(--text-dim);cursor:pointer;text-align:center;transition:all 0.15s;font-family:'DM Sans',sans-serif;}
     .env-btn:hover{border-color:var(--turk-border);color:var(--turk);}
     .env-btn.active{border-color:var(--turk);color:var(--turk);background:var(--turk-dim);}
     .color-row{display:flex;align-items:center;gap:10px;}
-    .color-prev{width:32px;height:32px;border-radius:6px;border:1px solid var(--border);
-      cursor:pointer;flex-shrink:0;transition:transform 0.1s;}
+    .color-prev{width:32px;height:32px;border-radius:6px;border:1px solid var(--border);cursor:pointer;flex-shrink:0;transition:transform 0.1s;}
     .color-prev:hover{transform:scale(1.05);}
     input[type=color]{position:absolute;opacity:0;width:0;height:0;}
     .color-lbl{font-size:11px;color:var(--text-dim);}
     .color-hex{font-size:11px;color:var(--turk);font-weight:600;font-family:monospace;}
     .btn-row{display:flex;gap:8px;}
-    .btn-sec{flex:1;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);
-      background:transparent;color:var(--text-dim);font-family:'DM Sans',sans-serif;
-      font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;text-align:center;}
+    .btn-sec{flex:1;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;text-align:center;}
     .btn-sec:hover{border-color:var(--turk-border);color:var(--turk);background:var(--turk-dim);}
-
     .mat-hint{font-size:11px;color:var(--text-muted);line-height:1.5;}
     .mat-list{display:flex;flex-direction:column;gap:5px;max-height:220px;overflow-y:auto;}
-    .mat-item{display:flex;align-items:center;gap:8px;padding:7px 10px;
-      border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;
-      transition:all 0.15s;background:var(--bg3);}
+    .mat-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;transition:all 0.15s;background:var(--bg3);}
     .mat-item:hover{border-color:var(--turk-border);}
     .mat-item.selected{border-color:var(--turk);background:var(--turk-dim);}
     .mat-item.hidden-mat{opacity:0.4;}
     .mat-dot{width:18px;height:18px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);flex-shrink:0;}
     .mat-label{font-size:11px;color:var(--text-dim);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .mat-item.selected .mat-label{color:var(--turk);}
-    .mat-hide-btn{font-size:12px;padding:2px 4px;background:none;border:none;
-      cursor:pointer;color:var(--text-muted);transition:color 0.15s;flex-shrink:0;}
+    .mat-hide-btn{font-size:12px;padding:2px 4px;background:none;border:none;cursor:pointer;color:var(--text-muted);transition:color 0.15s;flex-shrink:0;}
     .mat-hide-btn:hover{color:var(--error);}
     .mat-item.hidden-mat .mat-hide-btn{color:var(--success);}
-
-    .mat-editor{display:none;flex-direction:column;gap:10px;padding:12px;
-      background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--turk-border);
-      margin-top:4px;}
+    .mat-editor{display:none;flex-direction:column;gap:10px;padding:12px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--turk-border);margin-top:4px;}
     .mat-editor.ac{display:flex;}
     .mat-ed-title{font-size:11px;font-weight:700;color:var(--turk);font-family:'Syne',sans-serif;}
-    .big-color{width:40px;height:40px;border-radius:8px;border:1px solid var(--border);
-      cursor:pointer;flex-shrink:0;transition:transform 0.1s;}
+    .big-color{width:40px;height:40px;border-radius:8px;border:1px solid var(--border);cursor:pointer;flex-shrink:0;transition:transform 0.1s;}
     .big-color:hover{transform:scale(1.05);}
-
     .save-area{padding:16px;margin-top:auto;border-top:1px solid var(--border);}
-    .btn-save{width:100%;padding:13px;background:linear-gradient(135deg,var(--turk),var(--turk2));
-      color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;
-      font-weight:700;font-size:13px;letter-spacing:0.4px;cursor:pointer;
-      box-shadow:0 4px 16px rgba(25,176,199,0.3);transition:box-shadow 0.2s,transform 0.1s;}
+    .btn-save{width:100%;padding:13px;background:linear-gradient(135deg,var(--turk),var(--turk2));color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.4px;cursor:pointer;box-shadow:0 4px 16px rgba(25,176,199,0.3);transition:box-shadow 0.2s,transform 0.1s;}
     .btn-save:hover{box-shadow:0 4px 24px rgba(25,176,199,0.5);}
     .btn-save:active{transform:scale(0.98);}
     .btn-save:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
     .save-hint{font-size:10px;color:var(--text-muted);text-align:center;margin-top:7px;}
-
     .ed-right{flex:1;display:flex;flex-direction:column;}
-    .ed-topbar{padding:10px 18px;border-bottom:1px solid var(--border);
-      display:flex;align-items:center;gap:12px;}
-    .model-badge{background:var(--turk-dim);border:1px solid var(--turk-border);
-      border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;
-      color:var(--turk);font-family:monospace;}
+    .ed-topbar{padding:10px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+    .model-badge{background:var(--turk-dim);border:1px solid var(--turk-border);border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--turk);font-family:monospace;}
     .ed-info{font-size:11px;color:var(--text-muted);}
     .viewer-wrap{flex:1;position:relative;}
-    model-viewer#editorMV{width:100%;height:100%;min-height:500px;
-      --poster-color:#0d1117;cursor:crosshair;}
-    .viewer-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
-      background:rgba(13,17,23,0.82);backdrop-filter:blur(8px);
-      border:1px solid var(--border);border-radius:20px;padding:6px 16px;
-      font-size:10px;color:var(--text-muted);pointer-events:none;white-space:nowrap;}
-
-    /* ── ADIM 3: SONUÇ ── */
+    model-viewer#editorMV{width:100%;height:100%;min-height:500px;--poster-color:#0d1117;cursor:crosshair;}
+    .viewer-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(13,17,23,0.82);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:10px;color:var(--text-muted);pointer-events:none;white-space:nowrap;}
     #step3{flex:1;display:none;align-items:center;justify-content:center;padding:40px 20px;}
     #step3.ac{display:flex;}
     .result-wrap{width:100%;max-width:480px;display:flex;flex-direction:column;gap:16px;}
-    .result-card{background:var(--bg2);border:1px solid rgba(63,185,80,0.2);
-      border-radius:var(--radius);padding:32px;display:flex;flex-direction:column;gap:20px;
-      box-shadow:0 0 40px rgba(63,185,80,0.06);animation:fadeUp 0.4s ease;}
+    .result-card{background:var(--bg2);border:1px solid rgba(63,185,80,0.2);border-radius:var(--radius);padding:32px;display:flex;flex-direction:column;gap:20px;box-shadow:0 0 40px rgba(63,185,80,0.06);animation:fadeUp 0.4s ease;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
     .result-icon{font-size:44px;text-align:center;}
     .result-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;text-align:center;letter-spacing:-0.3px;}
     .result-sub{font-size:13px;color:var(--text-dim);text-align:center;line-height:1.6;}
-    .link-box{background:var(--bg3);border:1px solid var(--turk-border);
-      border-radius:var(--radius-sm);padding:14px;display:flex;align-items:center;gap:10px;}
-    .link-text{font-size:11px;color:var(--turk);font-weight:500;word-break:break-all;
-      flex:1;font-family:monospace;}
-    .btn-copy{background:var(--turk-dim);border:1px solid var(--turk-border);border-radius:6px;
-      padding:7px 14px;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;
-      color:var(--turk);cursor:pointer;white-space:nowrap;transition:background 0.15s;}
+    .link-box{background:var(--bg3);border:1px solid var(--turk-border);border-radius:var(--radius-sm);padding:14px;display:flex;align-items:center;gap:10px;}
+    .link-text{font-size:11px;color:var(--turk);font-weight:500;word-break:break-all;flex:1;font-family:monospace;}
+    .btn-copy{background:var(--turk-dim);border:1px solid var(--turk-border);border-radius:6px;padding:7px 14px;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--turk);cursor:pointer;white-space:nowrap;transition:background 0.15s;}
     .btn-copy:hover{background:rgba(25,176,199,0.2);}
     .btn-copy.copied{color:var(--success);border-color:rgba(63,185,80,0.3);background:rgba(63,185,80,0.08);}
     .result-btns{display:flex;gap:10px;}
-    .btn-preview{flex:1;padding:12px;background:linear-gradient(135deg,var(--turk),var(--turk2));
-      color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;
-      font-weight:700;font-size:12px;cursor:pointer;box-shadow:0 3px 12px rgba(25,176,199,0.3);
-      text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;}
-    .btn-new{flex:1;padding:12px;background:transparent;border:1px solid var(--border);
-      border-radius:var(--radius-sm);color:var(--text-dim);font-family:'Syne',sans-serif;
-      font-weight:700;font-size:12px;cursor:pointer;transition:all 0.15s;}
+    .btn-preview{flex:1;padding:12px;background:linear-gradient(135deg,var(--turk),var(--turk2));color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-weight:700;font-size:12px;cursor:pointer;box-shadow:0 3px 12px rgba(25,176,199,0.3);text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .btn-new{flex:1;padding:12px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-dim);font-family:'Syne',sans-serif;font-weight:700;font-size:12px;cursor:pointer;transition:all 0.15s;}
     .btn-new:hover{border-color:var(--turk-border);color:var(--turk);}
-    .btn-dashboard{width:100%;padding:12px;background:transparent;
-      border:1px solid rgba(63,185,80,0.3);border-radius:var(--radius-sm);
-      color:var(--success);font-family:'Syne',sans-serif;font-weight:700;font-size:12px;
-      cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .btn-dashboard{width:100%;padding:12px;background:transparent;border:1px solid rgba(63,185,80,0.3);border-radius:var(--radius-sm);color:var(--success);font-family:'Syne',sans-serif;font-weight:700;font-size:12px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;}
     .btn-dashboard:hover{background:rgba(63,185,80,0.07);}
-
     ::-webkit-scrollbar{width:4px;}
     ::-webkit-scrollbar-track{background:transparent;}
     ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
@@ -236,7 +163,6 @@
 <body>
 <div class="app">
 
-  <!-- TOPBAR -->
   <div class="topbar">
     <a href="dashboard.html" class="logo"><div class="logo-dot"></div>pepper<span>AR</span></a>
     <div class="topbar-sep"></div>
@@ -245,9 +171,7 @@
         <div class="user-avatar" id="userAvatar">?</div>
         <span class="user-name" id="userName">Yükleniyor…</span>
       </div>
-      <a href="dashboard.html" class="btn-dash">
-        ← Dashboard
-      </a>
+      <a href="dashboard.html" class="btn-dash">← Dashboard</a>
     </div>
     <div class="steps" style="margin-left:16px;">
       <div class="stp active" id="stp1">1 · Yükle</div>
@@ -307,7 +231,7 @@
       </div>
     </div>
 
-    <!-- ADIM 2: EDITOR -->
+    <!-- ADIM 2 -->
     <div id="step2">
       <div class="ed-left">
         <div class="ed-sec">
@@ -381,44 +305,36 @@
           <div class="save-hint">Ayarlar Supabase'e kaydedilir, viewer'da uygulanır.</div>
         </div>
       </div>
-
       <div class="ed-right">
         <div class="ed-topbar">
           <div class="model-badge" id="edModelName">—</div>
           <div class="ed-info">Modele tıkla: parça seç &nbsp;·&nbsp; Sürükle: döndür &nbsp;·&nbsp; Scroll: zoom</div>
         </div>
         <div class="viewer-wrap">
-          <model-viewer id="editorMV"
-            camera-controls
-            shadow-intensity="1.5"
-            environment-image="neutral"
-            exposure="0.95"
-            interaction-prompt="none"
+          <model-viewer id="editorMV" camera-controls shadow-intensity="1.5"
+            environment-image="neutral" exposure="0.95" interaction-prompt="none"
             style="width:100%;height:100%;min-height:500px;background:#f7f5f2;cursor:crosshair;">
           </model-viewer>
-          <div class="viewer-hint" id="viewerHint">Modele tıklayarak parça seçebilirsin</div>
+          <div class="viewer-hint">Modele tıklayarak parça seçebilirsin</div>
         </div>
       </div>
     </div>
 
-    <!-- ADIM 3: SONUÇ -->
+    <!-- ADIM 3 -->
     <div id="step3">
       <div class="result-wrap">
         <div class="result-card">
           <div class="result-icon">🎉</div>
           <div class="result-title">Yayına Hazır!</div>
           <div class="result-sub" id="resultSub">Model kaydedildi, AR linki oluşturuldu.</div>
-
           <div class="link-box">
             <div class="link-text" id="resultLink"></div>
             <button class="btn-copy" id="btnCopy">Kopyala</button>
           </div>
-
           <div class="result-btns">
             <a class="btn-preview" id="btnPreview" href="#" target="_blank">🔍 Önizle</a>
             <button class="btn-new" id="btnNew">↑ Yeni Model</button>
           </div>
-
           <button class="btn-dashboard" onclick="window.location.href='dashboard.html'">
             📊 Dashboard'a Git
           </button>
@@ -433,42 +349,32 @@
 <script>
 (function(){
 
+  /* ══ AYARLAR ══ */
   var SUPABASE_URL  = 'https://vdqumssdodfihuovytbs.supabase.co';
   var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkcXVtc3Nkb2RmaWh1b3Z5dGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzI1NDgsImV4cCI6MjA4OTc0ODU0OH0.SpKRUbrPmKQtcEDUCwthD-74heZMxTl2R9m9LXN0WQI';
   var VIEWER_BASE   = window.location.origin + '/viewer.html';
-
-  /* Supabase client */
   var _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+  var currentUser   = null;
 
-  /* ── AUTH KONTROLÜ ── */
-  var currentUser = null;
-
+  /* ══ AUTH ══ */
   async function initAuth() {
     var { data: { session } } = await _sb.auth.getSession();
-    if (!session) {
-      window.location.href = '/login.html?redirect=upload';
-      return;
-    }
+    if (!session) { window.location.href = '/login.html?redirect=upload'; return; }
     currentUser = session.user;
-
-    /* Profil bilgisini göster */
-    var { data: profile } = await _sb.from('profiles').select('full_name, username, plan').eq('id', currentUser.id).single();
-    var displayName = profile?.full_name || profile?.username || currentUser.email.split('@')[0];
-    document.getElementById('userName').textContent = displayName;
-    document.getElementById('userAvatar').textContent = displayName.charAt(0).toUpperCase();
-
-    /* Plan limiti kontrolü */
-    var { count } = await _sb.from('models').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id);
-    var limit = profile?.plan === 'pro' ? 999 : 3;
+    var { data: profile } = await _sb.from('profiles').select('full_name,username,plan').eq('id', currentUser.id).single();
+    var dn = (profile && (profile.full_name || profile.username)) || currentUser.email.split('@')[0];
+    document.getElementById('userName').textContent = dn;
+    document.getElementById('userAvatar').textContent = dn.charAt(0).toUpperCase();
+    var { count } = await _sb.from('models').select('*', { count:'exact', head:true }).eq('user_id', currentUser.id);
+    var limit = (profile && profile.plan === 'pro') ? 999 : 3;
     if (count >= limit) {
-      document.getElementById('errBox').textContent = '⚠ ' + profile.plan + ' planında maksimum ' + limit + ' model yükleyebilirsiniz. Dashboard\'dan planınızı yükseltin.';
-      document.getElementById('errBox').classList.add('ac');
-      document.getElementById('btnUpload').disabled = true;
+      errBox.textContent = '⚠ Maksimum ' + limit + ' model limitine ulaştınız. Dashboard\'dan planınızı yükseltin.';
+      errBox.classList.add('ac');
+      btnUpload.disabled = true;
     }
   }
-  initAuth();
 
-  /* ── ELEMENTLER ── */
+  /* ══ ELEMENTLER ══ */
   var mv           = document.getElementById('editorMV');
   var productName  = document.getElementById('productName');
   var fileGlb      = document.getElementById('fileGlb');
@@ -494,23 +400,75 @@
   var selectedIdx  = -1;
   var matData      = [];
 
-  /* ── ADIM YÖNETİMİ ── */
+  /* ══ EDIT MODU — tüm değişkenler hazır, buraya gelir ══ */
+  async function checkEditMode() {
+    var editName = new URLSearchParams(window.location.search).get('edit');
+    if (!editName) return;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', SUPABASE_URL + '/rest/v1/models?name=eq.' + encodeURIComponent(editName) + '&limit=1');
+    xhr.setRequestHeader('apikey', SUPABASE_ANON);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON);
+    xhr.onload = function() {
+      if (xhr.status !== 200) return;
+      var rows = JSON.parse(xhr.responseText);
+      if (!rows || rows.length === 0) return;
+      var s = rows[0];
+      openEditor(editName);
+      mv.addEventListener('load', function applySettings() {
+        mv.removeEventListener('load', applySettings);
+        if (s.exposure)         { slExp.value=s.exposure; document.getElementById('vExp').textContent=(+s.exposure).toFixed(2); mv.setAttribute('exposure',s.exposure); }
+        if (s.shadow_intensity) { slShd.value=s.shadow_intensity; document.getElementById('vShd').textContent=(+s.shadow_intensity).toFixed(1); mv.setAttribute('shadow-intensity',s.shadow_intensity); }
+        if (s.environment) {
+          document.querySelectorAll('.env-btn').forEach(function(b){b.classList.remove('active');});
+          var eb=document.querySelector('.env-btn[data-env="'+s.environment+'"]');
+          if(eb){eb.classList.add('active'); mv.setAttribute('environment-image',s.environment);}
+        }
+        if (s.bg_color) { bgPick.value=s.bg_color; document.getElementById('bgPrev').style.background=s.bg_color; document.getElementById('bgHex').textContent=s.bg_color; mv.style.background=s.bg_color; }
+        if (s.scale)    { var sp=Math.round(s.scale*100); slScale.value=sp; document.getElementById('vScale').textContent=sp+'%'; mv.setAttribute('scale',s.scale+' '+s.scale+' '+s.scale); }
+        if (s.rotate_y) { slRot.value=s.rotate_y; document.getElementById('vRot').textContent=s.rotate_y+'°'; mv.setAttribute('orientation','0deg '+s.rotate_y+'deg 0deg'); }
+        if (s.materials && s.materials.length > 0) {
+          s.materials.forEach(function(edit) {
+            var i=edit.index!==undefined?edit.index:0;
+            if(!matData[i]) return;
+            matData[i].color     = edit.color     || matData[i].color;
+            matData[i].roughness = edit.roughness !== undefined ? edit.roughness : matData[i].roughness;
+            matData[i].metalness = edit.metalness !== undefined ? edit.metalness : matData[i].metalness;
+            matData[i].hidden    = edit.hidden    || false;
+            try {
+              var mat=mv.model.materials[i]; var rgb=hexToRgb(matData[i].color);
+              if(matData[i].hidden){mat.pbrMetallicRoughness.setBaseColorFactor([0,0,0,0]);}
+              else{mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]);}
+              mat.pbrMetallicRoughness.setRoughnessFactor(matData[i].roughness);
+              mat.pbrMetallicRoughness.setMetallicFactor(matData[i].metalness);
+            } catch(e) {}
+          });
+          var list=document.getElementById('matList'); list.innerHTML='';
+          matData.forEach(function(_,j){renderMatItem(j);});
+        }
+      }, {once:true});
+    };
+    xhr.send();
+  }
+
+  /* Auth tamamlanınca edit modunu kontrol et */
+  initAuth().then(function(){ checkEditMode(); });
+
+  /* ══ ADIM YÖNETİMİ ══ */
   function goStep(n){
-    document.getElementById('step1').style.display = n===1 ? 'flex' : 'none';
-    document.getElementById('step2').classList.toggle('ac', n===2);
-    document.getElementById('step3').classList.toggle('ac', n===3);
+    document.getElementById('step1').style.display=n===1?'flex':'none';
+    document.getElementById('step2').classList.toggle('ac',n===2);
+    document.getElementById('step3').classList.toggle('ac',n===3);
     ['stp1','stp2','stp3'].forEach(function(id,i){
-      var el = document.getElementById(id);
-      el.classList.remove('active','done');
+      var el=document.getElementById(id); el.classList.remove('active','done');
       if(i+1===n) el.classList.add('active');
       else if(i+1<n) el.classList.add('done');
     });
   }
   goStep(1);
 
-  /* ── UPLOAD ── */
-  fileGlb.onchange  = function(){ if(this.files[0]){ document.getElementById('nameGlb').textContent=this.files[0].name; dropGlb.classList.add('has-file'); } checkReady(); };
-  fileUsdz.onchange = function(){ if(this.files[0]){ document.getElementById('nameUsdz').textContent=this.files[0].name; dropUsdz.classList.add('has-file'); } checkReady(); };
+  /* ══ UPLOAD ══ */
+  fileGlb.onchange  = function(){ if(this.files[0]){document.getElementById('nameGlb').textContent=this.files[0].name; dropGlb.classList.add('has-file');} checkReady(); };
+  fileUsdz.onchange = function(){ if(this.files[0]){document.getElementById('nameUsdz').textContent=this.files[0].name; dropUsdz.classList.add('has-file');} checkReady(); };
   productName.oninput = checkReady;
 
   [dropGlb,dropUsdz].forEach(function(z){
@@ -530,40 +488,39 @@
     xhr.setRequestHeader('Authorization','Bearer '+SUPABASE_ANON);
     xhr.setRequestHeader('Content-Type',mime);
     xhr.setRequestHeader('x-upsert','true');
-    xhr.onload=function(){ (xhr.status===200||xhr.status===201) ? cb(null) : cb(xhr.status+' '+xhr.statusText); };
-    xhr.onerror=function(){ cb('Bağlantı hatası'); };
+    xhr.onload=function(){(xhr.status===200||xhr.status===201)?cb(null):cb(xhr.status+' '+xhr.statusText);};
+    xhr.onerror=function(){cb('Bağlantı hatası');};
     xhr.send(file);
   }
 
   btnUpload.onclick=function(){
-    if (!currentUser) { showErr('Lütfen önce giriş yapın.'); return; }
+    if(!currentUser){showErr('Lütfen önce giriş yapın.'); return;}
     var name=productName.value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-    if(!name){ showErr('Geçerli bir ürün adı girin.'); return; }
+    if(!name){showErr('Geçerli bir ürün adı girin.'); return;}
     hideErr(); btnUpload.disabled=true; progWrap.classList.add('ac'); setProg(0,'GLB yükleniyor…');
     uploadFile(name+'-3d.glb',fileGlb.files[0],'model/gltf-binary',function(e){
-      if(e){ showErr('GLB yüklenemedi: '+e); btnUpload.disabled=false; return; }
+      if(e){showErr('GLB yüklenemedi: '+e); btnUpload.disabled=false; return;}
       setProg(55,'USDZ yükleniyor…');
       uploadFile(name+'-3d.usdz',fileUsdz.files[0],'model/vnd.usdz+zip',function(e2){
-        if(e2){ showErr('USDZ yüklenemedi: '+e2); btnUpload.disabled=false; return; }
+        if(e2){showErr('USDZ yüklenemedi: '+e2); btnUpload.disabled=false; return;}
         setProg(100,'Tamamlandı!');
-        setTimeout(function(){ openEditor(name); },500);
+        setTimeout(function(){openEditor(name);},500);
       });
     });
   };
 
-  /* ── EDITOR ── */
+  /* ══ EDITOR ══ */
   function openEditor(name){
     currentModel=name; matData=[]; selectedIdx=-1;
     document.getElementById('edModelName').textContent=name;
     goStep(2);
-    var glbUrl=SUPABASE_URL+'/storage/v1/object/public/models/'+name+'-3d.glb';
-    mv.setAttribute('src',glbUrl);
+    mv.setAttribute('src',SUPABASE_URL+'/storage/v1/object/public/models/'+name+'-3d.glb');
     mv.addEventListener('load',onMVLoad,{once:true});
   }
 
   function onMVLoad(){ scanMaterials(); }
 
-  var mvClickHandler = null;
+  var mvClickHandler=null;
 
   function scanMaterials(){
     var list=document.getElementById('matList');
@@ -575,56 +532,58 @@
       return;
     }
     model.materials.forEach(function(mat,i){
-      var bc   = mat.pbrMetallicRoughness.baseColorFactor || [1,1,1,1];
-      var hex  = rgbToHex(bc[0],bc[1],bc[2]);
-      var roug = mat.pbrMetallicRoughness.roughnessFactor != null ? mat.pbrMetallicRoughness.roughnessFactor : 0.5;
-      var meta = mat.pbrMetallicRoughness.metallicFactor  != null ? mat.pbrMetallicRoughness.metallicFactor  : 0.0;
-      matData.push({ name: mat.name || ('Materyal '+(i+1)), color:hex, roughness:roug, metalness:meta, hidden:false, origBC:[bc[0],bc[1],bc[2],bc[3]||1] });
+      var bc=mat.pbrMetallicRoughness.baseColorFactor||[1,1,1,1];
+      matData.push({
+        name:mat.name||('Materyal '+(i+1)),
+        color:rgbToHex(bc[0],bc[1],bc[2]),
+        roughness:mat.pbrMetallicRoughness.roughnessFactor!=null?mat.pbrMetallicRoughness.roughnessFactor:0.5,
+        metalness:mat.pbrMetallicRoughness.metallicFactor!=null?mat.pbrMetallicRoughness.metallicFactor:0.0,
+        hidden:false
+      });
       renderMatItem(i);
     });
-    if(mvClickHandler) mv.removeEventListener('click', mvClickHandler);
-    var pointerMoved = false;
-    mv.addEventListener('pointerdown', function(){ pointerMoved = false; });
-    mv.addEventListener('pointermove', function(){ pointerMoved = true; });
-    mvClickHandler = function(e){
+    if(mvClickHandler) mv.removeEventListener('click',mvClickHandler);
+    var pointerMoved=false;
+    mv.addEventListener('pointerdown',function(){pointerMoved=false;});
+    mv.addEventListener('pointermove',function(){pointerMoved=true;});
+    mvClickHandler=function(e){
       if(pointerMoved) return;
-      var hit = mv.positionAndNormalFromPoint(e.clientX, e.clientY);
+      var hit=mv.positionAndNormalFromPoint(e.clientX,e.clientY);
       if(!hit) return;
-      var mName = hit.materialName;
+      var mName=hit.materialName;
       if(mName){
-        var model2 = mv.model; if(!model2) return;
-        var found = false;
-        model2.materials.forEach(function(mat2,j){ if(mat2.name===mName&&!found){ found=true; selectMat(j); } });
+        var m2=mv.model; if(!m2) return;
+        var found=false;
+        m2.materials.forEach(function(mat2,j){if(mat2.name===mName&&!found){found=true;selectMat(j);}});
         if(found) return;
       }
-      for(var k=0;k<matData.length;k++){ if(!matData[k].hidden){ selectMat(k); break; } }
+      for(var k=0;k<matData.length;k++){if(!matData[k].hidden){selectMat(k);break;}}
     };
-    mv.addEventListener('click', mvClickHandler);
+    mv.addEventListener('click',mvClickHandler);
   }
 
   function renderMatItem(i){
-    var list = document.getElementById('matList');
-    var d    = matData[i];
-    var item = document.createElement('div');
-    item.className = 'mat-item' + (d.hidden ? ' hidden-mat' : '');
-    item.dataset.idx = i;
-    item.innerHTML = '<div class="mat-dot" style="background:'+d.color+'"></div><div class="mat-label">'+d.name+'</div><button class="mat-hide-btn" title="'+(d.hidden?'Göster':'Gizle')+'" data-hide="'+i+'">'+(d.hidden?'👁':'🚫')+'</button>';
-    item.addEventListener('click', function(e){ if(e.target.dataset.hide!==undefined) return; selectMat(i); });
-    item.querySelector('.mat-hide-btn').addEventListener('click', function(e){ e.stopPropagation(); toggleHide(i); });
+    var list=document.getElementById('matList');
+    var d=matData[i];
+    var item=document.createElement('div');
+    item.className='mat-item'+(d.hidden?' hidden-mat':'');
+    item.dataset.idx=i;
+    item.innerHTML='<div class="mat-dot" style="background:'+d.color+'"></div><div class="mat-label">'+d.name+'</div><button class="mat-hide-btn" data-hide="'+i+'">'+(d.hidden?'👁':'🚫')+'</button>';
+    item.addEventListener('click',function(e){if(e.target.dataset.hide!==undefined) return; selectMat(i);});
+    item.querySelector('.mat-hide-btn').addEventListener('click',function(e){e.stopPropagation(); toggleHide(i);});
     list.appendChild(item);
   }
 
   function toggleHide(i){
-    matData[i].hidden = !matData[i].hidden;
-    var model = mv.model;
-    if(model && model.materials[i]){
-      var mat = model.materials[i];
-      var pbr = mat.pbrMetallicRoughness;
-      if(matData[i].hidden){ var bc=pbr.baseColorFactor; pbr.setBaseColorFactor([bc[0],bc[1],bc[2],0]); }
-      else { var rgb=hexToRgb(matData[i].color); pbr.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]); }
+    matData[i].hidden=!matData[i].hidden;
+    var model=mv.model;
+    if(model&&model.materials[i]){
+      var pbr=model.materials[i].pbrMetallicRoughness;
+      if(matData[i].hidden){var bc=pbr.baseColorFactor; pbr.setBaseColorFactor([bc[0],bc[1],bc[2],0]);}
+      else{var rgb=hexToRgb(matData[i].color); pbr.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]);}
     }
     var list=document.getElementById('matList'); list.innerHTML='';
-    matData.forEach(function(_,j){ renderMatItem(j); });
+    matData.forEach(function(_,j){renderMatItem(j);});
     if(selectedIdx===i) selectMat(i);
   }
 
@@ -645,29 +604,28 @@
     document.getElementById('matEditor').classList.add('ac');
     try{
       var mat=mv.model.materials[i]; var bc=mat.pbrMetallicRoughness.baseColorFactor;
-      var hR=bc[0]*0.6+0.18*0.4, hG=bc[1]*0.6+0.72*0.4, hB=bc[2]*0.6+0.83*0.4;
-      mat.pbrMetallicRoughness.setBaseColorFactor([hR,hG,hB,bc[3]||1]);
-      setTimeout(function(){ if(selectedIdx!==i) return; var rgb=hexToRgb(d.color); mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]); },600);
+      mat.pbrMetallicRoughness.setBaseColorFactor([bc[0]*0.6+0.18*0.4,bc[1]*0.6+0.72*0.4,bc[2]*0.6+0.83*0.4,bc[3]||1]);
+      setTimeout(function(){if(selectedIdx!==i) return; var rgb=hexToRgb(d.color); mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]);},600);
     }catch(e){}
   }
 
-  matColorPick.addEventListener('input', function(){
+  matColorPick.addEventListener('input',function(){
     if(selectedIdx<0) return;
     var hex=this.value; matData[selectedIdx].color=hex;
     document.getElementById('matColorPrev').style.background=hex;
     document.getElementById('matColorHex').textContent=hex;
-    try{ var rgb=hexToRgb(hex); mv.model.materials[selectedIdx].pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]); }catch(e){}
-    document.querySelectorAll('.mat-item').forEach(function(el){ if(+el.dataset.idx===selectedIdx) el.querySelector('.mat-dot').style.background=hex; });
+    try{var rgb=hexToRgb(hex); mv.model.materials[selectedIdx].pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]);}catch(e){}
+    document.querySelectorAll('.mat-item').forEach(function(el){if(+el.dataset.idx===selectedIdx) el.querySelector('.mat-dot').style.background=hex;});
   });
 
-  slRough.addEventListener('input',function(){ var v=+this.value; document.getElementById('vRough').textContent=v.toFixed(2); if(selectedIdx<0) return; matData[selectedIdx].roughness=v; try{mv.model.materials[selectedIdx].pbrMetallicRoughness.setRoughnessFactor(v);}catch(e){} });
-  slMetal.addEventListener('input',function(){ var v=+this.value; document.getElementById('vMetal').textContent=v.toFixed(2); if(selectedIdx<0) return; matData[selectedIdx].metalness=v; try{mv.model.materials[selectedIdx].pbrMetallicRoughness.setMetallicFactor(v);}catch(e){} });
-  slExp.addEventListener('input',function(){ document.getElementById('vExp').textContent=(+this.value).toFixed(2); mv.setAttribute('exposure',this.value); });
-  slShd.addEventListener('input',function(){ document.getElementById('vShd').textContent=(+this.value).toFixed(1); mv.setAttribute('shadow-intensity',this.value); });
+  slRough.addEventListener('input',function(){var v=+this.value; document.getElementById('vRough').textContent=v.toFixed(2); if(selectedIdx<0) return; matData[selectedIdx].roughness=v; try{mv.model.materials[selectedIdx].pbrMetallicRoughness.setRoughnessFactor(v);}catch(e){}});
+  slMetal.addEventListener('input',function(){var v=+this.value; document.getElementById('vMetal').textContent=v.toFixed(2); if(selectedIdx<0) return; matData[selectedIdx].metalness=v; try{mv.model.materials[selectedIdx].pbrMetallicRoughness.setMetallicFactor(v);}catch(e){}});
+  slExp.addEventListener('input',function(){document.getElementById('vExp').textContent=(+this.value).toFixed(2); mv.setAttribute('exposure',this.value);});
+  slShd.addEventListener('input',function(){document.getElementById('vShd').textContent=(+this.value).toFixed(1); mv.setAttribute('shadow-intensity',this.value);});
 
   document.querySelectorAll('.env-btn').forEach(function(btn){
     btn.onclick=function(){
-      document.querySelectorAll('.env-btn').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.env-btn').forEach(function(b){b.classList.remove('active');});
       this.classList.add('active'); mv.setAttribute('environment-image',this.dataset.env);
     };
   });
@@ -679,8 +637,8 @@
     mv.style.background=hex;
   });
 
-  slScale.addEventListener('input',function(){ var v=+this.value; document.getElementById('vScale').textContent=v+'%'; var s=v/100; mv.setAttribute('scale',s+' '+s+' '+s); });
-  slRot.addEventListener('input',function(){ var v=+this.value; document.getElementById('vRot').textContent=v+'°'; mv.setAttribute('orientation','0deg '+v+'deg 0deg'); });
+  slScale.addEventListener('input',function(){var v=+this.value; document.getElementById('vScale').textContent=v+'%'; var s=v/100; mv.setAttribute('scale',s+' '+s+' '+s);});
+  slRot.addEventListener('input',function(){var v=+this.value; document.getElementById('vRot').textContent=v+'°'; mv.setAttribute('orientation','0deg '+v+'deg 0deg');});
 
   document.getElementById('btnReset').onclick=function(){
     slScale.value=100; document.getElementById('vScale').textContent='100%'; mv.setAttribute('scale','1 1 1');
@@ -689,52 +647,42 @@
     slShd.value=1.5; document.getElementById('vShd').textContent='1.5'; mv.setAttribute('shadow-intensity','1.5');
     bgPick.value='#f7f5f2'; document.getElementById('bgPrev').style.background='#f7f5f2'; document.getElementById('bgHex').textContent='#f7f5f2'; mv.style.background='#f7f5f2';
   };
-  document.getElementById('btnCenter').onclick=function(){ mv.cameraOrbit='auto auto auto'; };
+  document.getElementById('btnCenter').onclick=function(){mv.cameraOrbit='auto auto auto';};
 
-  /* ── KAYDET — user_id ile ── */
-  document.getElementById('btnSave').onclick = async function(){
-    if (!currentUser) { showErr('Oturum bulunamadı, lütfen tekrar giriş yapın.'); return; }
+  /* ══ KAYDET ══ */
+  document.getElementById('btnSave').onclick=async function(){
+    if(!currentUser){showErr('Oturum bulunamadı, lütfen tekrar giriş yapın.'); return;}
     var btn=this; btn.disabled=true; btn.textContent='Kaydediliyor…';
     var env=document.querySelector('.env-btn.active');
-
-    var mats = matData.map(function(d,i){
-      return { index:i, name:d.name, color:d.color, roughness:d.roughness, metalness:d.metalness, hidden:d.hidden };
-    });
-
-    var payload = {
-      name:             currentModel,
-      user_id:          currentUser.id,
-      exposure:         +slExp.value,
-      shadow_intensity: +slShd.value,
-      environment:      env ? env.dataset.env : 'neutral',
-      bg_color:         bgPick.value,
-      scale:            +slScale.value/100,
-      rotate_y:         +slRot.value,
-      materials:        mats
+    var mats=matData.map(function(d,i){return {index:i,name:d.name,color:d.color,roughness:d.roughness,metalness:d.metalness,hidden:d.hidden};});
+    var payload={
+      name:currentModel, user_id:currentUser.id,
+      exposure:+slExp.value, shadow_intensity:+slShd.value,
+      environment:env?env.dataset.env:'neutral',
+      bg_color:bgPick.value, scale:+slScale.value/100, rotate_y:+slRot.value,
+      materials:mats
     };
-
-    try {
-      var { error } = await _sb.from('models').upsert(payload, { onConflict: 'name' });
-      if (error) throw error;
+    try{
+      var {error}=await _sb.from('models').upsert(payload,{onConflict:'name'});
+      if(error) throw error;
       btn.textContent='✓ Kaydedildi!';
-      setTimeout(function(){ showResult(currentModel); }, 600);
-    } catch(e) {
-      showErr('Kayıt hatası: ' + (e.message || e));
+      setTimeout(function(){showResult(currentModel);},600);
+    }catch(e){
+      showErr('Kayıt hatası: '+(e.message||e));
       btn.disabled=false; btn.textContent='💾 Kaydet ve Link Oluştur';
     }
   };
 
   function showResult(name){
-    var link = VIEWER_BASE + '?model=' + name;
-    document.getElementById('resultLink').textContent = link;
-    document.getElementById('resultSub').textContent = '"' + name + '" modeli kaydedildi ve AR linki hazır.';
-    document.getElementById('btnPreview').href = link;
-
-    document.getElementById('btnCopy').onclick = function(){
+    var link=VIEWER_BASE+'?model='+name;
+    document.getElementById('resultLink').textContent=link;
+    document.getElementById('resultSub').textContent='"'+name+'" modeli kaydedildi ve AR linki hazır.';
+    document.getElementById('btnPreview').href=link;
+    document.getElementById('btnCopy').onclick=function(){
       var b=this;
       navigator.clipboard.writeText(link).then(function(){
         b.textContent='✓ Kopyalandı'; b.classList.add('copied');
-        setTimeout(function(){ b.textContent='Kopyala'; b.classList.remove('copied'); }, 2000);
+        setTimeout(function(){b.textContent='Kopyala'; b.classList.remove('copied');},2000);
       });
     };
     goStep(3);
@@ -754,8 +702,8 @@
     goStep(1);
   };
 
-  function rgbToHex(r,g,b){ function c(x){ var h=Math.round(x*255).toString(16); return h.length===1?'0'+h:h; } return '#'+c(r)+c(g)+c(b); }
-  function hexToRgb(hex){ return {r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)}; }
+  function rgbToHex(r,g,b){function c(x){var h=Math.round(x*255).toString(16);return h.length===1?'0'+h:h;} return '#'+c(r)+c(g)+c(b);}
+  function hexToRgb(hex){return {r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)};}
 
 })();
 </script>
