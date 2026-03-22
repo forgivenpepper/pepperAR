@@ -445,13 +445,27 @@
         var hex=rgbToHex(color[0],color[1],color[2]);
         var roughness=mat.pbrMetallicRoughness.roughnessFactor!=null?mat.pbrMetallicRoughness.roughnessFactor:0.5;
         var metalness=mat.pbrMetallicRoughness.metallicFactor!=null?mat.pbrMetallicRoughness.metallicFactor:0.0;
-        matOverrides.push({index:i,name:mat.name||'Materyal '+(i+1),color:hex,roughness:roughness,metalness:metalness});
+        matOverrides.push({index:i,name:mat.name||'Materyal '+(i+1),color:hex,roughness:roughness,metalness:metalness,origColor:[color[0],color[1],color[2],color[3]||1]});
         var item=document.createElement('div');
         item.className='mat-item';
+        item.dataset.idx=i;
         item.innerHTML='<div class="mat-color" style="background:'+hex+'"></div><div class="mat-name">'+(mat.name||'Materyal '+(i+1))+'</div>';
-        item.onclick=function(){ selectMaterial(i,mat); };
+        item.onclick=function(){ selectMaterial(i); };
         matList.appendChild(item);
       });
+
+      /* Model viewer'a tıklayınca materyal seç + buz mavisi highlight */
+      mv.addEventListener('click', function(e){
+        var hit = mv.positionAndNormalFromPoint(e.clientX, e.clientY);
+        if (!hit || !hit.materialName) return;
+        var mName = hit.materialName;
+        var model2 = mv.model;
+        if (!model2) return;
+        model2.materials.forEach(function(mat2, j){
+          if (mat2.name === mName) { selectMaterial(j); }
+        });
+      });
+
     }catch(e){ matList.innerHTML='<div style="font-size:11px;color:var(--text-muted)">Materyaller yüklenemedi.</div>'; }
   }
 
@@ -466,6 +480,23 @@
     slRoughness.value=ov.roughness; document.getElementById('vRoughness').textContent=ov.roughness.toFixed(2);
     slMetalness.value=ov.metalness; document.getElementById('vMetalness').textContent=ov.metalness.toFixed(2);
     document.getElementById('matEditor').classList.add('ac');
+
+    /* Buz mavisi highlight: seçili materyale kısa süreli renk tinti */
+    try {
+      var mat = mv.model.materials[idx];
+      var bc  = mat.pbrMetallicRoughness.baseColorFactor;
+      /* %65 orijinal + %35 buz mavi (#2eb8d4) */
+      var hR = bc[0]*0.65 + 0.18*0.35;
+      var hG = bc[1]*0.65 + 0.72*0.35;
+      var hB = bc[2]*0.65 + 0.83*0.35;
+      mat.pbrMetallicRoughness.setBaseColorFactor([hR, hG, hB, bc[3]||1]);
+      /* 700ms sonra gerçek renge dön */
+      setTimeout(function(){
+        if(selectedMatIdx !== idx) return;
+        var rgb = hexToRgb(ov.color);
+        mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r/255, rgb.g/255, rgb.b/255, 1]);
+      }, 700);
+    } catch(e){}
   }
 
   matColorPicker.oninput=function(){
@@ -531,6 +562,10 @@
   document.getElementById('btnSave').onclick=function(){
     var btn=this; btn.disabled=true; btn.textContent='Kaydediliyor…';
     var env=document.querySelector('.env-btn.active');
+    /* matOverrides'ı temizle — sadece değiştirilenleri kaydet, name field'ını garantile */
+    var mats = matOverrides.map(function(ov){
+      return { name: ov.name, color: ov.color, metalness: ov.metalness, roughness: ov.roughness };
+    });
     var payload={
       name:currentModel,
       exposure:+slExposure.value,
@@ -539,7 +574,7 @@
       bg_color:bgPicker.value,
       scale:+slScale.value/100,
       rotate_y:+slRotate.value,
-      materials:matOverrides
+      materials:mats
     };
     fetch(SUPABASE_URL+'/rest/v1/models?on_conflict=name',{
       method:'POST',
