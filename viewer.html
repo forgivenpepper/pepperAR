@@ -694,11 +694,16 @@
   function applyMaterialsToMV(materials) {
     var model = mv.model;
     if (!model || !model.materials) return;
-    materials.forEach(function(edit) {
-      model.materials.forEach(function(mat, idx) {
+    model.materials.forEach(function(mat) {
+      materials.forEach(function(edit) {
         if (mat.name === edit.name) {
-          var rgb = hexToRgbV(edit.color);
-          mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r/255, rgb.g/255, rgb.b/255, 1]);
+          if (edit.hidden) {
+            /* Gizli parça: alpha 0 */
+            mat.pbrMetallicRoughness.setBaseColorFactor([0, 0, 0, 0]);
+          } else {
+            var rgb = hexToRgbV(edit.color);
+            mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r/255, rgb.g/255, rgb.b/255, 1]);
+          }
           if (edit.metalness !== undefined) mat.pbrMetallicRoughness.setMetallicFactor(edit.metalness);
           if (edit.roughness !== undefined) mat.pbrMetallicRoughness.setRoughnessFactor(edit.roughness);
         }
@@ -714,10 +719,15 @@
       var matName = obj.material.name || '';
       materials.forEach(function(edit) {
         if (edit.name && matName === edit.name) {
-          var rgb = hexToRgbV(edit.color);
-          if (obj.material.color) obj.material.color.setRGB(rgb.r/255, rgb.g/255, rgb.b/255);
-          if (edit.metalness !== undefined && obj.material.metalness !== undefined) obj.material.metalness = edit.metalness;
-          if (edit.roughness !== undefined && obj.material.roughness !== undefined) obj.material.roughness = edit.roughness;
+          if (edit.hidden) {
+            obj.material.visible = false;
+          } else {
+            obj.material.visible = true;
+            var rgb = hexToRgbV(edit.color);
+            if (obj.material.color) obj.material.color.setRGB(rgb.r/255, rgb.g/255, rgb.b/255);
+            if (edit.metalness !== undefined && obj.material.metalness !== undefined) obj.material.metalness = edit.metalness;
+            if (edit.roughness !== undefined && obj.material.roughness !== undefined) obj.material.roughness = edit.roughness;
+          }
           obj.material.needsUpdate = true;
         }
       });
