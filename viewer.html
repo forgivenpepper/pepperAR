@@ -632,9 +632,10 @@
     return;
   }
 
-  var folderPath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-  var GLB_PATH   = folderPath + m + '-3d.glb';
-  var USDZ_PATH  = folderPath + m + '-3d.usdz';
+  /* Supabase Storage base URL — model adı ?model= parametresinden geliyor */
+  var SUPABASE_URL = 'https://vdqumssdodfihuovytbs.supabase.co/storage/v1/object/public/models/';
+  var GLB_PATH     = SUPABASE_URL + m + '-3d.glb';
+  var USDZ_PATH    = SUPABASE_URL + m + '-3d.usdz';
 
   /* ══ UI METİNLERİNİ UYGULA ══ */
   function applyTexts() {
