@@ -823,7 +823,27 @@
     xhr.send();
   }
   loadModelSettings();
+function recordView() {
+  var device = 'desktop';
+  var ua = navigator.userAgent;
+  if (/iphone|ipad|ipod/i.test(ua)) device = 'ios';
+  else if (/android/i.test(ua)) device = 'android';
 
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', SUPABASE_REST + '/model_views');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('apikey', SUPABASE_ANON);
+  xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON);
+  xhr.send(JSON.stringify({ model_id: m, device_type: device }));
+
+  var xhr2 = new XMLHttpRequest();
+  xhr2.open('POST', SUPABASE_REST + '/rpc/increment_model_views');
+  xhr2.setRequestHeader('Content-Type', 'application/json');
+  xhr2.setRequestHeader('apikey', SUPABASE_ANON);
+  xhr2.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON);
+  xhr2.send(JSON.stringify({ model_name: m }));
+}
+recordView();
   /* ─── CİHAZ TESPİTİ ─── */
   var isIOS    = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
