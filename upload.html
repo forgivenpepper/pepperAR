@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pepperAR — Model Yükle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --turk: #19b0c7;
+      --turk2: #1399ae;
+      --turk-dim: rgba(25,176,199,0.12);
+      --turk-border: rgba(25,176,199,0.25);
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #21262d;
+      --text: #e6edf3;
+      --text-dim: rgba(230,237,243,0.5);
+      --text-muted: rgba(230,237,243,0.25);
+      --border: rgba(255,255,255,0.07);
+      --radius: 14px;
+      --radius-sm: 8px;
+      --success: #3fb950;
+      --error: #f85149;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 80px;
+    }
+
+    /* Arka plan grid efekti */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(25,176,199,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(25,176,199,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    /* Glow top */
+    body::after {
+      content: '';
+      position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(25,176,199,0.08) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .wrap {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 540px;
+      display: flex; flex-direction: column; gap: 32px;
+    }
+
+    /* Header */
+    .header {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px; font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .logo span {
+      color: var(--turk);
+    }
+    .logo-dot {
+      width: 8px; height: 8px;
+      background: var(--turk);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--turk);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+    .header p {
+      font-size: 13px; color: var(--text-dim);
+      font-weight: 300; letter-spacing: 0.2px;
+    }
+
+    /* Kart */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      display: flex; flex-direction: column; gap: 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    /* Input */
+    .field {
+      display: flex; flex-direction: column; gap: 7px;
+    }
+    .field label {
+      font-size: 12px; font-weight: 500;
+      color: var(--text-dim); letter-spacing: 0.3px;
+    }
+    .field input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field input:focus {
+      border-color: var(--turk-border);
+      box-shadow: 0 0 0 3px rgba(25,176,199,0.08);
+    }
+    .field input::placeholder { color: var(--text-muted); }
+
+    .field-hint {
+      font-size: 11px; color: var(--text-muted); margin-top: 2px;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px; background: var(--border);
+    }
+
+    /* Dosya yükleme alanı */
+    .drop-zone {
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px 16px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag { border-color: var(--turk-border); background: var(--turk-dim); }
+    .drop-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon { font-size: 24px; }
+    .drop-label {
+      font-size: 12px; font-weight: 500; color: var(--text-dim); text-align: center;
+    }
+    .drop-label strong { color: var(--turk); font-weight: 600; }
+    .drop-ext {
+      font-size: 10px; color: var(--text-muted);
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 4px; padding: 2px 8px; letter-spacing: 0.5px;
+    }
+    .drop-zone.has-file { border-color: rgba(63,185,80,0.4); background: rgba(63,185,80,0.05); }
+    .drop-zone.has-file .drop-icon::after { content: ' ✓'; font-size: 14px; color: var(--success); }
+    .file-name {
+      font-size: 11px; color: var(--success); font-weight: 500;
+      display: none; text-align: center; word-break: break-all;
+    }
+    .drop-zone.has-file .file-name { display: block; }
+    .drop-zone.has-file .drop-label { display: none; }
+
+    /* Dosya çifti */
+    .files-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+
+    /* Progress */
+    #progressWrap {
+      display: none; flex-direction: column; gap: 8px;
+    }
+    #progressWrap.ac { display: flex; }
+    .progress-label {
+      font-size: 12px; color: var(--text-dim);
+      display: flex; justify-content: space-between;
+    }
+    .progress-bar-bg {
+      height: 4px; background: var(--bg3); border-radius: 4px; overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%; background: linear-gradient(90deg, var(--turk), var(--turk2));
+      border-radius: 4px; width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Submit butonu */
+    #btnUpload {
+      background: linear-gradient(135deg, var(--turk), var(--turk2));
+      color: #fff; border: none;
+      border-radius: var(--radius-sm);
+      padding: 13px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 13px;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(25,176,199,0.3);
+      width: 100%;
+    }
+    #btnUpload:hover { box-shadow: 0 4px 24px rgba(25,176,199,0.5); }
+    #btnUpload:active { transform: scale(0.98); }
+    #btnUpload:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* Sonuç kartı */
+    #resultCard {
+      display: none;
+      background: var(--bg2);
+      border: 1px solid rgba(63,185,80,0.25);
+      border-radius: var(--radius);
+      padding: 24px;
+      flex-direction: column; gap: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(63,185,80,0.1);
+      animation: fadeUp 0.4s ease;
+    }
+    #resultCard.ac { display: flex; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .result-check {
+      width: 32px; height: 32px;
+      background: rgba(63,185,80,0.15);
+      border: 1px solid rgba(63,185,80,0.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    .result-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px; font-weight: 700; color: var(--text);
+    }
+    .result-sub {
+      font-size: 12px; color: var(--text-dim);
+    }
+
+    .link-box {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .link-text {
+      font-size: 12px; color: var(--turk);
+      font-weight: 500; word-break: break-all; flex: 1;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.2px;
+    }
+    #btnCopy {
+      background: var(--turk-dim);
+      border: 1px solid var(--turk-border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-family: 'Syne', sans-serif;
+      font-size: 11px; font-weight: 700;
+      color: var(--turk); cursor: pointer;
+      transition: background 0.15s; white-space: nowrap; flex-shrink: 0;
+    }
+    #btnCopy:hover { background: rgba(25,176,199,0.2); }
+    #btnCopy.copied { color: var(--success); border-color: rgba(63,185,80,0.3); background: rgba(63,185,80,0.08); }
+
+    #btnPreview {
+      background: linear-gradient(135deg, var(--turk), var(--turk2));
+      color: #fff; border: none;
+      border-radius: var(--radius-sm);
+      padding: 11px; width: 100%;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 12px; letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(25,176,199,0.3);
+      transition: box-shadow 0.2s;
+    }
+    #btnPreview:hover { box-shadow: 0 4px 22px rgba(25,176,199,0.5); }
+
+    #btnNewUpload {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px; width: 100%;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 12px; letter-spacing: 0.5px;
+      color: var(--text-dim); cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    #btnNewUpload:hover { border-color: var(--turk-border); color: var(--turk); }
+
+    /* Hata */
+    #errorBox {
+      display: none; padding: 12px 14px;
+      background: rgba(248,81,73,0.08);
+      border: 1px solid rgba(248,81,73,0.25);
+      border-radius: var(--radius-sm);
+      font-size: 12px; color: var(--error);
+    }
+    #errorBox.ac { display: block; }
+
+    /* Footer */
+    .footer {
+      font-size: 11px; color: var(--text-muted);
+      text-align: center; letter-spacing: 0.3px;
+    }
+    .footer strong { color: var(--turk); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      pepper<span>AR</span>
+    </div>
+    <p>3D modelini yükle, AR linkini al — müşterilerin ürünü gerçek ortamında görsün.</p>
+  </div>
+
+  <!-- Yükleme formu -->
+  <div class="card" id="uploadCard">
+    <div class="card-title">Yeni Model Yükle</div>
+
+    <div class="field">
+      <label>Ürün Adı</label>
+      <input type="text" id="productName" placeholder="örn: modern-koltuk" autocomplete="off" spellcheck="false">
+      <div class="field-hint">Sadece harf, rakam ve tire kullanın. Bu, link adresiniz olacak.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="files-row">
+      <!-- GLB -->
+      <div class="field">
+        <label>Android / Web <span style="color:var(--turk)">GLB</span></label>
+        <div class="drop-zone" id="dropGlb">
+          <input type="file" id="fileGlb" accept=".glb">
+          <div class="drop-icon">📦</div>
+          <div class="drop-label"><strong>Seç</strong> veya sürükle</div>
+          <div class="drop-ext">.glb</div>
+          <div class="file-name" id="nameGlb"></div>
+        </div>
+      </div>
+
+      <!-- USDZ -->
+      <div class="field">
+        <label>iOS <span style="color:var(--turk)">USDZ</span></label>
+        <div class="drop-zone" id="dropUsdz">
+          <input type="file" id="fileUsdz" accept=".usdz">
+          <div class="drop-icon">🍎</div>
+          <div class="drop-label"><strong>Seç</strong> veya sürükle</div>
+          <div class="drop-ext">.usdz</div>
+          <div class="file-name" id="nameUsdz"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div id="progressWrap">
+      <div class="progress-label">
+        <span id="progressText">Yükleniyor…</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </div>
+
+    <!-- Hata -->
+    <div id="errorBox"></div>
+
+    <button id="btnUpload" disabled>Yükle ve Link Oluştur →</button>
+  </div>
+
+  <!-- Sonuç kartı -->
+  <div id="resultCard">
+    <div class="result-header">
+      <div class="result-check">✓</div>
+      <div>
+        <div class="result-title">Model Yüklendi!</div>
+        <div class="result-sub" id="resultSub">Linki kopyalayıp sitenize yapıştırın.</div>
+      </div>
+    </div>
+
+    <div class="link-box">
+      <div class="link-text" id="resultLink"></div>
+      <button id="btnCopy">Kopyala</button>
+    </div>
+
+    <button id="btnPreview">🔍 Önizle</button>
+    <button id="btnNewUpload">↑ Yeni Model Yükle</button>
+  </div>
+
+  <div class="footer">powered by <strong>pepperAR</strong> — Cemer</div>
+
+</div>
+
+<script>
+(function() {
+
+  /* ══ AYARLAR — kendi Supabase bilgilerini buraya gir ══ */
+  var SUPABASE_URL    = 'https://vdqumssdodfihuovytbs.supabase.co';
+  var SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkcXVtc3Nkb2RmaWh1b3Z5dGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzI1NDgsImV4cCI6MjA4OTc0ODU0OH0.SpKRUbrPmKQtcEDUCwthD-74heZMxTl2R9m9LXN0WQI';
+  var VIEWER_BASE     = 'https://project-w9khd.vercel.app/viewer.html'; /* ← Vercel URL'in */
+  /* ════════════════════════════════════════════════════ */
+
+  var productName  = document.getElementById('productName');
+  var fileGlb      = document.getElementById('fileGlb');
+  var fileUsdz     = document.getElementById('fileUsdz');
+  var dropGlb      = document.getElementById('dropGlb');
+  var dropUsdz     = document.getElementById('dropUsdz');
+  var nameGlb      = document.getElementById('nameGlb');
+  var nameUsdz     = document.getElementById('nameUsdz');
+  var btnUpload    = document.getElementById('btnUpload');
+  var progressWrap = document.getElementById('progressWrap');
+  var progressBar  = document.getElementById('progressBar');
+  var progressText = document.getElementById('progressText');
+  var progressPct  = document.getElementById('progressPct');
+  var errorBox     = document.getElementById('errorBox');
+  var uploadCard   = document.getElementById('uploadCard');
+  var resultCard   = document.getElementById('resultCard');
+  var resultLink   = document.getElementById('resultLink');
+  var resultSub    = document.getElementById('resultSub');
+  var btnCopy      = document.getElementById('btnCopy');
+  var btnPreview   = document.getElementById('btnPreview');
+  var btnNewUpload = document.getElementById('btnNewUpload');
+
+  /* ── Dosya seçimi ── */
+  fileGlb.addEventListener('change', function() {
+    if (this.files[0]) {
+      nameGlb.textContent = this.files[0].name;
+      dropGlb.classList.add('has-file');
+    }
+    checkReady();
+  });
+
+  fileUsdz.addEventListener('change', function() {
+    if (this.files[0]) {
+      nameUsdz.textContent = this.files[0].name;
+      dropUsdz.classList.add('has-file');
+    }
+    checkReady();
+  });
+
+  productName.addEventListener('input', checkReady);
+
+  /* Drag & drop görsel */
+  [dropGlb, dropUsdz].forEach(function(zone) {
+    zone.addEventListener('dragover',  function(e) { e.preventDefault(); this.classList.add('drag'); });
+    zone.addEventListener('dragleave', function()  { this.classList.remove('drag'); });
+    zone.addEventListener('drop',      function()  { this.classList.remove('drag'); });
+  });
+
+  /* Buton aktif kontrolü */
+  function checkReady() {
+    var name = productName.value.trim();
+    var glb  = fileGlb.files[0];
+    var usdz = fileUsdz.files[0];
+    btnUpload.disabled = !(name && glb && usdz);
+  }
+
+  /* ── Yükleme ── */
+  btnUpload.addEventListener('click', function() {
+    var name = productName.value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    if (!name) { showError('Geçerli bir ürün adı girin.'); return; }
+
+    var glb  = fileGlb.files[0];
+    var usdz = fileUsdz.files[0];
+    if (!glb || !usdz) { showError('Her iki dosyayı da seçin.'); return; }
+
+    hideError();
+    btnUpload.disabled = true;
+    progressWrap.classList.add('ac');
+    setProgress(0, 'GLB yükleniyor…');
+
+    uploadFile(name + '-3d.glb', glb, 'model/gltf-binary', function(err) {
+      if (err) { showError('GLB yüklenemedi: ' + err); resetUI(); return; }
+      setProgress(50, 'USDZ yükleniyor…');
+      uploadFile(name + '-3d.usdz', usdz, 'model/vnd.usdz+zip', function(err2) {
+        if (err2) { showError('USDZ yüklenemedi: ' + err2); resetUI(); return; }
+        setProgress(100, 'Tamamlandı!');
+        setTimeout(function() { showResult(name); }, 600);
+      });
+    });
+  });
+
+  /* Supabase Storage'a dosya yükle */
+  function uploadFile(fileName, file, mimeType, cb) {
+    var xhr = new XMLHttpRequest();
+    var url = SUPABASE_URL + '/storage/v1/object/models/' + encodeURIComponent(fileName);
+    xhr.open('POST', url);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON);
+    xhr.setRequestHeader('Content-Type', mimeType);
+    xhr.setRequestHeader('x-upsert', 'true'); /* Aynı isimde dosya varsa üzerine yaz */
+    xhr.onload = function() {
+      if (xhr.status === 200 || xhr.status === 201) { cb(null); }
+      else { cb(xhr.status + ' ' + xhr.statusText); }
+    };
+    xhr.onerror = function() { cb('Bağlantı hatası'); };
+    xhr.send(file);
+  }
+
+  function setProgress(pct, text) {
+    progressBar.style.width = pct + '%';
+    progressText.textContent = text;
+    progressPct.textContent  = pct + '%';
+  }
+
+  function showResult(name) {
+    progressWrap.classList.remove('ac');
+    uploadCard.style.display = 'none';
+    var link = VIEWER_BASE + '?model=' + name;
+    resultLink.textContent = link;
+    resultSub.textContent  = '"' + name + '" modeli başarıyla yüklendi.';
+    resultCard.classList.add('ac');
+
+    btnPreview.onclick = function() { window.open(link, '_blank'); };
+    btnCopy.onclick    = function() {
+      navigator.clipboard.writeText(link).then(function() {
+        btnCopy.textContent = '✓ Kopyalandı';
+        btnCopy.classList.add('copied');
+        setTimeout(function() {
+          btnCopy.textContent = 'Kopyala';
+          btnCopy.classList.remove('copied');
+        }, 2000);
+      });
+    };
+  }
+
+  btnNewUpload.onclick = function() {
+    resultCard.classList.remove('ac');
+    uploadCard.style.display = '';
+    productName.value = '';
+    fileGlb.value  = '';
+    fileUsdz.value = '';
+    dropGlb.classList.remove('has-file');
+    dropUsdz.classList.remove('has-file');
+    nameGlb.textContent  = '';
+    nameUsdz.textContent = '';
+    btnUpload.disabled = true;
+    progressWrap.classList.remove('ac');
+    setProgress(0, '');
+    hideError();
+  };
+
+  function showError(msg) {
+    errorBox.textContent = '⚠ ' + msg;
+    errorBox.classList.add('ac');
+  }
+  function hideError() { errorBox.classList.remove('ac'); }
+  function resetUI() {
+    btnUpload.disabled = false;
+    progressWrap.classList.remove('ac');
+    setProgress(0, '');
+  }
+
+})();
+</script>
+</body>
+</html>
