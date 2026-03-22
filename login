@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>pepperAR — Giriş</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: system-ui, sans-serif; 
+      background: #0a0a0a; 
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .logo { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .logo span { color: #ff4500; }
+    .subtitle { color: #666; font-size: 14px; margin-bottom: 32px; }
+    input {
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #fff;
+      font-size: 15px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+    input:focus { border-color: #ff4500; }
+    button {
+      width: 100%;
+      background: #ff4500;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    button.secondary {
+      background: transparent;
+      border: 1px solid #333;
+      color: #aaa;
+    }
+    .divider { 
+      text-align: center; 
+      color: #444; 
+      font-size: 13px; 
+      margin: 16px 0; 
+    }
+    .error { 
+      color: #ff4500; 
+      font-size: 13px; 
+      margin-bottom: 12px; 
+      display: none; 
+    }
+    .tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+    .tab {
+      flex: 1; padding: 8px; text-align: center;
+      border-radius: 8px; cursor: pointer;
+      font-size: 14px; color: #666;
+      border: 1px solid transparent;
+    }
+    .tab.active { 
+      background: #1a1a1a; 
+      border-color: #333; 
+      color: #fff; 
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">pepper<span>AR</span></div>
+  <div class="subtitle">3D & AR ürün deneyimleri</div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('login')">Giriş Yap</div>
+    <div class="tab" onclick="switchTab('register')">Kayıt Ol</div>
+  </div>
+
+  <div id="error" class="error"></div>
+
+  <div id="login-form">
+    <input type="email" id="login-email" placeholder="E-posta" />
+    <input type="password" id="login-password" placeholder="Şifre" />
+    <button onclick="login()">Giriş Yap</button>
+  </div>
+
+  <div id="register-form" style="display:none">
+    <input type="text" id="reg-name" placeholder="Ad Soyad" />
+    <input type="email" id="reg-email" placeholder="E-posta" />
+    <input type="password" id="reg-password" placeholder="Şifre (min. 6 karakter)" />
+    <button onclick="register()">Hesap Oluştur</button>
+  </div>
+
+  <div class="divider">veya</div>
+  <button class="secondary" onclick="loginWithGoogle()">Google ile devam et</button>
+</div>
+
+<script>
+  const supabase = window.supabase.createClient(
+    'https://vdqumssdodfihuovytbs.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkcXVtc3Nkb2RmaWh1b3Z5dGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzI1NDgsImV4cCI6MjA4OTc0ODU0OH0.SpKRUbrPmKQtcEDUCwthD-74heZMxTl2R9m9LXN0WQI'
+  );
+
+  // Zaten giriş yapmışsa dashboard'a yönlendir
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session) window.location.href = '/dashboard.html';
+  });
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0) === (tab === 'login'));
+    });
+    document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  async function login() {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return showError(error.message);
+    const redirect = new URLSearchParams(window.location.search).get('redirect');
+    window.location.href = redirect ? `/${redirect}.html` : '/dashboard.html';
+  }
+
+  async function register() {
+    const name = document.getElementById('reg-name').value;
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
+    const { error } = await supabase.auth.signUp({
+      email, password,
+      options: { data: { full_name: name } }
+    });
+    if (error) return showError(error.message);
+    showError('✅ Doğrulama e-postası gönderildi, gelen kutunuzu kontrol edin.');
+  }
+
+  async function loginWithGoogle() {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/dashboard.html' }
+    });
+  }
+</script>
+</body>
+</html>
