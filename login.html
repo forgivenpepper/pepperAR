@@ -111,14 +111,18 @@
 </div>
 
 <script>
-  const supabase = window.supabase.createClient(
-    'https://vdqumssdodfihuovytbs.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkcXVtc3Nkb2RmaWh1b3Z5dGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzI1NDgsImV4cCI6MjA4OTc0ODU0OH0.SpKRUbrPmKQtcEDUCwthD-74heZMxTl2R9m9LXN0WQI'
-  );
+  // Supabase init
+  let supabase;
+  
+  window.addEventListener('load', () => {
+    supabase = window.supabase.createClient(
+      'https://vdqumssdodfihuovytbs.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkcXVtc3Nkb2RmaWh1b3Z5dGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzI1NDgsImV4cCI6MjA4OTc0ODU0OH0.SpKRUbrPmKQtcEDUCwthD-74heZMxTl2R9m9LXN0WQI'
+    );
 
-  // Zaten giriş yapmışsa dashboard'a yönlendir
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session) window.location.href = '/dashboard.html';
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) window.location.href = '/dashboard.html';
+    });
   });
 
   function switchTab(tab) {
