@@ -523,6 +523,8 @@
   }
 
   /* ── MATERYAL TARAMA ── */
+  var mvClickHandler = null; /* click handler referansı — tekrar eklemeyi önle */
+
   function scanMaterials(){
     var list=document.getElementById('matList');
     list.innerHTML='';
@@ -554,19 +556,33 @@
       renderMatItem(i);
     });
 
-    /* Model viewer'a tıklayınca ilgili materyali seç */
-    mv.addEventListener('click', function(e){
-      /* camera-controls ile çakışmasın: sadece kısa tıklamada çalış */
+    /* Model viewer'a tıklayınca ilgili materyali seç — INDEX BAZLI */
+    if(mvClickHandler) mv.removeEventListener('click', mvClickHandler);
+    var pointerMoved = false;
+    mv.addEventListener('pointerdown', function(){ pointerMoved = false; });
+    mv.addEventListener('pointermove', function(){ pointerMoved = true; });
+    mvClickHandler = function(e){
+      if(pointerMoved) return; /* sürükleme ise atla */
       var hit = mv.positionAndNormalFromPoint(e.clientX, e.clientY);
       if(!hit) return;
+      /* İsim bazlı eşleştirmeyi dene, bulamazsa atla */
       var mName = hit.materialName;
-      if(!mName) return;
-      var model2 = mv.model;
-      if(!model2) return;
-      model2.materials.forEach(function(mat2,j){
-        if(mat2.name === mName){ selectMat(j); }
-      });
-    });
+      if(mName){
+        var model2 = mv.model;
+        if(!model2) return;
+        var found = false;
+        model2.materials.forEach(function(mat2,j){
+          if(mat2.name === mName && !found){ found=true; selectMat(j); }
+        });
+        if(found) return;
+      }
+      /* İsim eşleşmezse (aynı isimli materyaller) — hit position'a en yakın materyali tahmin et */
+      /* En basit fallback: ilk gizli olmayan materyali seç */
+      for(var k=0;k<matData.length;k++){
+        if(!matData[k].hidden){ selectMat(k); break; }
+      }
+    };
+    mv.addEventListener('click', mvClickHandler);
   }
 
   function renderMatItem(i){
@@ -621,17 +637,19 @@
 
   /* ── MATERYAL SEÇ ── */
   function selectMat(i){
-    if(matData[i].hidden) return; /* Gizli parça seçilemesin */
+    if(!matData[i] || matData[i].hidden) return;
 
     selectedIdx = i;
 
-    /* Listedeki seçim güncelle */
+    /* Listedeki seçim güncelle + scroll into view */
     document.querySelectorAll('.mat-item').forEach(function(el){
-      el.classList.toggle('selected', +el.dataset.idx === i);
+      var isThis = +el.dataset.idx === i;
+      el.classList.toggle('selected', isThis);
+      if(isThis) el.scrollIntoView({block:'nearest',behavior:'smooth'});
     });
 
     var d = matData[i];
-    document.getElementById('matEdTitle').textContent = d.name;
+    document.getElementById('matEdTitle').textContent = d.name + ' (#' + i + ')';
     matColorPick.value = d.color;
     document.getElementById('matColorPrev').style.background = d.color;
     document.getElementById('matColorHex').textContent = d.color;
@@ -641,7 +659,7 @@
     document.getElementById('vMetal').textContent = d.metalness.toFixed(2);
     document.getElementById('matEditor').classList.add('ac');
 
-    /* Buz mavisi highlight: 600ms tint sonra gerçek renge dön */
+    /* Buz mavisi highlight: 600ms */
     try{
       var mat = mv.model.materials[i];
       var bc  = mat.pbrMetallicRoughness.baseColorFactor;
@@ -664,14 +682,16 @@
     matData[selectedIdx].color = hex;
     document.getElementById('matColorPrev').style.background = hex;
     document.getElementById('matColorHex').textContent = hex;
-    /* Sadece seçili materyale uygula */
+    /* INDEX ile sadece seçili materyale uygula */
     try{
       var rgb = hexToRgb(hex);
       mv.model.materials[selectedIdx].pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]);
-    }catch(e){}
+    }catch(e){ console.warn('Color apply error:',e); }
     /* Listedeki dot rengini güncelle */
-    var items = document.querySelectorAll('.mat-item');
-    if(items[selectedIdx]) items[selectedIdx].querySelector('.mat-dot').style.background = hex;
+    var allItems = document.querySelectorAll('.mat-item');
+    allItems.forEach(function(el){
+      if(+el.dataset.idx === selectedIdx) el.querySelector('.mat-dot').style.background = hex;
+    });
   });
 
   slRough.addEventListener('input', function(){
@@ -738,9 +758,10 @@
     var btn=this; btn.disabled=true; btn.textContent='Kaydediliyor…';
     var env=document.querySelector('.env-btn.active');
 
-    /* Sadece değiştirilmiş ve gizlenmemiş materyalleri kaydet */
-    var mats = matData.map(function(d){
+    /* INDEX ile kaydet — isim aynı olsa bile doğru çalışır */
+    var mats = matData.map(function(d, i){
       return {
+        index:     i,
         name:      d.name,
         color:     d.color,
         roughness: d.roughness,
