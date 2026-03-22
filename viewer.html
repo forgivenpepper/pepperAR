@@ -713,26 +713,56 @@
   /* Three.js scene'e materyal uygula (AR modu) — INDEX BAZLI */
   function applyMaterialsToThree(scene, materials) {
     if (!scene || !materials || materials.length === 0) return;
-    /* Three.js mesh'leri topla — sıralı */
-    var meshes = [];
-    scene.traverse(function(obj) { if (obj.isMesh) meshes.push(obj); });
-    /* Unique materyal indexleri bul */
-    var matMap = {}; /* materialUUID -> index */
-    var matIdx = 0;
-    meshes.forEach(function(mesh) {
-      var mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+
+    /* GLTFLoader materyalleri scene.userData veya parser'dan gelir.
+       En güvenilir yol: gltf.parser.json.materials listesini sırayla okumak.
+       Ama buna erişimimiz yok — bunun yerine Three.js sahnesindeki
+       materyalleri GLTF sırasında toplarız: traverse sırası GLTF index sırasına
+       genellikle uymaz. Bu yüzden materyal adıyla + sonra index ile eşleştiririz. */
+
+    /* 1. Önce materyalleri UUID bazında topla */
+    var threeMatsByName = {}; /* name -> [material, ...] */
+    var allThreeMats    = []; /* sıralı unique materyal listesi */
+    var seenUUIDs       = {};
+
+    scene.traverse(function(obj) {
+      if (!obj.isMesh) return;
+      var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
       mats.forEach(function(m) {
-        if (m && matMap[m.uuid] === undefined) { matMap[m.uuid] = matIdx++; }
+        if (!m || seenUUIDs[m.uuid]) return;
+        seenUUIDs[m.uuid] = true;
+        allThreeMats.push(m);
+        var n = m.name || '';
+        if (!threeMatsByName[n]) threeMatsByName[n] = [];
+        threeMatsByName[n].push(m);
       });
     });
-    /* Uygula */
-    meshes.forEach(function(mesh) {
-      var mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      mats.forEach(function(m) {
-        if (!m) return;
-        var idx = matMap[m.uuid];
-        if (idx === undefined || !materials[idx]) return;
-        var edit = materials[idx];
+
+    /* 2. Her edit için eşleştirme: önce adla, sonra indexle */
+    materials.forEach(function(edit, arrIdx) {
+      var editIdx = (edit.index !== undefined) ? edit.index : arrIdx;
+      var targets = [];
+
+      /* A) Benzersiz isim varsa ada göre bul */
+      var eName = edit.name || '';
+      var byName = threeMatsByName[eName] || [];
+      if (byName.length === 1) {
+        /* Benzersiz isim eşleşmesi — güvenilir */
+        targets = byName;
+      } else if (byName.length > 1) {
+        /* Aynı isimden birden fazla var — index ile seç */
+        /* Aynı isimli materyaller arasında kaçıncısı olduğunu bul */
+        var sameNameEdits = materials.filter(function(e){ return (e.name||'') === eName; });
+        var posInSameName = sameNameEdits.indexOf(edit);
+        if (byName[posInSameName]) targets = [byName[posInSameName]];
+        else targets = [byName[0]];
+      } else {
+        /* İsim bulunamadı — direkt index kullan */
+        if (allThreeMats[editIdx]) targets = [allThreeMats[editIdx]];
+      }
+
+      /* 3. Uygula */
+      targets.forEach(function(m) {
         if (edit.hidden) {
           m.visible = false;
         } else {
