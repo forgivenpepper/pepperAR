@@ -488,143 +488,89 @@
   ══════════════════════════════════════════ */
   var STRINGS = {
     tr: {
-      loading: 'Model yükleniyor',
-      loadError: 'Model yüklenemedi',
-      modelMissing: 'Model bulunamadı',
-      panelTitle: '3D Görüntüleyici',
-      labelSize: 'Boyut',
-      btnStart: '📸 AR Başlat',
-      btnLock: '🔓 Sabitle',
-      btnLocked: '🔒 Kilitlendi',
-      arPanelTitle: 'AR Kontrolü',
-      bPlace: '📍 Yerleştir',
-      bMove: '✋ Taşı',
-      bFix: '🔒 Sabitle',
-      bUnfix: '🔓 Kilidi Aç',
-      bReset: '↺ Sıfırla',
-      bExit: '✕ Çıkış',
-      bReal: '📏 Gerçek Boyut',
-      bRealOff: '🔓 Normal Boyut',
-      hint: "Kamerayı yere doğrult → Yerleştir'e bas",
-      realLabel: '📏 Gerçek Boyut Aktif',
-      badgeScan: '📡 Zemin Taranıyor…',
-      badgePlaced: '✅ Yerleştirildi',
-      badgeMove: '✋ Taşıma Modu',
-      badgeLocked: '🔒 Sabitlendi',
-      iosBadge: '📱 iOS AR — Ürünü yerleştirin',
-      iosBadgeReal: '📏 Gerçek Boyut Aktif',
-      iosPanelTitle: 'AR Kontrolü',
-      bIosReal: '📏 Gerçek Boyut',
-      bIosRealOff: '🔓 Normal Boyut',
-      bIosReset: '↺ Sıfırla',
-      bIosCik: '✕ Çıkış',
-      errDefault: "Cihazınız AR'ı desteklemiyor.",
-      errOk: 'Tamam',
-      pcTitle: 'Telefonda AR ile Görüntüle',
-      pcDesc: 'QR kodu telefonunla tara.'
+      loading: 'Model yükleniyor', loadError: 'Model yüklenemedi', modelMissing: 'Model bulunamadı',
+      modelMissingDesc: '?model= parametresi eksik', panelTitle: '3D Görüntüleyici', labelSize: 'Boyut',
+      labelRotate: 'Döndür', btnStart: '📸 AR Başlat', btnLock: '🔓 Sabitle', btnLocked: '🔒 Kilitlendi',
+      arPanelTitle: 'AR Kontrolü', bPlace: '📍 Yerleştir', bMove: '✋ Taşı', bFix: '🔒 Sabitle',
+      bUnfix: '🔓 Kilidi Aç', bSif: '↺ Sıfırla', bCik: '✕ Çıkış', bReal: '📏 Gerçek Boyutlu Gör',
+      bRealOff: '🔓 Normal Boyuta Dön', hint: "Kamerayı yere doğrult → Yerleştir'e bas",
+      realLabel: '📏 Gerçek Boyut Aktif', badgeScan: '📡 Zemin Taranıyor…', badgePlaced: '✅ Yerleştirildi',
+      badgeMove: '✋ Taşıma Modu', badgeLocked: '🔒 Sabitlendi', iosBadge: '📱 iOS AR — Ürünü yerleştirin',
+      iosBadgeReal: '📏 Gerçek Boyut Aktif', errTitle: 'AR Desteklenmiyor', errDefault: "Cihazınız AR'ı desteklemiyor.",
+      errOk: 'Tamam', pcTitle: 'Telefonda AR ile Görüntüle', pcDesc: 'QR kodu telefonunla tara.', pcClose: 'Kapat'
     },
     en: {
-      loading: 'Loading model',
-      loadError: 'Model error',
-      modelMissing: 'Model not found',
-      panelTitle: '3D Viewer',
-      labelSize: 'Size',
-      btnStart: '📸 Start AR',
-      btnLock: '🔓 Lock',
-      btnLocked: '🔒 Locked',
-      arPanelTitle: 'AR Controls',
-      bPlace: '📍 Place',
-      bMove: '✋ Move',
-      bFix: '🔒 Fix',
-      bUnfix: '🔓 Unlock',
-      bReset: '↺ Reset',
-      bExit: '✕ Exit',
-      bReal: '📏 Real Size',
-      bRealOff: '🔓 Normal Size',
-      hint: 'Point camera at floor → tap Place',
-      realLabel: '📏 Real Size Active',
-      badgeScan: '📡 Scanning…',
-      badgePlaced: '✅ Placed',
-      badgeMove: '✋ Move Mode',
-      badgeLocked: '🔒 Locked',
-      iosBadge: '📱 iOS AR — Place model',
-      iosBadgeReal: '📏 Real Size Active',
-      iosPanelTitle: 'AR Controls',
-      bIosReal: '📏 Real Size',
-      bIosRealOff: '🔓 Normal Size',
-      bIosReset: '↺ Reset',
-      bIosCik: '✕ Exit',
-      errDefault: 'AR not supported.',
-      errOk: 'OK',
-      pcTitle: 'View in AR',
-      pcDesc: 'Scan QR code.'
+      loading: 'Loading model', loadError: 'Error', modelMissing: 'Model not found',
+      modelMissingDesc: '?model= missing', panelTitle: '3D Viewer', labelSize: 'Size',
+      labelRotate: 'Rotate', btnStart: '📸 Start AR', btnLock: 'Lock', btnLocked: 'Locked',
+      arPanelTitle: 'AR Controls', bPlace: 'Place', bMove: 'Move', bFix: 'Fix',
+      bUnfix: 'Unlock', bSif: 'Reset', bCik: 'Exit', bReal: 'Real Size View',
+      bRealOff: 'Normal Size', hint: 'Point at floor → tap Place', realLabel: 'Real Size Active',
+      badgeScan: 'Scanning…', badgePlaced: 'Placed', badgeMove: 'Moving', badgeLocked: 'Locked',
+      iosBadge: 'iOS AR — Place product', iosBadgeReal: 'Real Size Active', errTitle: 'AR Not Supported',
+      errDefault: 'AR not supported.', errOk: 'OK', pcTitle: 'View in AR', pcDesc: 'Scan QR code.', pcClose: 'Close'
     }
   };
 
   var p = new URLSearchParams(window.location.search);
   var m = p.get('model');
-
   function detectLang() {
     var lp = (p.get('lang') || '').toLowerCase();
     if (lp === 'en' || lp === 'tr') return lp;
+    var own = window.location.href;
+    if (/\/en(\/|$)/.test(own)) return 'en';
     return 'tr';
   }
-
   var lang = detectLang();
   var T = STRINGS[lang];
   document.documentElement.lang = lang;
 
   if (!m) {
-    document.body.innerHTML = "<div style='padding:40px;text-align:center;font-family:Poppins;'><h2>" + T.modelMissing + "</h2></div>";
+    document.body.innerHTML = "<div style='text-align:center;padding:50px;'><h2>" + T.modelMissing + "</h2></div>";
     return;
   }
 
   var SUPABASE_STORAGE = 'https://vdqumssdodfihuovytbs.supabase.co/storage/v1/object/public/models/';
   var SUPABASE_REST    = 'https://vdqumssdodfihuovytbs.supabase.co/rest/v1';
   var SUPABASE_ANON    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkcXVtc3Nkb2RmaWh1b3Z5dGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzI1NDgsImV4cCI6MjA4OTc0ODU0OH0.SpKRUbrPmKQtcEDUCwthD-74heZMxTl2R9m9LXN0WQI';
-  var GLB_PATH  = SUPABASE_STORAGE + m + '-3d.glb';
+  var GLB_PATH = SUPABASE_STORAGE + m + '-3d.glb';
   var USDZ_PATH = SUPABASE_STORAGE + m + '-3d.usdz';
-
-  function set(id, txt) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = txt;
-  }
-
-  function applyTexts() {
-    set('loadText', T.loading); set('panelTitle', T.panelTitle); set('labelSize', T.labelSize);
-    set('btnBaslat', T.btnStart); set('btnKilit', T.btnLock); set('arPanelTitle', T.arPanelTitle);
-    set('arLabelSize', T.labelSize); set('arLabelRot', T.labelRotate); set('bYer', T.bPlace);
-    set('bTas', T.bMove); set('bSab', T.bFix); set('bSif', T.bReset); set('bCik', T.bExit);
-    set('bGercek', T.bReal); set('hint', T.hint); set('arGercekEtiket', T.realLabel);
-    set('iosBadge', T.iosBadge); set('iosPanelTitle', T.iosPanelTitle); set('iosLabelSize', T.labelSize);
-    set('iosLabelRot', T.labelRotate); set('bIosGercek', T.bIosReal); set('bIosSif', T.bIosReset);
-    set('bIosCik', T.bIosCik); set('arHataBaslik', 'AR'); set('arHataMesaj', T.errDefault);
-    set('arHataKapat', T.errOk); set('pcTitle', T.pcTitle); set('pcDesc', T.pcDesc); set('pcKapat', 'Kapat');
-  }
-  applyTexts();
 
   var mv = document.getElementById('mv');
   mv.setAttribute('src', GLB_PATH);
   mv.setAttribute('ios-src', USDZ_PATH);
 
-  var savedMaterials = [];
+  function set(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; }
+  function applyTexts() {
+    set('loadText', T.loading); set('panelTitle', T.panelTitle); set('labelSize', T.labelSize);
+    set('btnBaslat', T.btnStart); set('btnKilit', T.btnLock); set('arPanelTitle', T.arPanelTitle);
+    set('arLabelSize', T.labelSize); set('arLabelRot', T.labelRotate); set('bYer', T.bPlace);
+    set('bTas', T.bMove); set('bSab', T.bFix); set('bSif', T.bSif); set('bCik', T.bCik);
+    set('bGercek', T.bReal); set('hint', T.hint); set('arGercekEtiket', T.realLabel);
+    set('iosBadge', T.iosBadge); set('iosPanelTitle', T.arPanelTitle); set('iosLabelSize', T.labelSize);
+    set('iosLabelRot', T.labelRotate); set('bIosGercek', T.bReal); set('bIosSif', T.bSif);
+    set('bIosCik', T.bCik); set('arHataBaslik', T.errTitle); set('arHataMesaj', T.errDefault);
+    set('arHataKapat', T.errOk); set('pcTitle', T.pcTitle); set('pcDesc', T.pcDesc); set('pcKapat', T.pcClose);
+  }
+  applyTexts();
 
+  /* ─── SUPABASE & MATERYALLER ─── */
+  var savedMaterials = [];
   function hexToRgbV(hex) {
-    if (!hex || hex.length < 7) return {r:255,g:255,b:255};
-    return { r:parseInt(hex.slice(1,3),16), g:parseInt(hex.slice(3,5),16), b:parseInt(hex.slice(5,7),16) };
+    if (!hex || hex.length < 7) return {r:1,g:1,b:1};
+    return { r:parseInt(hex.slice(1,3),16)/255, g:parseInt(hex.slice(3,5),16)/255, b:parseInt(hex.slice(5,7),16)/255 };
   }
 
   function applyMaterialsToMV(materials) {
-    var model = mv.model;
-    if (!model || !model.materials) return;
-    materials.forEach(function(edit, arrIdx) {
-      var i = (edit.index !== undefined) ? edit.index : arrIdx;
-      var mat = model.materials[i];
+    if (!mv.model || !mv.model.materials) return;
+    materials.forEach((edit, idx) => {
+      var i = edit.index !== undefined ? edit.index : idx;
+      var mat = mv.model.materials[i];
       if (!mat) return;
-      if (edit.hidden) { mat.pbrMetallicRoughness.setBaseColorFactor([0,0,0,0]); }
+      if (edit.hidden) mat.pbrMetallicRoughness.setBaseColorFactor([0,0,0,0]);
       else {
         var rgb = hexToRgbV(edit.color);
-        mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r/255, rgb.g/255, rgb.b/255, 1]);
+        mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r, rgb.g, rgb.b, 1]);
       }
       if (edit.metalness !== undefined) mat.pbrMetallicRoughness.setMetallicFactor(edit.metalness);
       if (edit.roughness !== undefined) mat.pbrMetallicRoughness.setRoughnessFactor(edit.roughness);
@@ -633,27 +579,20 @@
 
   function applyMaterialsToThree(scene, materials) {
     if (!scene || !materials) return;
-    var allThreeMats = [];
-    var seenUUIDs = {};
-    scene.traverse(function(obj) {
-      if (!obj.isMesh) return;
-      var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-      mats.forEach(function(mat) {
-        if (!mat || seenUUIDs[mat.uuid]) return;
-        seenUUIDs[mat.uuid] = true;
-        allThreeMats.push(mat);
-      });
-    });
-    materials.forEach(function(edit, arrIdx) {
-      var i = (edit.index !== undefined) ? edit.index : arrIdx;
-      var mat = allThreeMats[i];
-      if (!mat) return;
-      if (edit.hidden) { mat.visible = false; }
+    var mats = [];
+    scene.traverse(o => { if(o.isMesh) { var m = Array.isArray(o.material)?o.material:[o.material]; m.forEach(x=>{if(!mats.includes(x))mats.push(x)}) }});
+    materials.forEach((edit, idx) => {
+      var i = edit.index !== undefined ? edit.index : idx;
+      var mat = mats[i]; if(!mat) return;
+      if (edit.hidden) mat.visible = false;
       else {
         mat.visible = true;
         var rgb = hexToRgbV(edit.color);
-        if (mat.color) mat.color.setRGB(rgb.r/255, rgb.g/255, rgb.b/255);
+        if (mat.color) mat.color.setRGB(rgb.r, rgb.g, rgb.b);
+        if (edit.metalness !== undefined && mat.metalness !== undefined) mat.metalness = edit.metalness;
+        if (edit.roughness !== undefined && mat.roughness !== undefined) mat.roughness = edit.roughness;
       }
+      mat.needsUpdate = true;
     });
   }
 
@@ -665,143 +604,124 @@
     xhr.onload = function() {
       if (xhr.status !== 200) return;
       try {
-        var rows = JSON.parse(xhr.responseText);
-        if (!rows || rows.length === 0) return;
-        var s = rows[0];
+        var s = JSON.parse(xhr.responseText)[0]; if(!s) return;
         if (s.exposure) mv.setAttribute('exposure', s.exposure);
         if (s.shadow_intensity) mv.setAttribute('shadow-intensity', s.shadow_intensity);
         if (s.environment) mv.setAttribute('environment-image', s.environment);
         if (s.bg_color) mv.style.background = s.bg_color;
-        if (s.scale) { baseScale = s.scale; applyMVScale(baseScale); }
+        if (s.scale) { baseScale = s.scale; applyMVScale(baseScale); syncSliders(100); }
         if (s.rotate_y) mv.setAttribute('orientation', '0deg ' + s.rotate_y + 'deg 0deg');
-        if (s.materials) {
+        if (s.materials) { 
           savedMaterials = s.materials;
-          if (mv.loaded) { applyMaterialsToMV(savedMaterials); }
-          else { mv.addEventListener('load', function() { applyMaterialsToMV(savedMaterials); }, {once:true}); }
+          if (mv.loaded) applyMaterialsToMV(savedMaterials);
+          else mv.addEventListener('load', () => applyMaterialsToMV(savedMaterials), {once:true});
         }
-      } catch(e) {}
+      } catch(e){}
     };
     xhr.send();
   }
   loadModelSettings();
 
-  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  var isMobile = /android|iphone|ipad|ipod|mobile|tablet/i.test(navigator.userAgent);
+  /* ─── DURUM MAKİNESİ & AR ─── */
+  var baseScale = 1.0, durum = 'tarama', gercekMod = false, modelHazir = false;
+  var renderer, scene, camera, xrSess, hitSrc, hitReq = false, retMesh, modelGrp, tPos, cPos;
+  var tScale = 1.0, cScale = 1.0, tRotY = 0, cRotY = 0, THREE_loaded = false;
 
-  var xrC = document.getElementById('xrC'), arUI = document.getElementById('arUI'),
-      badge = document.getElementById('badge'), arGercekEtiket = document.getElementById('arGercekEtiket'),
-      retUI = document.getElementById('retUI'), selRing = document.getElementById('selRing'),
-      arP = document.getElementById('arP'), slOn = document.getElementById('slOn'),
-      vlOn = document.getElementById('vlOn'), slAr = document.getElementById('slAr'),
-      vlAr = document.getElementById('vlAr'), slRot = document.getElementById('slRot'),
-      vlRot = document.getElementById('vlRot'), btnKilit = document.getElementById('btnKilit'),
-      btnBaslat = document.getElementById('btnBaslat'), bYer = document.getElementById('bYer'),
-      bTas = document.getElementById('bTas'), bSab = document.getElementById('bSab'),
-      bSif = document.getElementById('bSif'), bCik = document.getElementById('bCik'),
-      bGercek = document.getElementById('bGercek'), iosPanel = document.getElementById('iosPanel'),
-      slIos = document.getElementById('slIos'), vlIos = document.getElementById('vlIos'),
-      slIosRot = document.getElementById('slIosRot'), vlIosRot = document.getElementById('vlIosRot'),
-      bIosSif = document.getElementById('bIosSif'), bIosCik = document.getElementById('bIosCik'),
-      bIosGercek = document.getElementById('bIosGercek'), loadOverlay = document.getElementById('loadOverlay');
+  mv.addEventListener('load', () => { mv.classList.add('hazir'); document.getElementById('loadOverlay').classList.add('gizle'); });
 
-  var mScale = 1.0, durum = 'tarama', baseScale = 1.0, renderer = null, scene = null, camera = null, xrSess = null;
-  var hitSrc = null, hitReq = false, retMesh = null, modelGrp = null, modelHazir = false, pivotOffset = 0, gercekMod = false;
-  var tPos = null, cPos = null, tScale = 1.0, cScale = 1.0, tRotY = 0, cRotY = 0;
-  var LP = 0.14, LS = 0.11, LR = 0.11, THREE_loaded = false;
-
-  mv.addEventListener('load', function() { mv.classList.add('hazir'); loadOverlay.classList.add('gizle'); });
-
-  slOn.addEventListener('input', function() { var v = +this.value; vlOn.textContent = v + '%'; applyMVScale(baseScale * (v / 100)); syncSliders(v); });
-
+  /* ─── ÖNİZLEME SLIDER ─── */
   function applyMVScale(s) { mv.setAttribute('scale', s + ' ' + s + ' ' + s); }
+  document.getElementById('slOn').oninput = function() {
+    var v = +this.value; document.getElementById('vlOn').textContent = v + '%';
+    applyMVScale(baseScale * (v / 100)); syncSliders(v);
+  };
+  document.getElementById('btnKilit').onclick = function() {
+    var sl = document.getElementById('slOn'); sl.disabled = !sl.disabled;
+    this.textContent = sl.disabled ? T.btnLocked : T.btnLock; this.classList.toggle('kilitli', sl.disabled);
+  };
 
-  btnKilit.addEventListener('click', function() { slOn.disabled = !slOn.disabled; this.textContent = slOn.disabled ? T.btnLocked : T.btnLock; this.classList.toggle('kilitli', slOn.disabled); });
+  /* ─── AR BAŞLAT (KESİN ÇÖZÜM) ─── */
+  document.getElementById('btnBaslat').onclick = function() {
+    var isMobile = /android|iphone|ipad|ipod|mobile|tablet/i.test(navigator.userAgent) || ('ontouchstart' in window && navigator.maxTouchPoints > 1);
+    if (!isMobile) { showQR(); return; }
+    if (/iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) startIOSAR();
+    else webxrDestekKontrol();
+  };
 
-  btnBaslat.addEventListener('click', function() {
-    if (!isMobile) { 
-        var url = window.location.href; 
-        document.getElementById('pcUrlBox').textContent = url;
-        document.getElementById('pcPanel').classList.add('ac');
-        if (!document.getElementById('qrScript')) {
-            var s = document.createElement('script'); s.id='qrScript'; s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-            s.onload = function() { new QRCode(document.getElementById('qrWrap'), {text:url, width:160, height:160}); };
-            document.head.appendChild(s);
-        }
-        return; 
+  function showQR() {
+    var url = window.location.href; document.getElementById('pcUrlBox').textContent = url;
+    document.getElementById('pcPanel').classList.add('ac');
+    if (!document.getElementById('qrScript')) {
+      var s = document.createElement('script'); s.id='qrScript'; s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+      s.onload = () => { new QRCode(document.getElementById('qrWrap'), {text:url, width:160, height:160}); };
+      document.head.appendChild(s);
     }
-    if (isIOS) { 
-        iosGercekModKapat();
-        var a = document.createElement('a'); a.rel = 'ar'; a.href = USDZ_PATH + (gercekMod ? '#apple_ar_scale=fixed' : '#apple_ar_scale=auto');
-        var img = document.createElement('img'); img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-        a.appendChild(img); a.click(); iosPanel.classList.add('ac');
-    } else { 
-        if (navigator.xr) { loadThreeAndStart(); } else { mv.activateAR(); }
-    }
-  });
+  }
 
-  bIosGercek.addEventListener('click', function() {
-    gercekMod = !gercekMod;
-    if (gercekMod) {
-        this.textContent = T.bIosRealOff; this.classList.add('aktif'); set('iosBadge', T.iosBadgeReal);
-        var a = document.createElement('a'); a.rel = 'ar'; a.href = USDZ_PATH + '#apple_ar_scale=fixed';
-        var img = document.createElement('img'); img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-        a.appendChild(img); a.click();
-    } else { iosGercekModKapat(); }
-  });
+  function startIOSAR() {
+    var ts = new Date().getTime();
+    var usdz = USDZ_PATH + (gercekMod ? '#apple_ar_scale=fixed&allowsContentScaling=0' : '#apple_ar_scale=auto&allowsContentScaling=1') + '&t=' + ts;
+    var a = document.createElement('a'); a.rel = 'ar'; a.href = usdz;
+    var img = document.createElement('img'); img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    a.appendChild(img); document.body.appendChild(a); 
+    setTimeout(() => { a.click(); a.remove(); }, 50);
+    document.getElementById('iosPanel').classList.add('ac');
+    mv.addEventListener('ar-status', e => { if(e.detail.status==='not-presenting') document.getElementById('iosPanel').classList.remove('ac'); }, {once:true});
+  }
 
-  function iosGercekModKapat() { gercekMod=false; bIosGercek.textContent=T.bIosReal; bIosGercek.classList.remove('aktif'); set('iosBadge', T.iosBadge); }
+  document.getElementById('bIosGercek').onclick = function() {
+    gercekMod = !gercekMod; this.textContent = gercekMod ? T.bRealOff : T.bReal;
+    this.classList.toggle('aktif', gercekMod);
+    set('iosBadge', gercekMod ? T.iosBadgeReal : T.iosBadge); startIOSAR();
+  };
+
+  /* ─── ANDROID WEBXR ─── */
+  function webxrDestekKontrol() {
+    if (!navigator.xr) { mv.activateAR(); return; }
+    navigator.xr.isSessionSupported('immersive-ar').then(ok => { if(ok) loadThreeAndStart(); else mv.activateAR(); }).catch(()=>mv.activateAR());
+  }
 
   function loadThreeAndStart() {
     if (THREE_loaded) { webxrBaslat(); return; }
     var s1 = document.createElement('script'); s1.src = 'https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js';
-    s1.onload = function() {
+    s1.onload = () => {
       var s2 = document.createElement('script'); s2.src = 'https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/loaders/GLTFLoader.js';
-      s2.onload = function() { THREE_loaded = true; webxrBaslat(); };
-      document.head.appendChild(s2);
+      s2.onload = () => { THREE_loaded = true; webxrBaslat(); }; document.head.appendChild(s2);
     };
     document.head.appendChild(s1);
   }
 
   function webxrBaslat() {
-    navigator.xr.requestSession('immersive-ar', { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay'], domOverlay: { root: arUI } }).then(function(sess) {
-      xrSess = sess;
-      renderer = new THREE.WebGLRenderer({ canvas: xrC, alpha: true, antialias: true });
-      renderer.setPixelRatio(window.devicePixelRatio); renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.xr.enabled = true;
-      renderer.xr.setSession(sess).then(function() {
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 50);
-        scene.add(new THREE.AmbientLight(0xffffff, 2));
-        retMesh = new THREE.Mesh(new THREE.RingGeometry(0.04, 0.07, 32).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({ color: 0x19b0c7 }));
+    navigator.xr.requestSession('immersive-ar', { requiredFeatures:['hit-test'], optionalFeatures:['dom-overlay'], domOverlay:{root:document.getElementById('arUI')} }).then(sess => {
+      xrSess = sess; renderer = new THREE.WebGLRenderer({ canvas:document.getElementById('xrC'), alpha:true, antialias:true });
+      renderer.setPixelRatio(window.devicePixelRatio); renderer.setSize(window.innerWidth, window.innerHeight); renderer.xr.enabled = true;
+      renderer.xr.setSession(sess).then(() => {
+        scene = new THREE.Scene(); camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 100);
+        scene.add(new THREE.AmbientLight(0xffffff, 2.0)); tPos = new THREE.Vector3(); cPos = new THREE.Vector3();
+        retMesh = new THREE.Mesh(new THREE.RingGeometry(0.04, 0.06, 32).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({color:0x19b0c7, transparent:true, opacity:0.8}));
         retMesh.matrixAutoUpdate = false; retMesh.visible = false; scene.add(retMesh);
-        new THREE.GLTFLoader().load(GLB_PATH, function(g) {
-          modelGrp = g.scene; scene.add(modelGrp); modelGrp.visible = false; modelHazir = true;
-          var box = new THREE.Box3().setFromObject(modelGrp);
-          pivotOffset = -box.min.y;
-          tPos = new THREE.Vector3(); cPos = new THREE.Vector3();
-          mScale = baseScale; tScale = baseScale; cScale = baseScale;
+        new THREE.GLTFLoader().load(GLB_PATH, g => {
+          modelGrp = g.scene; scene.add(modelGrp); modelGrp.visible = false;
+          var box = new THREE.Box3().setFromObject(modelGrp); var sz = new THREE.Vector3(); box.getSize(sz);
+          var maxD = Math.max(sz.x, sz.y, sz.z); baseScale = maxD > 0 ? 1.5/maxD : 1.0;
+          pivotOffset = -box.min.y; cScale = baseScale; tScale = baseScale; modelHazir = true;
           if (savedMaterials.length > 0) applyMaterialsToThree(modelGrp, savedMaterials);
         });
-        xrC.classList.add('ac'); arUI.classList.add('ac'); setDurum('tarama');
-        renderer.setAnimationLoop(function(ts, frame) {
-          if (!frame) return;
-          var ref = renderer.xr.getReferenceSpace();
-          if (!hitReq) { sess.requestReferenceSpace('viewer').then(function(vs) { sess.requestHitTestSource({ space: vs }).then(function(src) { hitSrc = src; }); }); hitReq = true; }
-          var hitOk = false;
+        document.getElementById('xrC').classList.add('ac'); document.getElementById('arUI').classList.add('ac'); setDurum('tarama');
+        renderer.setAnimationLoop((ts, frame) => {
+          if (!frame) return; var ref = renderer.xr.getReferenceSpace();
+          if (!hitReq) { sess.requestReferenceSpace('viewer').then(vs => { sess.requestHitTestSource({space:vs}).then(src => hitSrc = src); }); hitReq = true; }
           if (hitSrc && (durum === 'tarama' || durum === 'tasima')) {
             var hits = frame.getHitTestResults(hitSrc);
             if (hits.length > 0) {
-              var pose = hits[0].getPose(ref);
-              if (pose) { hitOk = true; retMesh.visible = true; retMesh.matrix.fromArray(pose.transform.matrix);
-                if (durum === 'tasima' && modelGrp) { var rp = new THREE.Vector3().setFromMatrixPosition(retMesh.matrix); rp.y += pivotOffset * cScale; tPos.copy(rp); modelGrp.visible = true; }
-              }
+              var pose = hits[0].getPose(ref); retMesh.visible = true; retMesh.matrix.fromArray(pose.transform.matrix);
+              if (durum === 'tasima') { var p = new THREE.Vector3().setFromMatrixPosition(retMesh.matrix); p.y += pivotOffset * cScale; tPos.copy(p); }
             }
           }
-          if (!hitOk && durum !== 'sabitlendi') retMesh.visible = false;
-          if (modelGrp && modelGrp.visible && tPos) {
-            cPos.lerp(tPos, LP); modelGrp.position.copy(cPos);
-            cScale += (tScale - cScale) * LS; modelGrp.scale.setScalar(cScale);
-            cRotY += (tRotY - cRotY) * LR; modelGrp.rotation.y = THREE.MathUtils.degToRad(cRotY);
+          if (modelGrp && modelGrp.visible) {
+            cPos.lerp(tPos, 0.2); modelGrp.position.copy(cPos);
+            cScale += (tScale - cScale) * 0.15; modelGrp.scale.setScalar(cScale);
+            cRotY += (tRotY - cRotY) * 0.15; modelGrp.rotation.y = THREE.MathUtils.degToRad(cRotY);
           }
           renderer.render(scene, camera);
         });
@@ -810,58 +730,75 @@
     });
   }
 
-  bGercek.addEventListener('click', function() {
-    if (!modelHazir) return;
-    gercekMod = !gercekMod;
-    if (gercekMod) { mScale = 1.0; tScale = 1.0; cScale = 1.0; arGercekAcUI(); }
-    else { mScale = baseScale; tScale = baseScale; cScale = baseScale; arGercekKapatUI(); }
-  });
+  /* ─── ANDROID GERÇEK BOYUT ─── */
+  document.getElementById('bGercek').onclick = function() {
+    if (!modelHazir) return; gercekMod = !gercekMod;
+    this.textContent = gercekMod ? T.bRealOff : T.bReal; this.classList.toggle('aktif', gercekMod);
+    if (gercekMod) {
+        tScale = 1.0; cScale = 1.0; // Anında 1:1 metreye kilitliyoruz
+        document.getElementById('arGercekEtiket').classList.add('ac');
+        document.getElementById('arP').classList.add('gercekMod');
+    } else {
+        tScale = baseScale; cScale = baseScale;
+        document.getElementById('arGercekEtiket').classList.remove('ac');
+        document.getElementById('arP').classList.remove('gercekMod');
+        syncSliders(100);
+    }
+  };
 
-  function arGercekAcUI() { bGercek.textContent = T.bRealOff; bGercek.classList.add('aktif'); arP.classList.add('gercekMod'); arGercekEtiket.classList.add('ac'); }
-  function arGercekKapatUI() { bGercek.textContent = T.bReal; bGercek.classList.remove('aktif'); arP.classList.remove('gercekMod'); arGercekEtiket.classList.remove('ac'); }
-
+  /* ─── YARDIMCILAR ─── */
   function setDurum(d) {
-    durum = d; badge.className = ''; retUI.classList.remove('ac'); selRing.classList.remove('ac');
-    bTas.style.display = ''; bYer.style.display = ''; bSab.textContent = T.bFix;
-    if(d==='tarama'){ badge.textContent=T.badgeScan; badge.classList.add('tur'); retUI.classList.add('ac'); bTas.style.display='none'; }
-    if(d==='yerlestirildi'){ badge.textContent=T.badgePlaced; bYer.style.display='none'; }
-    if(d==='tasima'){ badge.textContent=T.badgeMove; badge.classList.add('mav'); retUI.classList.add('ac'); selRing.classList.add('ac'); bYer.style.display='none'; bTas.style.display='none'; }
-    if(d==='sabitlendi'){ badge.textContent=T.badgeLocked; badge.classList.add('yes'); bYer.style.display='none'; bSab.textContent=T.bUnfix; }
+    durum = d; var b = document.getElementById('badge'); b.className = '';
+    document.getElementById('retUI').classList.toggle('ac', d==='tarama'||d==='tasima');
+    document.getElementById('bYer').style.display = d==='tarama' ? 'block' : 'none';
+    document.getElementById('bTas').style.display = d==='yerlestirildi' ? 'block' : 'none';
+    document.getElementById('bSab').textContent = d==='sabitlendi' ? T.bUnfix : T.bFix;
+    if(d==='tarama'){ b.textContent=T.badgeScan; b.classList.add('tur'); }
+    else if(d==='yerlestirildi'){ b.textContent=T.badgePlaced; }
+    else if(d==='tasima'){ b.textContent=T.badgeMove; b.classList.add('mav'); document.getElementById('selRing').classList.add('ac'); }
+    else if(d==='sabitlendi'){ b.textContent=T.badgeLocked; b.classList.add('yes'); }
+    if(d!=='tasima') document.getElementById('selRing').classList.remove('ac');
   }
 
-  bYer.onclick = function() { if (!retMesh.visible) return; var rp = new THREE.Vector3().setFromMatrixPosition(retMesh.matrix); rp.y += pivotOffset * mScale; tPos.copy(rp); cPos.copy(rp); modelGrp.visible = true; setDurum('yerlestirildi'); };
-  bTas.onclick = function() { if (durum !== 'sabitlendi') setDurum('tasima'); };
-  bSab.onclick = function() { if (durum === 'sabitlendi') setDurum('yerlestirildi'); else setDurum('sabitlendi'); };
-  slAr.oninput = function() { if (durum === 'sabitlendi' || gercekMod) return; var v = +this.value; mScale = baseScale * (v / 100); tScale = mScale; vlAr.textContent = v + '%'; syncSliders(v); };
-  slRot.oninput = function() { if (durum !== 'sabitlendi') { tRotY = +this.value; vlRot.textContent = Math.round(tRotY) + '°'; } };
-  bSif.onclick = function() { mScale = gercekMod ? 1.0 : baseScale; tScale = mScale; cScale = mScale; tRotY = 0; cRotY = 0; if (modelGrp) modelGrp.visible = false; setDurum('tarama'); };
-  bCik.onclick = function() { if (xrSess) xrSess.end(); else cleanup(); };
+  document.getElementById('bYer').onclick = function() {
+    if (!retMesh.visible) return; var p = new THREE.Vector3().setFromMatrixPosition(retMesh.matrix);
+    p.y += pivotOffset * (gercekMod ? 1.0 : baseScale); tPos.copy(p); cPos.copy(p);
+    modelGrp.visible = true; setDurum('yerlestirildi');
+  };
+  document.getElementById('bTas').onclick = () => setDurum('tasima');
+  document.getElementById('bSab').onclick = () => setDurum(durum==='sabitlendi' ? 'yerlestirildi' : 'sabitlendi');
+  document.getElementById('bSif').onclick = () => { if(modelGrp) modelGrp.visible = false; setDurum('tarama'); };
+  document.getElementById('bCik').onclick = () => { if(xrSess) xrSess.end(); };
+  
+  document.getElementById('slAr').oninput = function() { if(durum==='sabitlendi'||gercekMod) return; var v=+this.value; tScale=baseScale*(v/100); syncSliders(v); };
+  document.getElementById('slRot').oninput = function() { if(durum!=='sabitlendi') tRotY=+this.value; };
+  function syncSliders(v) { 
+    document.getElementById('slAr').value=v; document.getElementById('vlAr').textContent=v+'%'; 
+    document.getElementById('slOn').value=v; document.getElementById('vlOn').textContent=v+'%'; 
+    if(baseScale>0) applyMVScale(baseScale*(v/100)); 
+  }
+  function cleanup() { document.getElementById('xrC').classList.remove('ac'); document.getElementById('arUI').classList.remove('ac'); if(renderer) renderer.dispose(); modelHazir=false; hitReq=false; }
 
-  function syncSliders(v) { v = Math.round(v); slAr.value = v; vlAr.textContent = v + '%'; slOn.value = v; vlOn.textContent = v + '%'; slIos.value = v; vlIos.textContent = v + '%'; if (baseScale > 0) applyMVScale(baseScale * v / 100); }
-
-  function cleanup() { if (renderer) { renderer.setAnimationLoop(null); renderer.dispose(); } xrC.classList.remove('ac'); arUI.classList.remove('ac'); xrSess = null; modelHazir = false; gercekMod = false; arGercekKapatUI(); }
-
-  var drag = { on:false, x:0, y:0 }; var pinch = { on:false, d0:0, s0:0 };
-  xrC.addEventListener('touchstart', function(e) {
-    if (durum === 'sabitlendi') return;
+  /* ─── TOUCH ─── */
+  var drag = { on:false, x:0, y:0 }, pinch = { on:false, d0:0, s0:1 };
+  var cvs = document.getElementById('xrC');
+  cvs.ontouchstart = e => {
     if (e.touches.length === 1) { drag.on=true; drag.x=e.touches[0].clientX; drag.y=e.touches[0].clientY; }
     if (e.touches.length === 2) { drag.on=false; pinch.on=true; pinch.d0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY); pinch.s0=tScale; }
-  });
-  xrC.addEventListener('touchmove', function(e) {
-    if (durum === 'sabitlendi') return;
-    if (drag.on && e.touches.length === 1 && modelGrp) {
-        var dx = e.touches[0].clientX - drag.x; var dy = e.touches[0].clientY - drag.y;
-        drag.x = e.touches[0].clientX; drag.y = e.touches[0].clientY;
-        var r = new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion); r.y=0; r.normalize();
-        var u = new THREE.Vector3(0,1,0).applyQuaternion(camera.quaternion); u.y=0; u.normalize();
-        tPos.add(r.multiplyScalar(-dx * 0.002).add(u.multiplyScalar(dy * 0.002)));
+  };
+  cvs.ontouchmove = e => {
+    if (drag.on && modelGrp && durum !== 'sabitlendi') {
+      var dx=e.touches[0].clientX-drag.x, dy=e.touches[0].clientY-drag.y; drag.x=e.touches[0].clientX; drag.y=e.touches[0].clientY;
+      var r=new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion); r.y=0; r.normalize();
+      var u=new THREE.Vector3(0,1,0).applyQuaternion(camera.quaternion); u.y=0; u.normalize();
+      tPos.add(r.multiplyScalar(-dx*0.0012).add(u.multiplyScalar(dy*0.0012)));
     }
-    if (pinch.on && e.touches.length === 2 && !gercekMod) {
-        var d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
-        mScale = Math.max(0.1, pinch.s0 * (d / pinch.d0)); tScale = mScale; syncSliders((mScale / baseScale) * 100);
+    if (pinch.on && !gercekMod) {
+      var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      tScale = pinch.s0 * (d/pinch.d0); syncSliders(Math.round((tScale/baseScale)*100));
     }
-  });
-  xrC.addEventListener('touchend', function() { drag.on = false; pinch.on = false; });
+  };
+  cvs.ontouchend = () => { drag.on=false; pinch.on=false; };
 
 })();
 </script>
