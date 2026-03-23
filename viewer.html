@@ -484,93 +484,93 @@
 (function () {
 
   /* ══════════════════════════════════════════
-     DİL SİSTEMİ
+      DİL SİSTEMİ
   ══════════════════════════════════════════ */
   var STRINGS = {
     tr: {
       loading:          'Model yükleniyor',
       loadError:        'Model yüklenemedi',
-      modelMissing:     'Model bulunamadı',
+      modelMissing:      'Model bulunamadı',
       modelMissingDesc: '?model= parametresi eksik',
-      panelTitle:       '3D Görüntüleyici',
+      panelTitle:        '3D Görüntüleyici',
       labelSize:        'Boyut',
       labelRotate:      'Döndür',
-      btnStart:         '📸 AR Başlat',
+      btnStart:          '📸 AR Başlat',
       btnLock:          '🔓 Sabitle',
       btnLocked:        '🔒 Kilitlendi',
-      arPanelTitle:     'AR Kontrolü',
-      bPlace:           '📍 Yerleştir',
+      arPanelTitle:      'AR Kontrolü',
+      bPlace:            '📍 Yerleştir',
       bMove:            '✋ Taşı',
-      bFix:             '🔒 Sabitle',
-      bUnfix:           '🔓 Kilidi Aç',
-      bReset:           '↺ Sıfırla',
+      bFix:              '🔒 Sabitle',
+      bUnfix:            '🔓 Kilidi Aç',
+      bReset:            '↺ Sıfırla',
       bExit:            '✕ Çıkış',
       bReal:            '📏 Gerçek Boyutlu Gör',
-      bRealOff:         '🔓 Normal Boyuta Dön',
-      hint:             "Kamerayı yere doğrult → Yerleştir'e bas",
+      bRealOff:          '🔓 Normal Boyuta Dön',
+      hint:              "Kamerayı yere doğrult → Yerleştir'e bas",
       realLabel:        '📏 Gerçek Boyut Aktif',
       badgeScan:        '📡 Zemin Taranıyor…',
       badgePlaced:      '✅ Yerleştirildi',
       badgeMove:        '✋ Taşıma Modu',
       badgeLocked:      '🔒 Sabitlendi',
-      iosBadge:         '📱 iOS AR — Ürünü yerleştirin',
-      iosBadgeReal:     '📏 Gerçek Boyut Aktif',
+      iosBadge:          '📱 iOS AR — Ürünü yerleştirin',
+      iosBadgeReal:      '📏 Gerçek Boyut Aktif',
       iosPanelTitle:    'AR Kontrolü',
-      bIosReal:         '📏 Gerçek Boyut',
+      bIosReal:          '📏 Gerçek Boyut',
       bIosRealOff:      '🔓 Normal Boyut',
       bIosReset:        '↺ Sıfırla',
-      bIosExit:         '✕ Çıkış',
-      errTitle:         'AR Desteklenmiyor',
-      errDefault:       "Cihazınız AR'ı desteklemiyor veya gerekli izinler verilmedi.",
-      errThreeJS:       'Three.js yüklenemedi. İnternet bağlantınızı kontrol edin.',
+      bIosExit:          '✕ Çıkış',
+      errTitle:          'AR Desteklenmiyor',
+      errDefault:        "Cihazınız AR'ı desteklemiyor veya gerekli izinler verilmedi.",
+      errThreeJS:        'Three.js yüklenemedi. İnternet bağlantınızı kontrol edin.',
       errLoader:        'Three.js GLTFLoader yüklenemedi. İnternet bağlantınızı kontrol edin.',
-      errModelAR:       "3D model AR'a yüklenemedi.",
+      errModelAR:        "3D model AR'a yüklenemedi.",
       errOk:            'Tamam',
       pcTitle:          'Telefonda AR ile Görüntüle',
-      pcDesc:           'QR kodu telefonunla tara ve ürünü gerçek ortamında görüntüle.',
+      pcDesc:            'QR kodu telefonunla tara ve ürünü gerçek ortamında görüntüle.',
       pcClose:          'Kapat',
     },
     en: {
       loading:          'Loading model',
       loadError:        'Model could not be loaded',
-      modelMissing:     'Model not found',
+      modelMissing:      'Model not found',
       modelMissingDesc: '?model= parameter is missing',
-      panelTitle:       '3D Viewer',
+      panelTitle:        '3D Viewer',
       labelSize:        'Size',
       labelRotate:      'Rotate',
-      btnStart:         '📸 Start AR',
+      btnStart:          '📸 Start AR',
       btnLock:          '🔓 Lock',
       btnLocked:        '🔒 Locked',
-      arPanelTitle:     'AR Controls',
-      bPlace:           '📍 Place',
+      arPanelTitle:      'AR Controls',
+      bPlace:            '📍 Place',
       bMove:            '✋ Move',
-      bFix:             '🔒 Fix',
-      bUnfix:           '🔓 Unlock',
-      bReset:           '↺ Reset',
+      bFix:              '🔒 Fix',
+      bUnfix:            '🔓 Unlock',
+      bReset:            '↺ Reset',
       bExit:            '✕ Exit',
       bReal:            '📏 Real Size View',
-      bRealOff:         '🔓 Back to Normal',
-      hint:             'Point camera at floor → tap Place',
+      bRealOff:          '🔓 Back to Normal',
+      hint:              'Point camera at floor → tap Place',
       realLabel:        '📏 Real Size Active',
       badgeScan:        '📡 Scanning Surface…',
       badgePlaced:      '✅ Placed',
       badgeMove:        '✋ Move Mode',
       badgeLocked:      '🔒 Locked',
-      iosBadge:         '📱 iOS AR — Place the product',
-      iosBadgeReal:     '📏 Real Size Active',
+      iosBadge:          '📱 iOS AR — Place the product',
+      iosBadgeReal:      '📏 Real Size Active',
       iosPanelTitle:    'AR Controls',
-      bIosReal:         '📏 Real Size',
+      bIosReal:          '📏 Real Size',
       bIosRealOff:      '🔓 Normal Size',
       bIosReset:        '↺ Reset',
-      bIosExit:         '✕ Exit',
-      errTitle:         'AR Not Supported',
-      errDefault:       'Your device does not support AR or the required permissions were not granted.',
-      errThreeJS:       'Three.js could not be loaded. Please check your internet connection.',
+      bIosExit:          '✕ Exit',
+      errTitle:          'AR Not Supported',
+      errDefault:        'Your device does not support AR or the required permissions were not granted.',
+      errThreeJS:        'Three.js could not be loaded. Please check your internet connection.',
       errLoader:        'Three.js GLTFLoader could not be loaded. Please check your internet connection.',
-      errModelAR:       '3D model could not be loaded into AR.',
+      errModelAR:        '3D model could not be loaded into AR.',
       errOk:            'OK',
       pcTitle:          'View in AR on Your Phone',
-      pcDesc:           'Scan the QR code with your phone to view the product in your real environment.',
+      pcDesc:            'Scan the QR code with your phone to view the product in your real environment.',
       pcClose:          'Close',
     }
   };
@@ -621,33 +621,33 @@
   /* ─── UI METİNLERİ ─── */
   function applyTexts() {
     set('loadText',       T.loading);
-    set('panelTitle',     T.panelTitle);
-    set('labelSize',      T.labelSize);
-    set('btnBaslat',      T.btnStart);
+    set('panelTitle',      T.panelTitle);
+    set('labelSize',       T.labelSize);
+    set('btnBaslat',       T.btnStart);
     set('btnKilit',       T.btnLock);
-    set('arPanelTitle',   T.arPanelTitle);
-    set('arLabelSize',    T.labelSize);
-    set('arLabelRot',     T.labelRotate);
-    set('bYer',           T.bPlace);
-    set('bTas',           T.bMove);
-    set('bSab',           T.bFix);
-    set('bSif',           T.bReset);
-    set('bCik',           T.bExit);
-    set('bGercek',        T.bReal);
-    set('hint',           T.hint);
+    set('arPanelTitle',    T.arPanelTitle);
+    set('arLabelSize',     T.labelSize);
+    set('arLabelRot',      T.labelRotate);
+    set('bYer',            T.bPlace);
+    set('bTas',            T.bMove);
+    set('bSab',            T.bFix);
+    set('bSif',            T.bReset);
+    set('bCik',            T.bExit);
+    set('bGercek',         T.bReal);
+    set('hint',            T.hint);
     set('arGercekEtiket', T.realLabel);
-    set('iosBadge',       T.iosBadge);
+    set('iosBadge',        T.iosBadge);
     set('iosPanelTitle',  T.iosPanelTitle);
-    set('iosLabelSize',   T.labelSize);
+    set('iosLabelSize',    T.labelSize);
     set('iosLabelRot',    T.labelRotate);
-    set('bIosGercek',     T.bIosReal);
+    set('bIosGercek',      T.bIosReal);
     set('bIosSif',        T.bIosReset);
     set('bIosCik',        T.bIosExit);
-    set('arHataBaslik',   T.errTitle);
+    set('arHataBaslik',    T.errTitle);
     set('arHataMesaj',    T.errDefault);
     set('arHataKapat',    T.errOk);
     set('pcTitle',        T.pcTitle);
-    set('pcDesc',         T.pcDesc);
+    set('pcDesc',          T.pcDesc);
     set('pcKapat',        T.pcClose);
   }
   function set(id, txt) {
@@ -659,7 +659,6 @@
   /* ─── MODEL VIEWER ─── */
   var mv = document.getElementById('mv');
   mv.setAttribute('src', GLB_PATH);
-  /* Başlangıçta ios-src'yi auto ile set et — gerçek boyut butonu değiştirecek */
   mv.setAttribute('ios-src', USDZ_PATH + '#apple_ar_scale=auto&allowsContentScaling=1');
 
   /* ─── KAYDEDILEN MATERYALLER ─── */
@@ -773,18 +772,20 @@
   }
   loadModelSettings();
 
-  /* ─── VIEW KAYDET ─── */
+  /* ─── VIEW KAYDET (ANALYTICS) ─── */
   function recordView() {
     var device = 'desktop';
     var ua = navigator.userAgent;
     if (/iphone|ipad|ipod/i.test(ua)) device = 'ios';
     else if (/android/i.test(ua)) device = 'android';
+    
     var xhr = new XMLHttpRequest();
     xhr.open('POST', SUPABASE_REST + '/model_views');
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.setRequestHeader('apikey', SUPABASE_ANON);
     xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON);
     xhr.send(JSON.stringify({ model_id: m, device_type: device }));
+    
     var xhr2 = new XMLHttpRequest();
     xhr2.open('POST', SUPABASE_REST + '/rpc/increment_model_views');
     xhr2.setRequestHeader('Content-Type', 'application/json');
@@ -920,29 +921,27 @@
   });
 
   /* ══════════════════════════════════════════
-     iOS AR — DÜZELTİLMİŞ
-     Problem: ios-src değiştirip activateAR() çağırmak
-     Quick Look'ta önbellekten açılıyor, yeni URL'i görmüyor.
-     Çözüm: Her seferinde <a rel="ar"> elementi oluşturup
-     programatik tıklıyoruz — Quick Look bunu taze URL olarak işler.
+      iOS AR — KESİN ÇÖZÜM (Programatik Link & Cache Busting)
   ══════════════════════════════════════════ */
   function iosARLinkTikla(usdzUrl) {
-    /* Varsa önceki linki temizle */
     var eskiLink = document.getElementById('_iosARLink');
     if (eskiLink) eskiLink.remove();
 
-    var a   = document.createElement('a');
+    var a    = document.createElement('a');
     a.id    = '_iosARLink';
-    a.rel   = 'ar';
-    a.href  = usdzUrl;
+    a.rel    = 'ar';
+    
+    // Cache busting için timestamp ekle
+    var ts = new Date().getTime();
+    a.href  = usdzUrl + (usdzUrl.includes('#') ? '&' : '#') + 't=' + ts;
 
-    /* iOS Quick Look, içinde <img> olan <a rel="ar"> elementini tanır */
     var img = document.createElement('img');
     img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     a.appendChild(img);
     a.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;';
     document.body.appendChild(a);
-    a.click();
+    
+    setTimeout(function() { a.click(); }, 50);
   }
 
   function startIOSAR() {
@@ -950,7 +949,6 @@
     iosARLinkTikla(USDZ_PATH + '#apple_ar_scale=auto&allowsContentScaling=1');
     iosPanel.classList.add('ac');
 
-    /* ar-status: Quick Look kapandığında paneli gizle */
     mv.addEventListener('ar-status', function iosH(e) {
       if (e.detail.status === 'not-presenting') {
         iosPanel.classList.remove('ac');
@@ -971,10 +969,6 @@
       slIos.disabled = true;
       slIos.style.opacity = '0.3';
       set('iosBadge', T.iosBadgeReal);
-      /*
-        apple_ar_scale=fixed   → Quick Look modeli USDZ içindeki gerçek ölçekte gösterir
-        allowsContentScaling=0 → Kullanıcı pinch ile boyut değiştiremez
-      */
       iosARLinkTikla(USDZ_PATH + '#apple_ar_scale=fixed&allowsContentScaling=0');
     } else {
       iosGercekModKapat();
@@ -1047,7 +1041,7 @@
 
       renderer.xr.setSession(sess).then(function() {
         scene  = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.001, 100);
+        camera = new PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.001, 100);
         scene.add(new THREE.AmbientLight(0xffffff, 2.0));
         var sun = new THREE.DirectionalLight(0xfff5e0, 1.2);
         sun.position.set(2, 6, 3); scene.add(sun);
@@ -1067,7 +1061,7 @@
           baseScale   = maxDim > 0 ? 1.5 / maxDim : 1.0;
           pivotOffset = -box.min.y;
           tPos = new THREE.Vector3(); cPos = new THREE.Vector3();
-          /* Başlangıç: normal mod */
+          
           gercekMod = false;
           mScale  = baseScale;
           tScale  = baseScale;
@@ -1075,7 +1069,7 @@
           tRotY   = 0; cRotY = 0;
           syncSliders(100);
           arGercekKapatUI();
-          /* Kaydedilen materyal renklerini AR sahnesine uygula */
+          
           if (savedMaterials && savedMaterials.length > 0) {
             applyMaterialsToThree(modelGrp, savedMaterials);
           }
@@ -1132,28 +1126,18 @@
     });
   }
 
-  /* ══════════════════════════════════════════
-     Android Gerçek Boyut — DÜZELTİLMİŞ
-     Problem: mScale=1.0 setleniyordu ama cScale güncellenmiyordu,
-     lerp animasyonu baseScale'den 1.0'a doğru gidiyordu — yerleştirme
-     sırasında boyut atlıyordu.
-     Çözüm: tScale, cScale ve mScale hepsini aynı anda setliyoruz.
-     Gerçek boyut = GLB birimlerinde 1 birim = 1 metre demek.
-  ══════════════════════════════════════════ */
+  /* ══ Android Gerçek Boyut — DÜZELTİLMİŞ ══ */
   bGercek.addEventListener('click', function() {
     if (!modelHazir) return;
     gercekMod = !gercekMod;
 
     if (gercekMod) {
-      /* Gerçek boyut: GLB'deki 1 birim → 1 metre.
-         baseScale hesaplamasını bypass et. */
       mScale  = 1.0;
       tScale  = 1.0;
-      cScale  = 1.0; /* lerp'i anında atla, titreme olmasın */
+      cScale  = 1.0; 
       if (modelGrp) modelGrp.scale.setScalar(1.0);
       arGercekAcUI();
     } else {
-      /* Normal boyuta dön */
       mScale  = baseScale;
       tScale  = baseScale;
       cScale  = baseScale;
