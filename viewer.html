@@ -480,97 +480,690 @@
   <span>powered by <strong>Cemer</strong></span>
 </div>
 
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+  <style>
+    :root {
+      --turk: #19b0c7;
+      --turk2: #1399ae;
+      --turk3: #0e8296;
+      --turk-glow: rgba(25,176,199,0.28);
+      --bg-viewer: #f7f5f2;
+      --panel-bg: rgba(255,255,255,0.92);
+      --panel-border: rgba(25,176,199,0.22);
+      --text: #1a2e32;
+      --text-dim: rgba(26,46,50,0.45);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body, html {
+      width: 100%; height: 100%;
+      background: var(--bg-viewer);
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .cerceve {
+      width: 100vw; height: 100vh;
+      position: relative;
+      background: var(--bg-viewer);
+    }
+
+    model-viewer {
+      width: 100%; height: 100%;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      --poster-color: #f7f5f2;
+    }
+    model-viewer.hazir { opacity: 1; }
+
+    [slot="ar-button"] { display: none !important; }
+
+    /* LOADING */
+    #loadOverlay {
+      position: absolute; inset: 0; z-index: 5;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: var(--bg-viewer);
+      transition: opacity 0.5s;
+    }
+    #loadOverlay.gizle { opacity: 0; pointer-events: none; }
+    .load-ring {
+      width: 48px; height: 48px;
+      border: 3px solid rgba(25,176,199,0.2);
+      border-top-color: var(--turk);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loadOverlay span {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase;
+    }
+
+    /* ANA PANEL */
+    .on-panel {
+      position: absolute; bottom: 24px; left: 50%;
+      transform: translateX(-50%);
+      width: min(92%, 480px);
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex; flex-direction: column; gap: 12px;
+      z-index: 10;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(25,176,199,0.06);
+    }
+
+    .satir { display: flex; align-items: center; gap: 10px; }
+    .etiket {
+      font-size: 9px; font-weight: 700;
+      color: var(--turk); letter-spacing: 1.2px;
+      text-transform: uppercase; min-width: 46px;
+    }
+    .deger {
+      font-size: 9px; font-weight: 700;
+      color: var(--text); min-width: 36px; text-align: right;
+    }
+
+    input[type=range] {
+      flex: 1; -webkit-appearance: none; appearance: none;
+      height: 4px; border-radius: 4px;
+      background: rgba(25,176,199,0.2);
+      cursor: pointer; outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--turk);
+      box-shadow: 0 0 8px var(--turk-glow);
+      cursor: pointer;
+    }
+    input[type=range]:disabled { opacity: 0.3; pointer-events: none; }
+
+    .divider { height: 1px; background: var(--panel-border); margin: 0 -2px; }
+
+    .btn-gr { display: flex; gap: 8px; }
+
+    .btn {
+      flex: 1; padding: 11px 8px;
+      border: none; border-radius: var(--radius-sm);
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700; font-size: 10.5px;
+      letter-spacing: 0.3px; cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s, box-shadow 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .btn:active { transform: scale(0.96); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--turk), var(--turk2));
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(25,176,199,0.35);
+    }
+    .btn-primary:hover { box-shadow: 0 4px 20px rgba(25,176,199,0.5); }
+
+    .btn-secondary {
+      background: rgba(25,176,199,0.1);
+      color: var(--turk);
+      border: 1px solid rgba(25,176,199,0.25);
+    }
+    .btn-secondary:hover { background: rgba(25,176,199,0.18); }
+
+    #btnKilit.kilitli {
+      background: rgba(231,76,60,0.2);
+      color: #e74c3c;
+      border-color: rgba(231,76,60,0.3);
+    }
+
+    /* iOS PANEL */
+    #iosPanel { display:none; position:fixed; inset:0; z-index:99999; pointer-events:none; }
+    #iosPanel.ac { display:block; }
+    #iosBadge {
+      position:absolute; top:20px; left:50%; transform:translateX(-50%);
+      padding: 7px 20px; border-radius: 30px;
+      background: var(--panel-bg); backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      color: var(--turk); font-size:11px; font-weight:700;
+      pointer-events:none; white-space:nowrap; letter-spacing: 0.5px;
+    }
+    #iosAltPanel {
+      position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
+      width: min(92%, 480px);
+      background: var(--panel-bg); backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 16px; border-radius: var(--radius);
+      display:flex; flex-direction:column; gap:12px;
+      pointer-events:all; border:1px solid var(--panel-border);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    /* WebXR CANVAS */
+    #xrC {
+      display:none; position:fixed; inset:0; z-index:80000;
+      touch-action:none; width:100%; height:100%;
+    }
+    #xrC.ac { display:block; }
+
+    /* AR UI OVERLAY */
+    #arUI { display:none; position:fixed; inset:0; z-index:90000; pointer-events:none; }
+    #arUI.ac { display:block; }
+
+    #badge {
+      position:absolute; top:20px; left:50%; transform:translateX(-50%);
+      padding: 8px 20px; border-radius: 30px;
+      background: var(--panel-bg); backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      color: var(--text); font-size:11px; font-weight:700;
+      pointer-events:none; white-space:nowrap; letter-spacing: 0.4px;
+      transition: border-color 0.3s, color 0.3s;
+    }
+    #badge.tur { border-color: rgba(230,126,34,0.5); color: #e67e22; }
+    #badge.mav { border-color: rgba(41,128,185,0.5); color: #2980b9; }
+    #badge.yes { border-color: rgba(25,176,199,0.5); color: var(--turk); }
+
+    #arGercekEtiket {
+      display:none; position:absolute; top:58px; left:50%; transform:translateX(-50%);
+      padding: 5px 16px; border-radius: 20px;
+      background: rgba(25,176,199,0.15);
+      border: 1px solid rgba(25,176,199,0.4);
+      color: var(--turk); font-size:10px; font-weight:700;
+      pointer-events:none; white-space:nowrap; letter-spacing: 0.5px;
+    }
+    #arGercekEtiket.ac { display:block; }
+
+    #retUI { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); pointer-events:none; display:none; }
+    #retUI.ac { display:block; }
+    #retUI svg { display:block; animation:rpulse 1.4s ease-in-out infinite; }
+    @keyframes rpulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.1);} }
+
+    #selRing {
+      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+      width:72px; height:72px;
+      border: 2px dashed rgba(25,176,199,0.7);
+      border-radius:50%; pointer-events:none; display:none;
+      animation: rring 2.4s linear infinite;
+    }
+    @keyframes rring { to { transform: translate(-50%,-50%) rotate(360deg); } }
+    #selRing.ac { display:block; }
+
+    /* AR ALT PANEL */
+    #arP {
+      position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
+      width: min(92%, 480px);
+      background: var(--panel-bg); backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      padding: 16px; border-radius: var(--radius);
+      display:flex; flex-direction:column; gap:12px;
+      pointer-events:all; border:1px solid var(--panel-border);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(25,176,199,0.04);
+    }
+
+    #arP.gercekMod .boyutSatir { opacity:0.3; pointer-events:none; }
+
+    .abg { display:flex; gap:8px; }
+    .ab {
+      flex:1; padding: 11px 4px;
+      border: none; border-radius: var(--radius-sm);
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700; font-size: 10px; letter-spacing: 0.2px;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    .ab:active { transform: scale(0.95); }
+
+    #bYer    { background: linear-gradient(135deg, var(--turk), var(--turk2)); color:#fff; box-shadow:0 3px 10px rgba(25,176,199,0.35); }
+    #bTas    { background: linear-gradient(135deg, var(--turk2), var(--turk3)); color:#fff; box-shadow:0 3px 10px rgba(19,153,174,0.3); }
+    #bSab    { background: linear-gradient(135deg, var(--turk), var(--turk2)); color:#fff; box-shadow:0 3px 10px rgba(25,176,199,0.35); }
+    #bSif    { background: rgba(25,176,199,0.08); color:var(--turk); border:1px solid rgba(25,176,199,0.2); }
+    #bCik    { background: rgba(231,76,60,0.1); color:#e74c3c; border:1px solid rgba(231,76,60,0.2); }
+    #bGercek { background: rgba(25,176,199,0.1); color:var(--turk); border:1px solid rgba(25,176,199,0.3); }
+    #bGercek.aktif { background: linear-gradient(135deg, var(--turk), var(--turk2)); color:#fff; box-shadow:0 3px 12px rgba(25,176,199,0.4); border:none; }
+
+    #bIosGercek { background: rgba(25,176,199,0.1); color:var(--turk); border:1px solid rgba(25,176,199,0.3); }
+    #bIosGercek.aktif { background: linear-gradient(135deg, var(--turk), var(--turk2)); color:#fff; box-shadow:0 3px 12px rgba(25,176,199,0.4); border:none; }
+    #bIosSif { background: rgba(25,176,199,0.08); color:var(--turk); border:1px solid rgba(25,176,199,0.2); }
+    #bIosCik { background: rgba(231,76,60,0.1); color:#e74c3c; border:1px solid rgba(231,76,60,0.2); }
+
+    #hint {
+      text-align:center; font-size:9.5px; font-weight:500;
+      color: var(--text-dim); letter-spacing: 0.3px;
+    }
+
+    .panel-title {
+      font-size: 10px; font-weight: 700; color: var(--text-dim);
+      letter-spacing: 1.4px; text-transform: uppercase;
+      text-align: center;
+    }
+
+    #poweredBy {
+      position: fixed; top: 14px; left: 14px;
+      z-index: 99999; pointer-events: none;
+      display: flex; align-items: center; gap: 5px;
+    }
+    #poweredBy span {
+      font-family: 'Poppins', sans-serif;
+      font-size: 9px; font-weight: 600;
+      color: rgba(26,46,50,0.45); letter-spacing: 0.6px;
+    }
+    #poweredBy strong { font-weight: 800; color: var(--turk); letter-spacing: 0.3px; }
+
+    /* Hata modalı */
+    #arHata {
+      display:none; position:fixed; inset:0; z-index:99998;
+      align-items:center; justify-content:center;
+      background:rgba(247,245,242,0.97);
+    }
+    #arHata.ac { display:flex; }
+    #arHataBox {
+      background:#fff; border:1px solid var(--panel-border);
+      border-radius: var(--radius); padding:28px 24px;
+      text-align:center; max-width:320px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    #arHataBox h3 { color:var(--turk); font-size:15px; margin-bottom:8px; }
+    #arHataBox p  { color:var(--text-dim); font-size:11px; line-height:1.6; margin-bottom:16px; }
+    #arHataKapat {
+      background: linear-gradient(135deg, var(--turk), var(--turk2));
+      color:#fff; border:none; border-radius:var(--radius-sm);
+      padding:10px 24px; font-family:'Poppins',sans-serif;
+      font-weight:700; font-size:11px; cursor:pointer;
+    }
+
+    /* PC / QR MODAL */
+    #pcPanel {
+      display: none; position: fixed; inset: 0; z-index: 99997;
+      align-items: center; justify-content: center;
+      background: rgba(247,245,242,0.96);
+      backdrop-filter: blur(8px);
+    }
+    #pcPanel.ac { display: flex; }
+    #pcBox {
+      background: #fff; border: 1px solid var(--panel-border);
+      border-radius: 24px; padding: 36px 32px 28px;
+      text-align: center; max-width: 340px; width: 90%;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.13);
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
+    }
+    #pcBox .pc-icon { font-size: 36px; line-height: 1; }
+    #pcBox h3 { color: var(--text); font-size: 16px; font-weight: 800; margin: 0; letter-spacing: -0.3px; }
+    #pcBox p  { color: var(--text-dim); font-size: 11.5px; line-height: 1.65; margin: 0; }
+    #qrWrap {
+      width: 176px; height: 176px;
+      border: 2px solid var(--panel-border); border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      background: #fff; overflow: hidden; position: relative;
+    }
+    #qrWrap canvas, #qrWrap img { width: 160px !important; height: 160px !important; }
+    #qrLoading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #qrLoading .load-ring { margin: 0; }
+    #pcUrlBox {
+      background: rgba(25,176,199,0.07); border: 1px solid rgba(25,176,199,0.2);
+      border-radius: 10px; padding: 8px 14px;
+      font-size: 10px; color: var(--turk); font-weight: 600;
+      word-break: break-all; max-width: 100%; text-align: center; letter-spacing: 0.2px;
+    }
+    #pcKapat {
+      background: rgba(25,176,199,0.08); color: var(--turk);
+      border: 1px solid rgba(25,176,199,0.25); border-radius: var(--radius-sm);
+      padding: 10px 28px; font-family: 'Poppins', sans-serif;
+      font-weight: 700; font-size: 11px; cursor: pointer; transition: background 0.15s;
+    }
+    #pcKapat:hover { background: rgba(25,176,199,0.16); }
+  </style>
+</head>
+<body>
+
+<div class="cerceve">
+  <model-viewer id="mv"
+    ar
+    ar-modes="webxr scene-viewer quick-look"
+    ar-placement="floor"
+    camera-controls
+    shadow-intensity="1.5"
+    environment-image="neutral"
+    exposure="0.95"
+    loading="eager"
+    interaction-prompt="none"
+    style="outline:none; background:#f7f5f2; width:100%; height:100%;">
+
+    <div id="loadOverlay">
+      <div class="load-ring"></div>
+      <span id="loadText"></span>
+    </div>
+
+    <div class="on-panel">
+      <div class="panel-title" id="panelTitle"></div>
+      <div class="satir">
+        <span class="etiket" id="labelSize"></span>
+        <input type="range" id="slOn" min="10" max="500" value="100">
+        <span class="deger" id="vlOn">100%</span>
+      </div>
+      <div class="divider"></div>
+      <div class="btn-gr">
+        <button type="button" id="btnBaslat" class="btn btn-primary"></button>
+        <button type="button" id="btnKilit"  class="btn btn-secondary"></button>
+      </div>
+    </div>
+
+    <button slot="ar-button" id="mvArBtn" style="display:none;position:absolute;bottom:-9999px;"></button>
+  </model-viewer>
+</div>
+
+<!-- WebXR Canvas (model-viewer DIŞINDA) -->
+<canvas id="xrC"></canvas>
+
+<!-- AR UI Overlay -->
+<div id="arUI">
+  <div id="badge"></div>
+  <div id="arGercekEtiket"></div>
+  <div id="retUI">
+    <svg width="90" height="36" viewBox="0 0 90 36">
+      <ellipse cx="45" cy="18" rx="40" ry="14" stroke="rgba(25,176,199,0.8)" stroke-width="1.6" fill="none" stroke-dasharray="6 3"/>
+      <ellipse cx="45" cy="18" rx="5"  ry="3"  fill="rgba(25,176,199,0.9)"/>
+    </svg>
+  </div>
+  <div id="selRing"></div>
+  <div id="arP">
+    <div class="panel-title" id="arPanelTitle"></div>
+    <div class="satir boyutSatir">
+      <span class="etiket" id="arLabelSize"></span>
+      <input type="range" id="slAr" min="10" max="500" value="100">
+      <span class="deger" id="vlAr">100%</span>
+    </div>
+    <div class="satir">
+      <span class="etiket" id="arLabelRot"></span>
+      <input type="range" id="slRot" min="0" max="360" value="0">
+      <span class="deger" id="vlRot">0°</span>
+    </div>
+    <div class="divider"></div>
+    <div class="abg">
+      <button type="button" id="bYer"  class="ab"></button>
+      <button type="button" id="bTas"  class="ab"></button>
+    </div>
+    <div class="abg">
+      <button type="button" id="bSab"  class="ab"></button>
+      <button type="button" id="bSif"  class="ab"></button>
+      <button type="button" id="bCik"  class="ab"></button>
+    </div>
+    <div class="abg">
+      <button type="button" id="bGercek" class="ab"></button>
+    </div>
+    <div id="hint"></div>
+  </div>
+</div>
+
+<!-- iOS Panel -->
+<div id="iosPanel">
+  <div id="iosBadge"></div>
+  <div id="iosAltPanel">
+    <div class="panel-title" id="iosPanelTitle"></div>
+    <div class="satir">
+      <span class="etiket" id="iosLabelSize"></span>
+      <input type="range" id="slIos" min="10" max="500" value="100">
+      <span class="deger" id="vlIos">100%</span>
+    </div>
+    <div class="satir">
+      <span class="etiket" id="iosLabelRot"></span>
+      <input type="range" id="slIosRot" min="0" max="360" value="0">
+      <span class="deger" id="vlIosRot">0°</span>
+    </div>
+    <div class="divider"></div>
+    <div class="abg">
+      <button type="button" id="bIosGercek" class="ab"></button>
+    </div>
+    <div class="abg">
+      <button type="button" id="bIosSif" class="ab"></button>
+      <button type="button" id="bIosCik" class="ab"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Hata Modalı -->
+<div id="arHata">
+  <div id="arHataBox">
+    <h3 id="arHataBaslik"></h3>
+    <p  id="arHataMesaj"></p>
+    <button id="arHataKapat"></button>
+  </div>
+</div>
+
+<!-- PC QR Modal -->
+<div id="pcPanel">
+  <div id="pcBox">
+    <div class="pc-icon">📱</div>
+    <h3 id="pcTitle"></h3>
+    <p id="pcDesc"></p>
+    <div id="qrWrap">
+      <div id="qrLoading"><div class="load-ring"></div></div>
+    </div>
+    <div id="pcUrlBox"></div>
+    <button id="pcKapat"></button>
+  </div>
+</div>
+
+<!-- Powered by -->
+<div id="poweredBy">
+  <span>powered by <strong>Cemer</strong></span>
+</div>
+
 <script>
 (function () {
 
   /* ══════════════════════════════════════════
-      DİL SİSTEMİ
+     DİL SİSTEMİ
   ══════════════════════════════════════════ */
   var STRINGS = {
     tr: {
-      loading: 'Model yükleniyor', loadError: 'Model yüklenemedi', modelMissing: 'Model bulunamadı',
-      modelMissingDesc: '?model= parametresi eksik', panelTitle: '3D Görüntüleyici', labelSize: 'Boyut',
-      labelRotate: 'Döndür', btnStart: '📸 AR Başlat', btnLock: '🔓 Sabitle', btnLocked: '🔒 Kilitlendi',
-      arPanelTitle: 'AR Kontrolü', bPlace: '📍 Yerleştir', bMove: '✋ Taşı', bFix: '🔒 Sabitle',
-      bUnfix: '🔓 Kilidi Aç', bSif: '↺ Sıfırla', bCik: '✕ Çıkış', bReal: '📏 Gerçek Boyutlu Gör',
-      bRealOff: '🔓 Normal Boyuta Dön', hint: "Kamerayı yere doğrult → Yerleştir'e bas",
-      realLabel: '📏 Gerçek Boyut Aktif', badgeScan: '📡 Zemin Taranıyor…', badgePlaced: '✅ Yerleştirildi',
-      badgeMove: '✋ Taşıma Modu', badgeLocked: '🔒 Sabitlendi', iosBadge: '📱 iOS AR — Ürünü yerleştirin',
-      iosBadgeReal: '📏 Gerçek Boyut Aktif', errTitle: 'AR Desteklenmiyor', errDefault: "Cihazınız AR'ı desteklemiyor.",
-      errOk: 'Tamam', pcTitle: 'Telefonda AR ile Görüntüle', pcDesc: 'QR kodu telefonunla tara.', pcClose: 'Kapat'
+      loading:          'Model yükleniyor',
+      loadError:        'Model yüklenemedi',
+      modelMissing:     'Model bulunamadı',
+      modelMissingDesc: '?model= parametresi eksik',
+      panelTitle:       '3D Görüntüleyici',
+      labelSize:        'Boyut',
+      labelRotate:      'Döndür',
+      btnStart:         '📸 AR Başlat',
+      btnLock:          '🔓 Sabitle',
+      btnLocked:        '🔒 Kilitlendi',
+      arPanelTitle:     'AR Kontrolü',
+      bPlace:           '📍 Yerleştir',
+      bMove:            '✋ Taşı',
+      bFix:             '🔒 Sabitle',
+      bUnfix:           '🔓 Kilidi Aç',
+      bReset:           '↺ Sıfırla',
+      bExit:            '✕ Çıkış',
+      bReal:            '📏 Gerçek Boyutlu Gör',
+      bRealOff:         '🔓 Normal Boyuta Dön',
+      hint:             "Kamerayı yere doğrult → Yerleştir'e bas",
+      realLabel:        '📏 Gerçek Boyut Aktif',
+      badgeScan:        '📡 Zemin Taranıyor…',
+      badgePlaced:      '✅ Yerleştirildi',
+      badgeMove:        '✋ Taşıma Modu',
+      badgeLocked:      '🔒 Sabitlendi',
+      iosBadge:         '📱 iOS AR — Ürünü yerleştirin',
+      iosBadgeReal:     '📏 Gerçek Boyut Aktif',
+      iosPanelTitle:    'AR Kontrolü',
+      bIosReal:         '📏 Gerçek Boyut',
+      bIosRealOff:      '🔓 Normal Boyut',
+      bIosReset:        '↺ Sıfırla',
+      bIosExit:         '✕ Çıkış',
+      errTitle:         'AR Desteklenmiyor',
+      errDefault:       "Cihazınız AR'ı desteklemiyor veya gerekli izinler verilmedi.",
+      errThreeJS:       'Three.js yüklenemedi. İnternet bağlantınızı kontrol edin.',
+      errLoader:        'Three.js GLTFLoader yüklenemedi. İnternet bağlantınızı kontrol edin.',
+      errModelAR:       "3D model AR'a yüklenemedi.",
+      errOk:            'Tamam',
+      pcTitle:          'Telefonda AR ile Görüntüle',
+      pcDesc:           'QR kodu telefonunla tara ve ürünü gerçek ortamında görüntüle.',
+      pcClose:          'Kapat',
     },
     en: {
-      loading: 'Loading model', loadError: 'Error', modelMissing: 'Model not found',
-      modelMissingDesc: '?model= missing', panelTitle: '3D Viewer', labelSize: 'Size',
-      labelRotate: 'Rotate', btnStart: '📸 Start AR', btnLock: 'Lock', btnLocked: 'Locked',
-      arPanelTitle: 'AR Controls', bPlace: 'Place', bMove: 'Move', bFix: 'Fix',
-      bUnfix: 'Unlock', bSif: 'Reset', bCik: 'Exit', bReal: 'Real Size View',
-      bRealOff: 'Normal Size', hint: 'Point at floor → tap Place', realLabel: 'Real Size Active',
-      badgeScan: 'Scanning…', badgePlaced: 'Placed', badgeMove: 'Moving', badgeLocked: 'Locked',
-      iosBadge: 'iOS AR — Place product', iosBadgeReal: 'Real Size Active', errTitle: 'AR Not Supported',
-      errDefault: 'AR not supported.', errOk: 'OK', pcTitle: 'View in AR', pcDesc: 'Scan QR code.', pcClose: 'Close'
+      loading:          'Loading model',
+      loadError:        'Model could not be loaded',
+      modelMissing:     'Model not found',
+      modelMissingDesc: '?model= parameter is missing',
+      panelTitle:       '3D Viewer',
+      labelSize:        'Size',
+      labelRotate:      'Rotate',
+      btnStart:         '📸 Start AR',
+      btnLock:          '🔓 Lock',
+      btnLocked:        '🔒 Locked',
+      arPanelTitle:     'AR Controls',
+      bPlace:           '📍 Place',
+      bMove:            '✋ Move',
+      bFix:             '🔒 Fix',
+      bUnfix:           '🔓 Unlock',
+      bReset:           '↺ Reset',
+      bExit:            '✕ Exit',
+      bReal:            '📏 Real Size View',
+      bRealOff:         '🔓 Back to Normal',
+      hint:             'Point camera at floor → tap Place',
+      realLabel:        '📏 Real Size Active',
+      badgeScan:        '📡 Scanning Surface…',
+      badgePlaced:      '✅ Placed',
+      badgeMove:        '✋ Move Mode',
+      badgeLocked:      '🔒 Locked',
+      iosBadge:         '📱 iOS AR — Place the product',
+      iosBadgeReal:     '📏 Real Size Active',
+      iosPanelTitle:    'AR Controls',
+      bIosReal:         '📏 Real Size',
+      bIosRealOff:      '🔓 Normal Size',
+      bIosReset:        '↺ Reset',
+      bIosExit:         '✕ Exit',
+      errTitle:         'AR Not Supported',
+      errDefault:       'Your device does not support AR or the required permissions were not granted.',
+      errThreeJS:       'Three.js could not be loaded. Please check your internet connection.',
+      errLoader:        'Three.js GLTFLoader could not be loaded. Please check your internet connection.',
+      errModelAR:       '3D model could not be loaded into AR.',
+      errOk:            'OK',
+      pcTitle:          'View in AR on Your Phone',
+      pcDesc:           'Scan the QR code with your phone to view the product in your real environment.',
+      pcClose:          'Close',
     }
   };
 
+  /* ─── URL PARAMETRELERİ ─── */
   var p = new URLSearchParams(window.location.search);
   var m = p.get('model');
+
+  /* ─── DİL TESPİT ─── */
   function detectLang() {
     var lp = (p.get('lang') || '').toLowerCase();
     if (lp === 'en' || lp === 'tr') return lp;
+    var ref = document.referrer || '';
+    if (/\/en(\/|$)/.test(ref)) return 'en';
+    if (/\/tr(\/|$)/.test(ref)) return 'tr';
     var own = window.location.href;
     if (/\/en(\/|$)/.test(own)) return 'en';
+    if (/\/tr(\/|$)/.test(own)) return 'tr';
+    try {
+      var parentUrl = window.parent.location.href;
+      if (/\/en(\/|$)/.test(parentUrl)) return 'en';
+      if (/\/tr(\/|$)/.test(parentUrl)) return 'tr';
+    } catch(e) {}
     return 'tr';
   }
+
   var lang = detectLang();
   var T = STRINGS[lang];
   document.documentElement.lang = lang;
 
+  /* Model yoksa hata */
   if (!m) {
-    document.body.innerHTML = "<div style='text-align:center;padding:50px;'><h2>" + T.modelMissing + "</h2></div>";
+    document.body.innerHTML =
+      "<div style='padding:40px;text-align:center;font-family:Poppins,sans-serif;" +
+      "color:#1a2e32;background:#f7f5f2;height:100vh;display:flex;align-items:center;justify-content:center;'>" +
+      "<div><h2 style='color:#19b0c7;margin-bottom:8px'>" + T.modelMissing + "</h2>" +
+      "<p style='opacity:0.5;font-size:13px'>" + T.modelMissingDesc + "</p></div></div>";
     return;
   }
 
+  /* ─── SUPABASE ─── */
   var SUPABASE_STORAGE = 'https://vdqumssdodfihuovytbs.supabase.co/storage/v1/object/public/models/';
   var SUPABASE_REST    = 'https://vdqumssdodfihuovytbs.supabase.co/rest/v1';
   var SUPABASE_ANON    = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkcXVtc3Nkb2RmaWh1b3Z5dGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzI1NDgsImV4cCI6MjA4OTc0ODU0OH0.SpKRUbrPmKQtcEDUCwthD-74heZMxTl2R9m9LXN0WQI';
-  var GLB_PATH = SUPABASE_STORAGE + m + '-3d.glb';
+  var GLB_PATH  = SUPABASE_STORAGE + m + '-3d.glb';
   var USDZ_PATH = SUPABASE_STORAGE + m + '-3d.usdz';
 
-  var mv = document.getElementById('mv');
-  mv.setAttribute('src', GLB_PATH);
-  mv.setAttribute('ios-src', USDZ_PATH);
-
-  function set(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; }
+  /* ─── UI METİNLERİ ─── */
   function applyTexts() {
-    set('loadText', T.loading); set('panelTitle', T.panelTitle); set('labelSize', T.labelSize);
-    set('btnBaslat', T.btnStart); set('btnKilit', T.btnLock); set('arPanelTitle', T.arPanelTitle);
-    set('arLabelSize', T.labelSize); set('arLabelRot', T.labelRotate); set('bYer', T.bPlace);
-    set('bTas', T.bMove); set('bSab', T.bFix); set('bSif', T.bSif); set('bCik', T.bCik);
-    set('bGercek', T.bReal); set('hint', T.hint); set('arGercekEtiket', T.realLabel);
-    set('iosBadge', T.iosBadge); set('iosPanelTitle', T.arPanelTitle); set('iosLabelSize', T.labelSize);
-    set('iosLabelRot', T.labelRotate); set('bIosGercek', T.bReal); set('bIosSif', T.bSif);
-    set('bIosCik', T.bCik); set('arHataBaslik', T.errTitle); set('arHataMesaj', T.errDefault);
-    set('arHataKapat', T.errOk); set('pcTitle', T.pcTitle); set('pcDesc', T.pcDesc); set('pcKapat', T.pcClose);
+    set('loadText',       T.loading);
+    set('panelTitle',     T.panelTitle);
+    set('labelSize',      T.labelSize);
+    set('btnBaslat',      T.btnStart);
+    set('btnKilit',       T.btnLock);
+    set('arPanelTitle',   T.arPanelTitle);
+    set('arLabelSize',    T.labelSize);
+    set('arLabelRot',     T.labelRotate);
+    set('bYer',           T.bPlace);
+    set('bTas',           T.bMove);
+    set('bSab',           T.bFix);
+    set('bSif',           T.bReset);
+    set('bCik',           T.bExit);
+    set('bGercek',        T.bReal);
+    set('hint',           T.hint);
+    set('arGercekEtiket', T.realLabel);
+    set('iosBadge',       T.iosBadge);
+    set('iosPanelTitle',  T.iosPanelTitle);
+    set('iosLabelSize',   T.labelSize);
+    set('iosLabelRot',    T.labelRotate);
+    set('bIosGercek',     T.bIosReal);
+    set('bIosSif',        T.bIosReset);
+    set('bIosCik',        T.bIosExit);
+    set('arHataBaslik',   T.errTitle);
+    set('arHataMesaj',    T.errDefault);
+    set('arHataKapat',    T.errOk);
+    set('pcTitle',        T.pcTitle);
+    set('pcDesc',         T.pcDesc);
+    set('pcKapat',        T.pcClose);
+  }
+  function set(id, txt) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = txt;
   }
   applyTexts();
 
-  /* ─── SUPABASE & MATERYALLER ─── */
+  /* ─── MODEL VIEWER ─── */
+  var mv = document.getElementById('mv');
+  mv.setAttribute('src', GLB_PATH);
+  /* Başlangıçta ios-src'yi auto ile set et — gerçek boyut butonu değiştirecek */
+  mv.setAttribute('ios-src', USDZ_PATH + '#apple_ar_scale=auto&allowsContentScaling=1');
+
+  /* ─── KAYDEDILEN MATERYALLER ─── */
   var savedMaterials = [];
+
   function hexToRgbV(hex) {
-    if (!hex || hex.length < 7) return {r:1,g:1,b:1};
-    return { r:parseInt(hex.slice(1,3),16)/255, g:parseInt(hex.slice(3,5),16)/255, b:parseInt(hex.slice(5,7),16)/255 };
+    if (!hex || hex.length < 7) return {r:255,g:255,b:255};
+    return { r:parseInt(hex.slice(1,3),16), g:parseInt(hex.slice(3,5),16), b:parseInt(hex.slice(5,7),16) };
   }
 
   function applyMaterialsToMV(materials) {
-    if (!mv.model || !mv.model.materials) return;
-    materials.forEach((edit, idx) => {
-      var i = edit.index !== undefined ? edit.index : idx;
-      var mat = mv.model.materials[i];
+    var model = mv.model;
+    if (!model || !model.materials) return;
+    materials.forEach(function(edit, arrIdx) {
+      var i = (edit.index !== undefined) ? edit.index : arrIdx;
+      var mat = model.materials[i];
       if (!mat) return;
-      if (edit.hidden) mat.pbrMetallicRoughness.setBaseColorFactor([0,0,0,0]);
-      else {
+      if (edit.hidden) {
+        mat.pbrMetallicRoughness.setBaseColorFactor([0,0,0,0]);
+      } else {
         var rgb = hexToRgbV(edit.color);
-        mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r, rgb.g, rgb.b, 1]);
+        mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r/255, rgb.g/255, rgb.b/255, 1]);
       }
       if (edit.metalness !== undefined) mat.pbrMetallicRoughness.setMetallicFactor(edit.metalness);
       if (edit.roughness !== undefined) mat.pbrMetallicRoughness.setRoughnessFactor(edit.roughness);
@@ -578,21 +1171,48 @@
   }
 
   function applyMaterialsToThree(scene, materials) {
-    if (!scene || !materials) return;
-    var mats = [];
-    scene.traverse(o => { if(o.isMesh) { var m = Array.isArray(o.material)?o.material:[o.material]; m.forEach(x=>{if(!mats.includes(x))mats.push(x)}) }});
-    materials.forEach((edit, idx) => {
-      var i = edit.index !== undefined ? edit.index : idx;
-      var mat = mats[i]; if(!mat) return;
-      if (edit.hidden) mat.visible = false;
-      else {
-        mat.visible = true;
-        var rgb = hexToRgbV(edit.color);
-        if (mat.color) mat.color.setRGB(rgb.r, rgb.g, rgb.b);
-        if (edit.metalness !== undefined && mat.metalness !== undefined) mat.metalness = edit.metalness;
-        if (edit.roughness !== undefined && mat.roughness !== undefined) mat.roughness = edit.roughness;
+    if (!scene || !materials || materials.length === 0) return;
+    var threeMatsByName = {};
+    var allThreeMats    = [];
+    var seenUUIDs       = {};
+    scene.traverse(function(obj) {
+      if (!obj.isMesh) return;
+      var mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+      mats.forEach(function(mat) {
+        if (!mat || seenUUIDs[mat.uuid]) return;
+        seenUUIDs[mat.uuid] = true;
+        allThreeMats.push(mat);
+        var n = mat.name || '';
+        if (!threeMatsByName[n]) threeMatsByName[n] = [];
+        threeMatsByName[n].push(mat);
+      });
+    });
+    materials.forEach(function(edit, arrIdx) {
+      var editIdx = (edit.index !== undefined) ? edit.index : arrIdx;
+      var targets = [];
+      var eName = edit.name || '';
+      var byName = threeMatsByName[eName] || [];
+      if (byName.length === 1) {
+        targets = byName;
+      } else if (byName.length > 1) {
+        var sameNameEdits = materials.filter(function(e){ return (e.name||'') === eName; });
+        var posInSameName = sameNameEdits.indexOf(edit);
+        targets = [byName[posInSameName] || byName[0]];
+      } else {
+        if (allThreeMats[editIdx]) targets = [allThreeMats[editIdx]];
       }
-      mat.needsUpdate = true;
+      targets.forEach(function(mat) {
+        if (edit.hidden) {
+          mat.visible = false;
+        } else {
+          mat.visible = true;
+          var rgb = hexToRgbV(edit.color);
+          if (mat.color) mat.color.setRGB(rgb.r/255, rgb.g/255, rgb.b/255);
+          if (edit.metalness !== undefined && mat.metalness !== undefined) mat.metalness = edit.metalness;
+          if (edit.roughness !== undefined && mat.roughness !== undefined) mat.roughness = edit.roughness;
+        }
+        mat.needsUpdate = true;
+      });
     });
   }
 
@@ -604,203 +1224,566 @@
     xhr.onload = function() {
       if (xhr.status !== 200) return;
       try {
-        var s = JSON.parse(xhr.responseText)[0]; if(!s) return;
-        if (s.exposure) mv.setAttribute('exposure', s.exposure);
+        var rows = JSON.parse(xhr.responseText);
+        if (!rows || rows.length === 0) return;
+        var s = rows[0];
+        if (s.exposure)         mv.setAttribute('exposure', s.exposure);
         if (s.shadow_intensity) mv.setAttribute('shadow-intensity', s.shadow_intensity);
-        if (s.environment) mv.setAttribute('environment-image', s.environment);
-        if (s.bg_color) mv.style.background = s.bg_color;
-        if (s.scale) { baseScale = s.scale; applyMVScale(baseScale); syncSliders(100); }
-        if (s.rotate_y) mv.setAttribute('orientation', '0deg ' + s.rotate_y + 'deg 0deg');
-        if (s.materials) { 
-          savedMaterials = s.materials;
-          if (mv.loaded) applyMaterialsToMV(savedMaterials);
-          else mv.addEventListener('load', () => applyMaterialsToMV(savedMaterials), {once:true});
+        if (s.environment)      mv.setAttribute('environment-image', s.environment);
+        if (s.bg_color)         mv.style.background = s.bg_color;
+        if (s.scale) {
+          applyMVScale(s.scale);
+          syncSliders(Math.round(s.scale * 100));
         }
-      } catch(e){}
+        if (s.rotate_y) {
+          mv.setAttribute('orientation', '0deg ' + s.rotate_y + 'deg 0deg');
+        }
+        if (s.materials && s.materials.length > 0) {
+          savedMaterials = s.materials;
+          if (mv.loaded) {
+            applyMaterialsToMV(savedMaterials);
+          } else {
+            mv.addEventListener('load', function onMatLoad() {
+              mv.removeEventListener('load', onMatLoad);
+              applyMaterialsToMV(savedMaterials);
+            });
+          }
+        }
+      } catch(e) { console.warn('Settings parse error:', e); }
     };
     xhr.send();
   }
   loadModelSettings();
 
-  /* ─── DURUM MAKİNESİ & AR ─── */
-  var baseScale = 1.0, durum = 'tarama', gercekMod = false, modelHazir = false;
-  var renderer, scene, camera, xrSess, hitSrc, hitReq = false, retMesh, modelGrp, tPos, cPos;
-  var tScale = 1.0, cScale = 1.0, tRotY = 0, cRotY = 0, THREE_loaded = false;
+  /* ─── VIEW KAYDET ─── */
+  function recordView() {
+    var device = 'desktop';
+    var ua = navigator.userAgent;
+    if (/iphone|ipad|ipod/i.test(ua)) device = 'ios';
+    else if (/android/i.test(ua)) device = 'android';
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', SUPABASE_REST + '/model_views');
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('apikey', SUPABASE_ANON);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON);
+    xhr.send(JSON.stringify({ model_id: m, device_type: device }));
+    var xhr2 = new XMLHttpRequest();
+    xhr2.open('POST', SUPABASE_REST + '/rpc/increment_model_views');
+    xhr2.setRequestHeader('Content-Type', 'application/json');
+    xhr2.setRequestHeader('apikey', SUPABASE_ANON);
+    xhr2.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON);
+    xhr2.send(JSON.stringify({ model_name: m }));
+  }
+  recordView();
 
-  mv.addEventListener('load', () => { mv.classList.add('hazir'); document.getElementById('loadOverlay').classList.add('gizle'); });
+  /* ─── CİHAZ TESPİTİ ─── */
+  var isIOS    = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var hasWebXR = !!navigator.xr;
+  var isMobile = /android|iphone|ipad|ipod|mobile|tablet/i.test(navigator.userAgent) ||
+                 ('ontouchstart' in window && navigator.maxTouchPoints > 1);
+
+  /* ─── ELEMENTLER ─── */
+  var xrC            = document.getElementById('xrC'),
+      arUI           = document.getElementById('arUI'),
+      badge          = document.getElementById('badge'),
+      arGercekEtiket = document.getElementById('arGercekEtiket'),
+      retUI          = document.getElementById('retUI'),
+      selRing        = document.getElementById('selRing'),
+      arP            = document.getElementById('arP'),
+      slOn           = document.getElementById('slOn'),
+      vlOn           = document.getElementById('vlOn'),
+      slAr           = document.getElementById('slAr'),
+      vlAr           = document.getElementById('vlAr'),
+      slRot          = document.getElementById('slRot'),
+      vlRot          = document.getElementById('vlRot'),
+      btnKilit       = document.getElementById('btnKilit'),
+      btnBaslat      = document.getElementById('btnBaslat'),
+      bYer           = document.getElementById('bYer'),
+      bTas           = document.getElementById('bTas'),
+      bSab           = document.getElementById('bSab'),
+      bSif           = document.getElementById('bSif'),
+      bCik           = document.getElementById('bCik'),
+      bGercek        = document.getElementById('bGercek'),
+      iosPanel       = document.getElementById('iosPanel'),
+      slIos          = document.getElementById('slIos'),
+      vlIos          = document.getElementById('vlIos'),
+      slIosRot       = document.getElementById('slIosRot'),
+      vlIosRot       = document.getElementById('vlIosRot'),
+      bIosSif        = document.getElementById('bIosSif'),
+      bIosCik        = document.getElementById('bIosCik'),
+      bIosGercek     = document.getElementById('bIosGercek'),
+      loadOverlay    = document.getElementById('loadOverlay'),
+      arHata         = document.getElementById('arHata'),
+      arHataMesaj    = document.getElementById('arHataMesaj'),
+      arHataKapat    = document.getElementById('arHataKapat');
+
+  /* ─── DURUM ─── */
+  var mScale = 1.0, mRotY = 0, durum = 'tarama', baseScale = 1.0;
+  var renderer = null, scene = null, camera = null, xrSess = null;
+  var hitSrc = null, hitReq = false;
+  var retMesh = null, modelGrp = null, modelHazir = false, pivotOffset = 0;
+  var gercekMod = false;
+  var tPos, cPos, tScale = 1.0, cScale = 1.0, tRotY = 0, cRotY = 0;
+  var LP = 0.14, LS = 0.11, LR = 0.11;
+  var THREE_loaded = false;
+
+  arHataKapat.onclick = function() { arHata.classList.remove('ac'); };
+
+  function hataGoster(msg) {
+    arHataMesaj.textContent = msg || T.errDefault;
+    arHata.classList.add('ac');
+  }
+
+  /* ─── MODEL YÜKLENDİ ─── */
+  mv.addEventListener('load', function() {
+    mv.classList.add('hazir');
+    loadOverlay.classList.add('gizle');
+  });
+  mv.addEventListener('error', function() {
+    set('loadText', T.loadError);
+  });
 
   /* ─── ÖNİZLEME SLIDER ─── */
-  function applyMVScale(s) { mv.setAttribute('scale', s + ' ' + s + ' ' + s); }
-  document.getElementById('slOn').oninput = function() {
-    var v = +this.value; document.getElementById('vlOn').textContent = v + '%';
-    applyMVScale(baseScale * (v / 100)); syncSliders(v);
-  };
-  document.getElementById('btnKilit').onclick = function() {
-    var sl = document.getElementById('slOn'); sl.disabled = !sl.disabled;
-    this.textContent = sl.disabled ? T.btnLocked : T.btnLock; this.classList.toggle('kilitli', sl.disabled);
-  };
+  slOn.addEventListener('input', function() {
+    var v = +this.value;
+    vlOn.textContent = v + '%';
+    applyMVScale(baseScale * (v / 100));
+    syncSliders(v);
+  });
 
-  /* ─── AR BAŞLAT (KESİN ÇÖZÜM) ─── */
-  document.getElementById('btnBaslat').onclick = function() {
-    var isMobile = /android|iphone|ipad|ipod|mobile|tablet/i.test(navigator.userAgent) || ('ontouchstart' in window && navigator.maxTouchPoints > 1);
-    if (!isMobile) { showQR(); return; }
-    if (/iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) startIOSAR();
-    else webxrDestekKontrol();
-  };
+  function applyMVScale(s) {
+    mv.setAttribute('scale', s + ' ' + s + ' ' + s);
+  }
+
+  /* ─── KİLİT BUTONU ─── */
+  btnKilit.addEventListener('click', function() {
+    slOn.disabled = !slOn.disabled;
+    this.textContent = slOn.disabled ? T.btnLocked : T.btnLock;
+    this.classList.toggle('kilitli', slOn.disabled);
+  });
+
+  /* ══ QR MODAL ══ */
+  var pcPanel   = document.getElementById('pcPanel');
+  var pcUrlBox  = document.getElementById('pcUrlBox');
+  var pcKapat   = document.getElementById('pcKapat');
+  var qrWrap    = document.getElementById('qrWrap');
+  var qrLoading = document.getElementById('qrLoading');
+
+  pcKapat.onclick = function() { pcPanel.classList.remove('ac'); };
 
   function showQR() {
-    var url = window.location.href; document.getElementById('pcUrlBox').textContent = url;
-    document.getElementById('pcPanel').classList.add('ac');
-    if (!document.getElementById('qrScript')) {
-      var s = document.createElement('script'); s.id='qrScript'; s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-      s.onload = () => { new QRCode(document.getElementById('qrWrap'), {text:url, width:160, height:160}); };
-      document.head.appendChild(s);
-    }
+    var url = window.location.href;
+    pcUrlBox.textContent = url;
+    pcPanel.classList.add('ac');
+    if (document.getElementById('qrScript')) { renderQR(url); return; }
+    var s = document.createElement('script');
+    s.id  = 'qrScript';
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    s.onload = function() { renderQR(url); };
+    document.head.appendChild(s);
   }
 
-  function startIOSAR() {
-    var ts = new Date().getTime();
-    var usdz = USDZ_PATH + (gercekMod ? '#apple_ar_scale=fixed&allowsContentScaling=0' : '#apple_ar_scale=auto&allowsContentScaling=1') + '&t=' + ts;
-    var a = document.createElement('a'); a.rel = 'ar'; a.href = usdz;
-    var img = document.createElement('img'); img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-    a.appendChild(img); document.body.appendChild(a); 
-    setTimeout(() => { a.click(); a.remove(); }, 50);
-    document.getElementById('iosPanel').classList.add('ac');
-    mv.addEventListener('ar-status', e => { if(e.detail.status==='not-presenting') document.getElementById('iosPanel').classList.remove('ac'); }, {once:true});
-  }
-
-  document.getElementById('bIosGercek').onclick = function() {
-    gercekMod = !gercekMod; this.textContent = gercekMod ? T.bRealOff : T.bReal;
-    this.classList.toggle('aktif', gercekMod);
-    set('iosBadge', gercekMod ? T.iosBadgeReal : T.iosBadge); startIOSAR();
-  };
-
-  /* ─── ANDROID WEBXR ─── */
-  function webxrDestekKontrol() {
-    if (!navigator.xr) { mv.activateAR(); return; }
-    navigator.xr.isSessionSupported('immersive-ar').then(ok => { if(ok) loadThreeAndStart(); else mv.activateAR(); }).catch(()=>mv.activateAR());
-  }
-
-  function loadThreeAndStart() {
-    if (THREE_loaded) { webxrBaslat(); return; }
-    var s1 = document.createElement('script'); s1.src = 'https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js';
-    s1.onload = () => {
-      var s2 = document.createElement('script'); s2.src = 'https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/loaders/GLTFLoader.js';
-      s2.onload = () => { THREE_loaded = true; webxrBaslat(); }; document.head.appendChild(s2);
-    };
-    document.head.appendChild(s1);
-  }
-
-  function webxrBaslat() {
-    navigator.xr.requestSession('immersive-ar', { requiredFeatures:['hit-test'], optionalFeatures:['dom-overlay'], domOverlay:{root:document.getElementById('arUI')} }).then(sess => {
-      xrSess = sess; renderer = new THREE.WebGLRenderer({ canvas:document.getElementById('xrC'), alpha:true, antialias:true });
-      renderer.setPixelRatio(window.devicePixelRatio); renderer.setSize(window.innerWidth, window.innerHeight); renderer.xr.enabled = true;
-      renderer.xr.setSession(sess).then(() => {
-        scene = new THREE.Scene(); camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 100);
-        scene.add(new THREE.AmbientLight(0xffffff, 2.0)); tPos = new THREE.Vector3(); cPos = new THREE.Vector3();
-        retMesh = new THREE.Mesh(new THREE.RingGeometry(0.04, 0.06, 32).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({color:0x19b0c7, transparent:true, opacity:0.8}));
-        retMesh.matrixAutoUpdate = false; retMesh.visible = false; scene.add(retMesh);
-        new THREE.GLTFLoader().load(GLB_PATH, g => {
-          modelGrp = g.scene; scene.add(modelGrp); modelGrp.visible = false;
-          var box = new THREE.Box3().setFromObject(modelGrp); var sz = new THREE.Vector3(); box.getSize(sz);
-          var maxD = Math.max(sz.x, sz.y, sz.z); baseScale = maxD > 0 ? 1.5/maxD : 1.0;
-          pivotOffset = -box.min.y; cScale = baseScale; tScale = baseScale; modelHazir = true;
-          if (savedMaterials.length > 0) applyMaterialsToThree(modelGrp, savedMaterials);
-        });
-        document.getElementById('xrC').classList.add('ac'); document.getElementById('arUI').classList.add('ac'); setDurum('tarama');
-        renderer.setAnimationLoop((ts, frame) => {
-          if (!frame) return; var ref = renderer.xr.getReferenceSpace();
-          if (!hitReq) { sess.requestReferenceSpace('viewer').then(vs => { sess.requestHitTestSource({space:vs}).then(src => hitSrc = src); }); hitReq = true; }
-          if (hitSrc && (durum === 'tarama' || durum === 'tasima')) {
-            var hits = frame.getHitTestResults(hitSrc);
-            if (hits.length > 0) {
-              var pose = hits[0].getPose(ref); retMesh.visible = true; retMesh.matrix.fromArray(pose.transform.matrix);
-              if (durum === 'tasima') { var p = new THREE.Vector3().setFromMatrixPosition(retMesh.matrix); p.y += pivotOffset * cScale; tPos.copy(p); }
-            }
-          }
-          if (modelGrp && modelGrp.visible) {
-            cPos.lerp(tPos, 0.2); modelGrp.position.copy(cPos);
-            cScale += (tScale - cScale) * 0.15; modelGrp.scale.setScalar(cScale);
-            cRotY += (tRotY - cRotY) * 0.15; modelGrp.rotation.y = THREE.MathUtils.degToRad(cRotY);
-          }
-          renderer.render(scene, camera);
-        });
-      });
-      sess.addEventListener('end', cleanup);
+  function renderQR(url) {
+    while (qrWrap.firstChild) qrWrap.removeChild(qrWrap.firstChild);
+    new QRCode(qrWrap, {
+      text: url, width: 160, height: 160,
+      colorDark: '#1a2e32', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
     });
   }
 
-  /* ─── ANDROID GERÇEK BOYUT ─── */
-  document.getElementById('bGercek').onclick = function() {
-    if (!modelHazir) return; gercekMod = !gercekMod;
-    this.textContent = gercekMod ? T.bRealOff : T.bReal; this.classList.toggle('aktif', gercekMod);
-    if (gercekMod) {
-        tScale = 1.0; cScale = 1.0; // Anında 1:1 metreye kilitliyoruz
-        document.getElementById('arGercekEtiket').classList.add('ac');
-        document.getElementById('arP').classList.add('gercekMod');
-    } else {
-        tScale = baseScale; cScale = baseScale;
-        document.getElementById('arGercekEtiket').classList.remove('ac');
-        document.getElementById('arP').classList.remove('gercekMod');
-        syncSliders(100);
-    }
-  };
+  /* ─── AR BAŞLAT ─── */
+  btnBaslat.addEventListener('click', function() {
+    if (!isMobile) { showQR(); return; }
+    if (isIOS)         { startIOSAR(); }
+    else if (hasWebXR) { webxrDestekKontrol(); }
+    else               { mv.activateAR(); }
+  });
 
-  /* ─── YARDIMCILAR ─── */
-  function setDurum(d) {
-    durum = d; var b = document.getElementById('badge'); b.className = '';
-    document.getElementById('retUI').classList.toggle('ac', d==='tarama'||d==='tasima');
-    document.getElementById('bYer').style.display = d==='tarama' ? 'block' : 'none';
-    document.getElementById('bTas').style.display = d==='yerlestirildi' ? 'block' : 'none';
-    document.getElementById('bSab').textContent = d==='sabitlendi' ? T.bUnfix : T.bFix;
-    if(d==='tarama'){ b.textContent=T.badgeScan; b.classList.add('tur'); }
-    else if(d==='yerlestirildi'){ b.textContent=T.badgePlaced; }
-    else if(d==='tasima'){ b.textContent=T.badgeMove; b.classList.add('mav'); document.getElementById('selRing').classList.add('ac'); }
-    else if(d==='sabitlendi'){ b.textContent=T.badgeLocked; b.classList.add('yes'); }
-    if(d!=='tasima') document.getElementById('selRing').classList.remove('ac');
+  /* ══════════════════════════════════════════
+     iOS AR — DÜZELTİLMİŞ
+     Problem: ios-src değiştirip activateAR() çağırmak
+     Quick Look'ta önbellekten açılıyor, yeni URL'i görmüyor.
+     Çözüm: Her seferinde <a rel="ar"> elementi oluşturup
+     programatik tıklıyoruz — Quick Look bunu taze URL olarak işler.
+  ══════════════════════════════════════════ */
+  function iosARLinkTikla(usdzUrl) {
+    /* Varsa önceki linki temizle */
+    var eskiLink = document.getElementById('_iosARLink');
+    if (eskiLink) eskiLink.remove();
+
+    var a   = document.createElement('a');
+    a.id    = '_iosARLink';
+    a.rel   = 'ar';
+    a.href  = usdzUrl;
+
+    /* iOS Quick Look, içinde <img> olan <a rel="ar"> elementini tanır */
+    var img = document.createElement('img');
+    img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    a.appendChild(img);
+    a.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;';
+    document.body.appendChild(a);
+    a.click();
   }
 
-  document.getElementById('bYer').onclick = function() {
-    if (!retMesh.visible) return; var p = new THREE.Vector3().setFromMatrixPosition(retMesh.matrix);
-    p.y += pivotOffset * (gercekMod ? 1.0 : baseScale); tPos.copy(p); cPos.copy(p);
+  function startIOSAR() {
+    iosGercekModKapat();
+    iosARLinkTikla(USDZ_PATH + '#apple_ar_scale=auto&allowsContentScaling=1');
+    iosPanel.classList.add('ac');
+
+    /* ar-status: Quick Look kapandığında paneli gizle */
+    mv.addEventListener('ar-status', function iosH(e) {
+      if (e.detail.status === 'not-presenting') {
+        iosPanel.classList.remove('ac');
+        iosGercekModKapat();
+        mv.removeEventListener('ar-status', iosH);
+      }
+    });
+  }
+
+  /* iOS Gerçek Boyut */
+  var iosGercekAktif = false;
+
+  bIosGercek.addEventListener('click', function() {
+    iosGercekAktif = !iosGercekAktif;
+    if (iosGercekAktif) {
+      this.textContent = T.bIosRealOff;
+      this.classList.add('aktif');
+      slIos.disabled = true;
+      slIos.style.opacity = '0.3';
+      set('iosBadge', T.iosBadgeReal);
+      /*
+        apple_ar_scale=fixed   → Quick Look modeli USDZ içindeki gerçek ölçekte gösterir
+        allowsContentScaling=0 → Kullanıcı pinch ile boyut değiştiremez
+      */
+      iosARLinkTikla(USDZ_PATH + '#apple_ar_scale=fixed&allowsContentScaling=0');
+    } else {
+      iosGercekModKapat();
+      iosARLinkTikla(USDZ_PATH + '#apple_ar_scale=auto&allowsContentScaling=1');
+    }
+  });
+
+  function iosGercekModKapat() {
+    iosGercekAktif = false;
+    bIosGercek.textContent = T.bIosReal;
+    bIosGercek.classList.remove('aktif');
+    slIos.disabled = false;
+    slIos.style.opacity = '1';
+    set('iosBadge', T.iosBadge);
+  }
+
+  bIosSif.onclick  = function() {
+    slIos.value = 100; vlIos.textContent = '100%';
+    slIosRot.value = 0; vlIosRot.textContent = '0°';
+    syncSliders(100);
+  };
+  bIosCik.onclick  = function() { location.reload(); };
+  slIos.oninput    = function() {
+    if (this.disabled) return;
+    var v = +this.value;
+    vlIos.textContent = v + '%';
+    syncSliders(v);
+  };
+  slIosRot.oninput = function() {
+    vlIosRot.textContent = Math.round(+this.value) + '°';
+  };
+
+  /* ══ WebXR Destek Kontrolü ══ */
+  function webxrDestekKontrol() {
+    navigator.xr.isSessionSupported('immersive-ar').then(function(ok) {
+      if (ok) { loadThreeAndStart(); }
+      else    { mv.activateAR(); }
+    }).catch(function() { mv.activateAR(); });
+  }
+
+  /* Three.js Dinamik Yükleme */
+  function loadThreeAndStart() {
+    if (THREE_loaded && typeof THREE !== 'undefined') { webxrBaslat(); return; }
+    var s1 = document.createElement('script');
+    s1.src    = 'https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js';
+    s1.onload = function() {
+      var s2 = document.createElement('script');
+      s2.src    = 'https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/loaders/GLTFLoader.js';
+      s2.onload = function() { THREE_loaded = true; webxrBaslat(); };
+      s2.onerror= function() { hataGoster(T.errLoader); };
+      document.head.appendChild(s2);
+    };
+    s1.onerror = function() { hataGoster(T.errThreeJS); };
+    document.head.appendChild(s1);
+  }
+
+  /* ══ Android WebXR ══ */
+  function webxrBaslat() {
+    navigator.xr.requestSession('immersive-ar', {
+      requiredFeatures: ['hit-test'],
+      optionalFeatures: ['dom-overlay', 'anchors', 'local-floor', 'plane-detection'],
+      domOverlay: { root: arUI }
+    }).then(function(sess) {
+      xrSess = sess;
+      renderer = new THREE.WebGLRenderer({ canvas: xrC, alpha: true, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.xr.enabled = true;
+      renderer.xr.setReferenceSpaceType('local');
+
+      renderer.xr.setSession(sess).then(function() {
+        scene  = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.001, 100);
+        scene.add(new THREE.AmbientLight(0xffffff, 2.0));
+        var sun = new THREE.DirectionalLight(0xfff5e0, 1.2);
+        sun.position.set(2, 6, 3); scene.add(sun);
+
+        retMesh = new THREE.Mesh(
+          new THREE.RingGeometry(0.04, 0.07, 48).rotateX(-Math.PI / 2),
+          new THREE.MeshBasicMaterial({ color: 0x19b0c7, transparent: true, opacity: 0.75 })
+        );
+        retMesh.matrixAutoUpdate = false; retMesh.visible = false; scene.add(retMesh);
+
+        new THREE.GLTFLoader().load(GLB_PATH, function(g) {
+          modelGrp = g.scene; scene.add(modelGrp);
+          modelGrp.visible = false; modelHazir = true;
+          var box = new THREE.Box3().setFromObject(modelGrp);
+          var sz  = new THREE.Vector3(); box.getSize(sz);
+          var maxDim = Math.max(sz.x, sz.y, sz.z);
+          baseScale   = maxDim > 0 ? 1.5 / maxDim : 1.0;
+          pivotOffset = -box.min.y;
+          tPos = new THREE.Vector3(); cPos = new THREE.Vector3();
+          /* Başlangıç: normal mod */
+          gercekMod = false;
+          mScale  = baseScale;
+          tScale  = baseScale;
+          cScale  = baseScale;
+          tRotY   = 0; cRotY = 0;
+          syncSliders(100);
+          arGercekKapatUI();
+          /* Kaydedilen materyal renklerini AR sahnesine uygula */
+          if (savedMaterials && savedMaterials.length > 0) {
+            applyMaterialsToThree(modelGrp, savedMaterials);
+          }
+        }, undefined, function() { hataGoster(T.errModelAR); });
+
+        xrC.classList.add('ac'); arUI.classList.add('ac'); setDurum('tarama');
+
+        renderer.setAnimationLoop(function(ts, frame) {
+          if (!frame) return;
+          var ref = renderer.xr.getReferenceSpace();
+
+          if (!hitReq) {
+            hitReq = true;
+            sess.requestReferenceSpace('viewer').then(function(vs) {
+              sess.requestHitTestSource({ space: vs })
+                .then(function(src) { hitSrc = src; })
+                .catch(function(e) { console.warn('hitTestSource:', e); });
+            });
+          }
+
+          var hitOk = false;
+          if (hitSrc && (durum === 'tarama' || durum === 'tasima')) {
+            var hits = frame.getHitTestResults(hitSrc);
+            if (hits.length > 0) {
+              var pose = hits[0].getPose(ref);
+              if (pose) {
+                hitOk = true; retMesh.visible = true;
+                retMesh.matrix.fromArray(pose.transform.matrix);
+                if (durum === 'tasima' && modelGrp) {
+                  var rp = new THREE.Vector3().setFromMatrixPosition(retMesh.matrix);
+                  rp.y += pivotOffset * cScale; tPos.copy(rp); modelGrp.visible = true;
+                }
+              }
+            }
+          }
+          if (!hitOk && durum !== 'sabitlendi') retMesh.visible = false;
+
+          if (modelGrp && modelGrp.visible && tPos) {
+            cPos.lerp(tPos, LP); modelGrp.position.copy(cPos);
+            cScale += (tScale - cScale) * LS; modelGrp.scale.setScalar(cScale);
+            var dr = tRotY - cRotY;
+            if (dr >  180) dr -= 360;
+            if (dr < -180) dr += 360;
+            cRotY += dr * LR;
+            modelGrp.rotation.y = THREE.MathUtils.degToRad(cRotY);
+          }
+          renderer.render(scene, camera);
+        });
+
+        sess.addEventListener('end', cleanup);
+      });
+    }).catch(function(err) {
+      console.warn('WebXR session:', err); mv.activateAR();
+    });
+  }
+
+  /* ══════════════════════════════════════════
+     Android Gerçek Boyut — DÜZELTİLMİŞ
+     Problem: mScale=1.0 setleniyordu ama cScale güncellenmiyordu,
+     lerp animasyonu baseScale'den 1.0'a doğru gidiyordu — yerleştirme
+     sırasında boyut atlıyordu.
+     Çözüm: tScale, cScale ve mScale hepsini aynı anda setliyoruz.
+     Gerçek boyut = GLB birimlerinde 1 birim = 1 metre demek.
+  ══════════════════════════════════════════ */
+  bGercek.addEventListener('click', function() {
+    if (!modelHazir) return;
+    gercekMod = !gercekMod;
+
+    if (gercekMod) {
+      /* Gerçek boyut: GLB'deki 1 birim → 1 metre.
+         baseScale hesaplamasını bypass et. */
+      mScale  = 1.0;
+      tScale  = 1.0;
+      cScale  = 1.0; /* lerp'i anında atla, titreme olmasın */
+      if (modelGrp) modelGrp.scale.setScalar(1.0);
+      arGercekAcUI();
+    } else {
+      /* Normal boyuta dön */
+      mScale  = baseScale;
+      tScale  = baseScale;
+      cScale  = baseScale;
+      if (modelGrp) modelGrp.scale.setScalar(baseScale);
+      syncSliders(100);
+      arGercekKapatUI();
+    }
+  });
+
+  function arGercekAcUI() {
+    bGercek.textContent = T.bRealOff;
+    bGercek.classList.add('aktif');
+    arP.classList.add('gercekMod');
+    arGercekEtiket.classList.add('ac');
+  }
+  function arGercekKapatUI() {
+    bGercek.textContent = T.bReal;
+    bGercek.classList.remove('aktif');
+    arP.classList.remove('gercekMod');
+    arGercekEtiket.classList.remove('ac');
+  }
+
+  /* ─── DURUM MAKİNESİ ─── */
+  function setDurum(d) {
+    durum = d;
+    badge.className = '';
+    retUI.classList.remove('ac'); selRing.classList.remove('ac');
+    bTas.style.display = ''; bYer.style.display = '';
+    bSab.textContent = T.bFix;
+
+    switch (d) {
+      case 'tarama':
+        badge.textContent = T.badgeScan; badge.classList.add('tur');
+        retUI.classList.add('ac'); bTas.style.display = 'none'; break;
+      case 'yerlestirildi':
+        badge.textContent = T.badgePlaced; bYer.style.display = 'none'; break;
+      case 'tasima':
+        badge.textContent = T.badgeMove; badge.classList.add('mav');
+        retUI.classList.add('ac'); selRing.classList.add('ac');
+        bYer.style.display = 'none'; bTas.style.display = 'none'; break;
+      case 'sabitlendi':
+        badge.textContent = T.badgeLocked; badge.classList.add('yes');
+        bYer.style.display = 'none'; bSab.textContent = T.bUnfix; break;
+    }
+    if (gercekMod) arGercekEtiket.classList.add('ac');
+  }
+
+  /* ─── AR BUTONLARI ─── */
+  bYer.onclick = function() {
+    if (!modelHazir || !retMesh || !retMesh.visible) return;
+    var rp = new THREE.Vector3().setFromMatrixPosition(retMesh.matrix);
+    rp.y += pivotOffset * mScale; tPos.copy(rp); cPos.copy(rp);
     modelGrp.visible = true; setDurum('yerlestirildi');
   };
-  document.getElementById('bTas').onclick = () => setDurum('tasima');
-  document.getElementById('bSab').onclick = () => setDurum(durum==='sabitlendi' ? 'yerlestirildi' : 'sabitlendi');
-  document.getElementById('bSif').onclick = () => { if(modelGrp) modelGrp.visible = false; setDurum('tarama'); };
-  document.getElementById('bCik').onclick = () => { if(xrSess) xrSess.end(); };
-  
-  document.getElementById('slAr').oninput = function() { if(durum==='sabitlendi'||gercekMod) return; var v=+this.value; tScale=baseScale*(v/100); syncSliders(v); };
-  document.getElementById('slRot').oninput = function() { if(durum!=='sabitlendi') tRotY=+this.value; };
-  function syncSliders(v) { 
-    document.getElementById('slAr').value=v; document.getElementById('vlAr').textContent=v+'%'; 
-    document.getElementById('slOn').value=v; document.getElementById('vlOn').textContent=v+'%'; 
-    if(baseScale>0) applyMVScale(baseScale*(v/100)); 
-  }
-  function cleanup() { document.getElementById('xrC').classList.remove('ac'); document.getElementById('arUI').classList.remove('ac'); if(renderer) renderer.dispose(); modelHazir=false; hitReq=false; }
+  bTas.onclick = function() { if (durum !== 'sabitlendi') setDurum('tasima'); };
+  bSab.onclick = function() { if (durum === 'sabitlendi') setDurum('yerlestirildi'); else setDurum('sabitlendi'); };
+  slAr.oninput = function() {
+    if (durum === 'sabitlendi' || gercekMod) return;
+    var v = +this.value;
+    mScale  = baseScale * (v / 100);
+    tScale  = mScale;
+    vlAr.textContent = v + '%';
+    syncSliders(v);
+  };
+  slRot.oninput = function() {
+    if (durum !== 'sabitlendi') {
+      mRotY = +this.value; tRotY = mRotY;
+      vlRot.textContent = Math.round(mRotY) + '°';
+    }
+  };
+  bSif.onclick = function() {
+    if (durum !== 'sabitlendi') {
+      mScale  = gercekMod ? 1.0 : baseScale;
+      tScale  = mScale;
+      cScale  = mScale;
+      mRotY   = 0; tRotY = 0;
+      if (modelGrp) modelGrp.visible = false;
+      if (!gercekMod) syncSliders(100);
+      setDurum('tarama');
+    }
+  };
+  bCik.onclick = function() { if (xrSess) xrSess.end(); else cleanup(); };
 
-  /* ─── TOUCH ─── */
-  var drag = { on:false, x:0, y:0 }, pinch = { on:false, d0:0, s0:1 };
-  var cvs = document.getElementById('xrC');
-  cvs.ontouchstart = e => {
+  /* ─── SYNC SLIDERS ─── */
+  function syncSliders(v) {
+    v = Math.round(Math.min(Math.max(v, 10), 500));
+    slAr.value  = v; vlAr.textContent  = v + '%';
+    slOn.value  = v; vlOn.textContent  = v + '%';
+    slIos.value = v; vlIos.textContent = v + '%';
+    if (baseScale > 0) applyMVScale(baseScale * v / 100);
+  }
+
+  /* ─── CLEANUP ─── */
+  function cleanup() {
+    if (renderer) { renderer.setAnimationLoop(null); renderer.dispose(); renderer = null; }
+    xrC.classList.remove('ac'); arUI.classList.remove('ac');
+    xrSess = null; scene = null; modelHazir = false; modelGrp = null;
+    durum = 'tarama'; hitSrc = null; hitReq = false;
+    gercekMod = false; arGercekKapatUI(); syncSliders(100);
+  }
+
+  /* ─── DOKUNMA (WebXR) ─── */
+  var drag  = { on:false, x:0, y:0 };
+  var pinch = { on:false, d0:0, s0:0 };
+  var twist = { on:false, a0:0, r0:0 };
+
+  function d2(t) { var dx=t[0].clientX-t[1].clientX, dy=t[0].clientY-t[1].clientY; return Math.sqrt(dx*dx+dy*dy); }
+  function a2(t) { return Math.atan2(t[1].clientY-t[0].clientY, t[1].clientX-t[0].clientX)*180/Math.PI; }
+
+  xrC.addEventListener('touchstart', function(e) {
+    if (durum === 'sabitlendi') return;
     if (e.touches.length === 1) { drag.on=true; drag.x=e.touches[0].clientX; drag.y=e.touches[0].clientY; }
-    if (e.touches.length === 2) { drag.on=false; pinch.on=true; pinch.d0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY); pinch.s0=tScale; }
-  };
-  cvs.ontouchmove = e => {
-    if (drag.on && modelGrp && durum !== 'sabitlendi') {
-      var dx=e.touches[0].clientX-drag.x, dy=e.touches[0].clientY-drag.y; drag.x=e.touches[0].clientX; drag.y=e.touches[0].clientY;
-      var r=new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion); r.y=0; r.normalize();
-      var u=new THREE.Vector3(0,1,0).applyQuaternion(camera.quaternion); u.y=0; u.normalize();
-      tPos.add(r.multiplyScalar(-dx*0.0012).add(u.multiplyScalar(dy*0.0012)));
+    if (e.touches.length === 2) { drag.on=false; pinch.on=true; pinch.d0=d2(e.touches); pinch.s0=tScale; twist.on=true; twist.a0=a2(e.touches); twist.r0=tRotY; }
+  }, { passive:true });
+
+  xrC.addEventListener('touchmove', function(e) {
+    if (durum === 'sabitlendi') return;
+    if (drag.on && e.touches.length === 1 && modelGrp && tPos && camera) {
+      var dx = e.touches[0].clientX - drag.x, dy = e.touches[0].clientY - drag.y;
+      drag.x = e.touches[0].clientX; drag.y = e.touches[0].clientY;
+      var dist = camera.position.distanceTo(modelGrp.position);
+      var uPx  = (2 * dist * Math.tan(camera.fov * Math.PI / 360)) / window.innerHeight;
+      var r = new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion);
+      var u = new THREE.Vector3(0,1,0).applyQuaternion(camera.quaternion);
+      r.y = 0; r.normalize(); u.y = 0; u.normalize();
+      tPos.add(r.multiplyScalar(-dx * uPx).add(u.multiplyScalar(dy * uPx)));
     }
-    if (pinch.on && !gercekMod) {
-      var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
-      tScale = pinch.s0 * (d/pinch.d0); syncSliders(Math.round((tScale/baseScale)*100));
+    if (e.touches.length === 2) {
+      if (pinch.on && !gercekMod) {
+        mScale = Math.min(Math.max(pinch.s0 * (d2(e.touches) / pinch.d0), baseScale * 0.1), baseScale * 5);
+        tScale = mScale;
+        syncSliders(Math.round((mScale / baseScale) * 100));
+      }
+      if (twist.on) {
+        mRotY = ((twist.r0 + a2(e.touches) - twist.a0) + 360) % 360;
+        tRotY = mRotY; slRot.value = Math.round(mRotY); vlRot.textContent = Math.round(mRotY) + '°';
+      }
     }
-  };
-  cvs.ontouchend = () => { drag.on=false; pinch.on=false; };
+  }, { passive:true });
+
+  xrC.addEventListener('touchend', function() {
+    drag.on = false; pinch.on = false; twist.on = false;
+  }, { passive:true });
 
 })();
 </script>
+</body>
+</html>
+
 </body>
 </html>
