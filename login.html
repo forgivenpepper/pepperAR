@@ -4,82 +4,187 @@
   <meta charset="UTF-8">
   <title>pepperAR — Giriş</title>
   <style>
+    :root {
+      /* LIGHT MODE (Standart) */
+      --bg:          #fafafa;
+      --bg2:         #ffffff;
+      --bg3:         #f4f4f5;
+      --border:      #e4e4e7;
+      --border2:     #d4d4d8;
+      
+      --accent:      #d97706; /* Koyu Sarı / Hardal */
+      --accent-hov:  #b45309;
+      --accent-bg:   rgba(217, 119, 6, 0.08);
+      
+      --text:        #18181b;
+      --text2:       #52525b;
+      --text3:       #a1a1aa;
+      
+      --red:         #ef4444;
+      --red-bg:      rgba(239, 68, 68, 0.08);
+      
+      --radius:      8px;
+      --radius-lg:   12px;
+      --border-w:    1px;
+    }
+
+    [data-theme="dark"] {
+      /* DARK MODE */
+      --bg:          #0a0a0a;
+      --bg2:         #121212;
+      --bg3:         #1a1a1a;
+      --border:      #27272a;
+      --border2:     #3f3f46;
+      
+      --accent:      #facc15; /* Karanlıkta parlayan sarı */
+      --accent-hov:  #eab308;
+      --accent-bg:   rgba(250, 204, 21, 0.1);
+      
+      --text:        #f4f4f5;
+      --text2:       #a1a1aa;
+      --text3:       #71717a;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { 
-      font-family: system-ui, sans-serif; 
-      background: #0a0a0a; 
-      color: #fff;
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      position: relative;
     }
+
+    /* Minimalist Grid Pattern */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+      transition: opacity 0.3s ease;
+    }
+
     .card {
-      background: #111;
-      border: 1px solid #222;
-      border-radius: 16px;
+      background: var(--bg2);
+      border: var(--border-w) solid var(--border);
+      border-radius: var(--radius-lg);
       padding: 40px;
       width: 100%;
       max-width: 400px;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+      transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
     }
-    .logo { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-    .logo span { color: #ff4500; }
-    .subtitle { color: #666; font-size: 14px; margin-bottom: 32px; }
+    [data-theme="dark"] .card { box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+
+    .logo { font-size: 24px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
+    .logo span { color: var(--accent); }
+    
+    .subtitle { color: var(--text2); font-size: 14px; margin-bottom: 32px; font-weight: 500; }
+    
     input {
       width: 100%;
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 8px;
+      background: var(--bg);
+      border: var(--border-w) solid var(--border2);
+      border-radius: var(--radius);
       padding: 12px 16px;
-      color: #fff;
-      font-size: 15px;
+      color: var(--text);
+      font-size: 14px;
       margin-bottom: 12px;
       outline: none;
+      transition: all 0.2s;
+      font-family: inherit;
     }
-    input:focus { border-color: #ff4500; }
+    input::placeholder { color: var(--text3); }
+    input:focus { 
+      border-color: var(--accent); 
+      box-shadow: 0 0 0 3px var(--accent-bg); 
+      background: var(--bg2); 
+    }
+    
     button {
       width: 100%;
-      background: #ff4500;
+      background: var(--accent);
       color: #fff;
       border: none;
-      border-radius: 8px;
+      border-radius: var(--radius);
       padding: 13px;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       margin-bottom: 12px;
+      transition: all 0.2s;
+      font-family: inherit;
     }
+    button:hover { background: var(--accent-hov); transform: translateY(-1px); }
+    [data-theme="dark"] button { color: #000; }
+    
     button.secondary {
       background: transparent;
-      border: 1px solid #333;
-      color: #aaa;
+      border: var(--border-w) solid var(--border2);
+      color: var(--text2);
     }
-    .divider { 
-      text-align: center; 
-      color: #444; 
-      font-size: 13px; 
-      margin: 16px 0; 
+    button.secondary:hover { 
+      background: var(--bg3); 
+      color: var(--text); 
+      border-color: var(--border); 
+      transform: none; 
     }
+    [data-theme="dark"] button.secondary { color: var(--text2); }
+    [data-theme="dark"] button.secondary:hover { color: var(--text); }
+
+    .divider { text-align: center; color: var(--text3); font-size: 13px; margin: 16px 0; font-weight: 500; }
+    
     .error { 
-      color: #ff4500; 
+      color: var(--red); 
       font-size: 13px; 
       margin-bottom: 12px; 
       display: none; 
+      background: var(--red-bg); 
+      padding: 10px; 
+      border-radius: var(--radius); 
+      border: var(--border-w) solid rgba(239, 68, 68, 0.2); 
     }
-    .tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+    
+    .tabs { 
+      display: flex; gap: 4px; margin-bottom: 24px; 
+      background: var(--bg3); padding: 4px; 
+      border-radius: var(--radius); 
+      border: var(--border-w) solid var(--border); 
+    }
     .tab {
       flex: 1; padding: 8px; text-align: center;
-      border-radius: 8px; cursor: pointer;
-      font-size: 14px; color: #666;
-      border: 1px solid transparent;
+      border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: var(--text2);
+      border: var(--border-w) solid transparent;
+      transition: all 0.2s;
     }
+    .tab:hover { color: var(--text); }
     .tab.active { 
-      background: #1a1a1a; 
-      border-color: #333; 
-      color: #fff; 
+      background: var(--bg2); 
+      border-color: var(--border); 
+      color: var(--text); 
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
     }
+    [data-theme="dark"] .tab.active { box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
   </style>
 </head>
+<script>
+  // Sayfa açılır açılmaz kullanıcının tercih ettiği temayı uygula
+  const savedTheme = localStorage.getItem('pepper_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
 <body>
 <div class="card">
   <div class="logo">pepper<span>AR</span></div>
