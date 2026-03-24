@@ -517,6 +517,37 @@
   const savedTheme = localStorage.getItem('pepper_theme') || 'light';
   document.documentElement.setAttribute('data-theme', savedTheme);
 
+  // ─── SOL MENÜ AKORDEON YAPISI ───
+  document.addEventListener("DOMContentLoaded", function() {
+    const sections = document.querySelectorAll('.ed-sec');
+    sections.forEach((sec, index) => {
+      const title = sec.querySelector('.sec-title');
+      if (!title) return;
+      
+      // Eğer HTML'de sec-content yoksa otomatik oluştur ve içine al
+      let content = sec.querySelector('.sec-content');
+      if (!content) {
+        content = document.createElement('div');
+        content.className = 'sec-content';
+        while (title.nextSibling) {
+          content.appendChild(title.nextSibling);
+        }
+        sec.appendChild(content);
+        
+        // Başlığa tıklayınca aç/kapat
+        title.style.cursor = 'pointer';
+        title.addEventListener('click', () => {
+          sec.classList.toggle('collapsed');
+        });
+      }
+
+      // Materyaller sekmesi (genellikle 3. index) hariç diğerlerini kapalı başlat
+      if (index !== 3) {
+        sec.classList.add('collapsed');
+      }
+    });
+  });
+
   // ─── MEVCUT JS MANTIĞI ───
   (function(){
 
@@ -824,6 +855,21 @@
   document.getElementById('btnSave').onclick=async function(){
     if(!currentUser){showErr('Oturum bulunamadı, lütfen tekrar giriş yapın.'); return;}
     var btn=this; btn.disabled=true; btn.textContent='Kaydediliyor…';
+
+    // --- YENİ EKLENEN: THUMBNAIL ÇEK VE YÜKLE ---
+    try {
+      btn.textContent = 'Fotoğraf Çekiliyor...';
+      const blob = await mv.toBlob({ idealAspect: true, mimeType: 'image/webp', quality: 0.85 });
+      await _sb.storage.from('models').upload(currentModel + '-thumb.webp', blob, {
+        contentType: 'image/webp',
+        upsert: true
+      });
+    } catch (err) {
+      console.warn('Thumbnail alınamadı:', err);
+    }
+    // --------------------------------------------
+
+    btn.textContent='Veriler Kaydediliyor...';
     var env=document.querySelector('.env-btn.active');
     var mats=matData.map(function(d,i){return {index:i,name:d.name,color:d.color,roughness:d.roughness,metalness:d.metalness,hidden:d.hidden};});
     var payload={
