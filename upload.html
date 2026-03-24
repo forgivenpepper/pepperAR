@@ -7,6 +7,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+  
+  <script>
+    const savedTheme = localStorage.getItem('pepper_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  </script>
+
   <style>
     :root {
       /* LIGHT MODE - Dashboard ile Milimetrik Aynı */
@@ -388,10 +394,9 @@
     <div id="step2">
       <div class="ed-left">
         
-        <div class="ed-sec collapsed">
-          <div class="sec-title" onclick="this.parentElement.classList.toggle('collapsed')">💡 Işık &amp; Ortam</div>
-          <div class="sec-content">
-            <div class="sl-row">
+        <div class="ed-sec">
+          <div class="sec-title">💡 Işık &amp; Ortam</div>
+          <div class="sl-row">
               <div class="sl-hdr"><span class="sl-lbl">Parlaklık</span><span class="sl-val" id="vExp">0.95</span></div>
               <input type="range" id="slExp" min="0.1" max="3" step="0.05" value="0.95">
             </div>
@@ -399,7 +404,7 @@
               <div class="sl-hdr"><span class="sl-lbl">Gölge</span><span class="sl-val" id="vShd">1.5</span></div>
               <input type="range" id="slShd" min="0" max="3" step="0.1" value="1.5">
             </div>
-            <div class="sec-title" style="margin-top:2px; cursor:default;">Ortam</div>
+            <div class="sec-title" style="margin-top:2px; cursor:default; color:var(--text3);">Ortam</div>
             <div class="env-grid">
               <button class="env-btn active" data-env="neutral">Nötr</button>
               <button class="env-btn" data-env="legacy">Legacy</button>
@@ -408,23 +413,19 @@
               <button class="env-btn" data-env="apartment">İç Mekan</button>
               <button class="env-btn" data-env="city">Şehir</button>
             </div>
-          </div>
         </div>
 
-        <div class="ed-sec collapsed">
-          <div class="sec-title" onclick="this.parentElement.classList.toggle('collapsed')">🎨 Arka Plan</div>
-          <div class="sec-content">
+        <div class="ed-sec">
+          <div class="sec-title">🎨 Arka Plan</div>
             <div class="color-row">
               <div class="color-prev" id="bgPrev" style="background:#f7f5f2" onclick="document.getElementById('bgPick').click()"></div>
               <input type="color" id="bgPick" value="#f7f5f2">
               <div><div class="color-lbl">Arka plan rengi</div><div class="color-hex" id="bgHex">#f7f5f2</div></div>
             </div>
-          </div>
         </div>
 
-        <div class="ed-sec collapsed">
-          <div class="sec-title" onclick="this.parentElement.classList.toggle('collapsed')">📐 Boyut &amp; Döndür</div>
-          <div class="sec-content">
+        <div class="ed-sec">
+          <div class="sec-title">📐 Boyut &amp; Döndür</div>
             <div class="sl-row">
               <div class="sl-hdr"><span class="sl-lbl">Boyut</span><span class="sl-val" id="vScale">100%</span></div>
               <input type="range" id="slScale" min="10" max="300" step="1" value="100">
@@ -437,12 +438,10 @@
               <button class="btn-sec" id="btnReset">↺ Sıfırla</button>
               <button class="btn-sec" id="btnCenter">⊙ Ortala</button>
             </div>
-          </div>
         </div>
 
         <div class="ed-sec" style="flex:1;min-height:0; border-bottom:none;">
-          <div class="sec-title" onclick="this.parentElement.classList.toggle('collapsed')">🎭 Materyaller</div>
-          <div class="sec-content" style="flex:1;">
+          <div class="sec-title">🎭 Materyaller</div>
             <div class="mat-hint">Listeden veya modele tıklayarak parça seç</div>
             <div class="mat-list" id="matList">
               <div style="font-size:11px;color:var(--text-muted);padding:8px 0">Model yüklenince görünür.</div>
@@ -463,7 +462,6 @@
                 <input type="range" id="slMetal" min="0" max="1" step="0.01" value="0.0">
               </div>
             </div>
-          </div>
         </div>
 
         <div class="save-area">
@@ -513,10 +511,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-  // ─── TEMA YÜKLEMESİ ───
-  const savedTheme = localStorage.getItem('pepper_theme') || 'light';
-  document.documentElement.setAttribute('data-theme', savedTheme);
-
   // ─── SOL MENÜ AKORDEON YAPISI ───
   document.addEventListener("DOMContentLoaded", function() {
     const sections = document.querySelectorAll('.ed-sec');
@@ -541,7 +535,7 @@
         });
       }
 
-      // Materyaller sekmesi (genellikle 3. index) hariç diğerlerini kapalı başlat
+      // Materyaller sekmesi (4. indeks olan, classında flex:1 olan hariç) diğerlerini kapalı başlat
       if (index !== 3) {
         sec.classList.add('collapsed');
       }
@@ -851,22 +845,19 @@
   };
   document.getElementById('btnCenter').onclick=function(){mv.cameraOrbit='auto auto auto';};
 
-/* ══ KAYDET ══ */
+  /* ══ KAYDET ══ */
   document.getElementById('btnSave').onclick=async function(){
     if(!currentUser){showErr('Oturum bulunamadı, lütfen tekrar giriş yapın.'); return;}
     var btn=this; btn.disabled=true; btn.textContent='Fotoğraf Çekiliyor...';
 
     // --- 📸 GÜNCELLENMİŞ GARANTİLİ THUMBNAIL ÇEKME KODU ---
     try {
-      // Model-viewer'dan ekran görüntüsünü kopar
       const blob = await mv.toBlob({ idealAspect: true, mimeType: 'image/webp', quality: 0.85 });
       
-      // Senin kendi XHR uploadFile fonksiyonunu kullanarak Supabase'e itiyoruz
-      // Bu sayede GLB dosyalarını nasıl yüklüyorsak bunu da aynı yetkiyle yüklüyoruz.
       await new Promise((resolve) => {
         uploadFile(currentModel + '-thumb.webp', blob, 'image/webp', (err) => {
           if(err) console.error('Thumbnail yükleme hatası:', err);
-          resolve(); // Hata verse bile veritabanı kaydına devam etmesi için resolve diyoruz
+          resolve(); 
         });
       });
     } catch (err) {
@@ -885,27 +876,6 @@
       materials:mats
     };
     
-    try{
-      var {error}=await _sb.from('models').upsert(payload,{onConflict:'name'});
-      if(error) throw error;
-      btn.textContent='✓ Kaydedildi!';
-      setTimeout(function(){showResult(currentModel);},600);
-    }catch(e){
-      showErr('Kayıt hatası: '+(e.message||e));
-      btn.disabled=false; btn.textContent='💾 Kaydet ve Link Oluştur';
-    }
-  };
-
-    btn.textContent='Veriler Kaydediliyor...';
-    var env=document.querySelector('.env-btn.active');
-    var mats=matData.map(function(d,i){return {index:i,name:d.name,color:d.color,roughness:d.roughness,metalness:d.metalness,hidden:d.hidden};});
-    var payload={
-      name:currentModel, user_id:currentUser.id,
-      exposure:+slExp.value, shadow_intensity:+slShd.value,
-      environment:env?env.dataset.env:'neutral',
-      bg_color:bgPick.value, scale:+slScale.value/100, rotate_y:+slRot.value,
-      materials:mats
-    };
     try{
       var {error}=await _sb.from('models').upsert(payload,{onConflict:'name'});
       if(error) throw error;
@@ -951,5 +921,3 @@
 
   })();
 </script>
-</body>
-</html>
