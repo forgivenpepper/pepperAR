@@ -851,23 +851,50 @@
   };
   document.getElementById('btnCenter').onclick=function(){mv.cameraOrbit='auto auto auto';};
 
-  /* ══ KAYDET ══ */
+/* ══ KAYDET ══ */
   document.getElementById('btnSave').onclick=async function(){
     if(!currentUser){showErr('Oturum bulunamadı, lütfen tekrar giriş yapın.'); return;}
-    var btn=this; btn.disabled=true; btn.textContent='Kaydediliyor…';
+    var btn=this; btn.disabled=true; btn.textContent='Fotoğraf Çekiliyor...';
 
-    // --- YENİ EKLENEN: THUMBNAIL ÇEK VE YÜKLE ---
+    // --- 📸 GÜNCELLENMİŞ GARANTİLİ THUMBNAIL ÇEKME KODU ---
     try {
-      btn.textContent = 'Fotoğraf Çekiliyor...';
+      // Model-viewer'dan ekran görüntüsünü kopar
       const blob = await mv.toBlob({ idealAspect: true, mimeType: 'image/webp', quality: 0.85 });
-      await _sb.storage.from('models').upload(currentModel + '-thumb.webp', blob, {
-        contentType: 'image/webp',
-        upsert: true
+      
+      // Senin kendi XHR uploadFile fonksiyonunu kullanarak Supabase'e itiyoruz
+      // Bu sayede GLB dosyalarını nasıl yüklüyorsak bunu da aynı yetkiyle yüklüyoruz.
+      await new Promise((resolve) => {
+        uploadFile(currentModel + '-thumb.webp', blob, 'image/webp', (err) => {
+          if(err) console.error('Thumbnail yükleme hatası:', err);
+          resolve(); // Hata verse bile veritabanı kaydına devam etmesi için resolve diyoruz
+        });
       });
     } catch (err) {
-      console.warn('Thumbnail alınamadı:', err);
+      console.error('Fotoğraf oluşturulamadı:', err);
     }
-    // --------------------------------------------
+    // ------------------------------------------------------
+
+    btn.textContent='Veriler Kaydediliyor...';
+    var env=document.querySelector('.env-btn.active');
+    var mats=matData.map(function(d,i){return {index:i,name:d.name,color:d.color,roughness:d.roughness,metalness:d.metalness,hidden:d.hidden};});
+    var payload={
+      name:currentModel, user_id:currentUser.id,
+      exposure:+slExp.value, shadow_intensity:+slShd.value,
+      environment:env?env.dataset.env:'neutral',
+      bg_color:bgPick.value, scale:+slScale.value/100, rotate_y:+slRot.value,
+      materials:mats
+    };
+    
+    try{
+      var {error}=await _sb.from('models').upsert(payload,{onConflict:'name'});
+      if(error) throw error;
+      btn.textContent='✓ Kaydedildi!';
+      setTimeout(function(){showResult(currentModel);},600);
+    }catch(e){
+      showErr('Kayıt hatası: '+(e.message||e));
+      btn.disabled=false; btn.textContent='💾 Kaydet ve Link Oluştur';
+    }
+  };
 
     btn.textContent='Veriler Kaydediliyor...';
     var env=document.querySelector('.env-btn.active');
