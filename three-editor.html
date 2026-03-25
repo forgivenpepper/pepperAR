@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pepperAR — Pro 3D Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #fafafa; --bg2: #ffffff; --bg3: #f4f4f5;
+      --border: #e4e4e7; --border2: #d4d4d8;
+      --accent: #d97706; --accent-hov: #b45309; --accent-bg: rgba(217, 119, 6, 0.08);
+      --text: #18181b; --text2: #52525b; --text3: #a1a1aa;
+      --radius: 8px; --border-w: 1px;
+    }
+    [data-theme="dark"] {
+      --bg: #0a0a0a; --bg2: #121212; --bg3: #1a1a1a;
+      --border: #27272a; --border2: #3f3f46;
+      --accent: #facc15; --accent-hov: #eab308; --accent-bg: rgba(250, 204, 21, 0.1);
+      --text: #f4f4f5; --text2: #a1a1aa; --text3: #71717a;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    
+    /* Topbar */
+    .topbar { height: 60px; border-bottom: var(--border-w) solid var(--border); display: flex; align-items: center; padding: 0 24px; background: var(--bg2); justify-content: space-between; z-index: 10;}
+    .logo { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none;}
+    .logo span { color: var(--accent); }
+    .btn-upload { background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: var(--radius); font-weight: 600; cursor: pointer; font-family: inherit; font-size: 13px;}
+    
+    /* Layout */
+    .main { display: flex; flex: 1; height: calc(100vh - 60px); }
+    
+    /* Sidebar */
+    .sidebar { width: 320px; background: var(--bg2); border-right: var(--border-w) solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+    .panel { padding: 24px; border-bottom: var(--border-w) solid var(--border); display: flex; flex-direction: column; gap: 16px; }
+    .panel-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text2); letter-spacing: 0.05em; margin-bottom: 8px;}
+    
+    /* Controls */
+    .control-group { display: flex; flex-direction: column; gap: 8px; }
+    .control-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; color: var(--text2); }
+    .control-val { color: var(--accent); font-family: 'DM Mono', monospace; font-weight: 600; }
+    input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; border-radius: 4px; background: var(--border2); outline: none; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg2); }
+    
+    .color-picker { display: flex; align-items: center; gap: 12px; }
+    .color-btn { width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--border2); cursor: pointer; }
+    input[type=color] { position: absolute; opacity: 0; pointer-events: none; }
+
+    /* 3D Canvas */
+    .canvas-wrapper { flex: 1; position: relative; background: var(--bg); }
+    #canvas-container { width: 100%; height: 100%; outline: none; cursor: crosshair; }
+    
+    /* Overlays */
+    .loading-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); color: white; display: none; align-items: center; justify-content: center; font-weight: 600; z-index: 20; backdrop-filter: blur(4px);}
+    .selected-info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: var(--bg2); padding: 8px 16px; border-radius: 20px; border: 1px solid var(--accent); color: var(--text); font-size: 13px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1); pointer-events: none; opacity: 0; transition: opacity 0.3s;}
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="logo">pepper<span>AR</span> Pro Engine</div>
+    <div>
+      <input type="file" id="file-input" accept=".glb" style="display: none;">
+      <button class="btn-upload" onclick="document.getElementById('file-input').click()">+ Yerel GLB Yükle & Test Et</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="panel">
+        <div class="panel-title">Seçili Parça Bilgisi</div>
+        <div id="part-name" style="font-size: 14px; font-weight: 600; color: var(--text); word-break: break-all;">Lütfen modelden bir parça seçin...</div>
+      </div>
+
+      <div class="panel" id="material-panel" style="opacity: 0.4; pointer-events: none; transition: opacity 0.3s;">
+        <div class="panel-title">Materyal Ayarları</div>
+        
+        <div class="control-group">
+          <div class="control-header"><span>Renk</span><span class="control-val" id="val-color">#ffffff</span></div>
+          <div class="color-picker">
+            <div class="color-btn" id="color-btn" style="background: #ffffff;"></div>
+            <input type="color" id="input-color">
+          </div>
+        </div>
+
+        <div class="control-group" style="margin-top: 12px;">
+          <div class="control-header"><span>Saydamlık (Opacity)</span><span class="control-val" id="val-opacity">1.00</span></div>
+          <input type="range" id="input-opacity" min="0" max="1" step="0.01" value="1">
+        </div>
+
+        <div class="control-group" style="margin-top: 12px;">
+          <div class="control-header"><span>Pürüzlülük (Roughness)</span><span class="control-val" id="val-rough">0.50</span></div>
+          <input type="range" id="input-rough" min="0" max="1" step="0.01" value="0.5">
+        </div>
+
+        <div class="control-group" style="margin-top: 12px;">
+          <div class="control-header"><span>Metalik (Metalness)</span><span class="control-val" id="val-metal">0.00</span></div>
+          <input type="range" id="input-metal" min="0" max="1" step="0.01" value="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-wrapper">
+      <div id="loading" class="loading-overlay">Model İşleniyor...</div>
+      <div id="selected-toast" class="selected-info"></div>
+      <div id="canvas-container"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+    // --- SİSTEM DEĞİŞKENLERİ ---
+    let scene, camera, renderer, controls;
+    let currentModel = null;
+    let selectedMesh = null;
+    let originalEmissive = new THREE.Color(); // Seçimi belli etmek için orijinal rengi tutarız
+
+    // --- UI ELEMENTLERİ ---
+    const container = document.getElementById('canvas-container');
+    const loadingUI = document.getElementById('loading');
+    const toastUI = document.getElementById('selected-toast');
+    const matPanel = document.getElementById('material-panel');
+    
+    const uiPartName = document.getElementById('part-name');
+    const inColor = document.getElementById('input-color');
+    const btnColor = document.getElementById('color-btn');
+    const valColor = document.getElementById('val-color');
+    
+    const inOpacity = document.getElementById('input-opacity');
+    const valOpacity = document.getElementById('val-opacity');
+    const inRough = document.getElementById('input-rough');
+    const valRough = document.getElementById('val-rough');
+    const inMetal = document.getElementById('input-metal');
+    const valMetal = document.getElementById('val-metal');
+
+    initEngine();
+    animate();
+
+    // 1. MOTOR KURULUMU (The Engine Setup)
+    function initEngine() {
+      // Sahne
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xf4f4f5);
+
+      // Kamera
+      camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+      camera.position.set(2, 2, 4);
+
+      // Render Motoru (Profesyonel Renk Uzayı ve Anti-Aliasing)
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping; // Sinematik ışık patlaması önleyici
+      renderer.toneMappingExposure = 1.0;
+      container.appendChild(renderer.domElement);
+
+      // Çevre Işıklandırması (RoomEnvironment - Çok kaliteli stüdyo yansıması)
+      const pmremGenerator = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+      // Kamera Kontrolleri
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.minDistance = 0.5;
+      controls.maxDistance = 20;
+
+      // Raycaster (Tıklama Algılayıcı)
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+
+      container.addEventListener('click', (event) => {
+        // Tıklanan yerin sadece canvas içindeki koordinatını bul (Sidebar genişliğini hesaba katar)
+        const rect = container.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+
+        // Model yüklüyse modeli tara
+        if (currentModel) {
+          const intersects = raycaster.intersectObject(currentModel, true);
+          
+          if (intersects.length > 0) {
+            selectMesh(intersects[0].object);
+          } else {
+            deselectMesh();
+          }
+        }
+      });
+
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    // 2. MODEL YÜKLEME VE MATEMATİKSEL ORTALAMA (Auto-Framing)
+    document.getElementById('file-input').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      loadingUI.style.display = 'flex';
+      const url = URL.createObjectURL(file);
+      const loader = new GLTFLoader();
+
+      loader.load(url, (gltf) => {
+        if (currentModel) scene.remove(currentModel);
+        deselectMesh();
+
+        currentModel = gltf.scene;
+        scene.add(currentModel);
+
+        // Matematiksel Ortalama Algoritması
+        const box = new THREE.Box3().setFromObject(currentModel);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+
+        // Modeli tam merkeze çek (0,0,0)
+        currentModel.position.x += (currentModel.position.x - center.x);
+        currentModel.position.y += (currentModel.position.y - center.y);
+        currentModel.position.z += (currentModel.position.z - center.z);
+
+        // Kamerayı objenin büyüklüğüne göre otomatik geriye çek
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fov = camera.fov * (Math.PI / 180);
+        let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+        cameraZ *= 1.5; // Biraz boşluk bırak
+
+        camera.position.set(cameraZ * 0.5, cameraZ * 0.5, cameraZ);
+        camera.updateProjectionMatrix();
+        controls.target.set(0, 0, 0);
+
+        loadingUI.style.display = 'none';
+      }, undefined, (error) => {
+        console.error(error);
+        loadingUI.style.display = 'none';
+        alert('Model yüklenirken bir hata oluştu.');
+      });
+    });
+
+    // 3. NESNE SEÇİMİ VE GÖRSEL GERİ BİLDİRİM
+    function selectMesh(mesh) {
+      if (!mesh.isMesh || !mesh.material) return;
+
+      // Eski seçilinin ışığını geri al
+      if (selectedMesh) {
+        selectedMesh.material.emissive.copy(originalEmissive);
+      }
+
+      selectedMesh = mesh;
+
+      // Yeni seçilinin orijinal ışığını kaydet ve ona hafif sarı bir "seçim parlaması" ver
+      originalEmissive.copy(selectedMesh.material.emissive);
+      selectedMesh.material.emissive.setHex(0x332200); // Koyu sarımsı bir parlama
+
+      // UI'ı Güncelle
+      uiPartName.textContent = mesh.name || 'İsimsiz Parça';
+      matPanel.style.opacity = '1';
+      matPanel.style.pointerEvents = 'auto';
+
+      showToast(`Seçildi: ${mesh.name || 'Parça'}`);
+
+      // Mevcut materyal değerlerini Sol Menüdeki UI'a yansıt
+      const mat = mesh.material;
+      
+      const hexColor = '#' + mat.color.getHexString();
+      inColor.value = hexColor;
+      btnColor.style.background = hexColor;
+      valColor.textContent = hexColor;
+
+      inOpacity.value = mat.opacity;
+      valOpacity.textContent = mat.opacity.toFixed(2);
+
+      inRough.value = mat.roughness !== undefined ? mat.roughness : 0.5;
+      valRough.textContent = parseFloat(inRough.value).toFixed(2);
+
+      inMetal.value = mat.metalness !== undefined ? mat.metalness : 0;
+      valMetal.textContent = parseFloat(inMetal.value).toFixed(2);
+    }
+
+    function deselectMesh() {
+      if (selectedMesh) {
+        selectedMesh.material.emissive.copy(originalEmissive);
+        selectedMesh = null;
+      }
+      uiPartName.textContent = 'Lütfen modelden bir parça seçin...';
+      matPanel.style.opacity = '0.4';
+      matPanel.style.pointerEvents = 'none';
+    }
+
+    // 4. EDİTÖR - UI DİNLEYİCİLERİ VE MATERYAL GÜNCELLEME
+    btnColor.addEventListener('click', () => inColor.click());
+    
+    inColor.addEventListener('input', (e) => {
+      const val = e.target.value;
+      btnColor.style.background = val;
+      valColor.textContent = val;
+      if (selectedMesh) selectedMesh.material.color.set(val);
+    });
+
+    inOpacity.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      valOpacity.textContent = val.toFixed(2);
+      if (selectedMesh) {
+        selectedMesh.material.opacity = val;
+        // Saydamlık 1'den küçükse transparent modunu aç, değilse kapat (Performans için önemli)
+        selectedMesh.material.transparent = val < 1.0;
+        selectedMesh.material.depthWrite = val === 1.0; // Saydam objelerin arkasındakileri doğru çizmesi için
+        selectedMesh.material.needsUpdate = true;
+      }
+    });
+
+    inRough.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      valRough.textContent = val.toFixed(2);
+      if (selectedMesh && selectedMesh.material.roughness !== undefined) {
+        selectedMesh.material.roughness = val;
+      }
+    });
+
+    inMetal.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      valMetal.textContent = val.toFixed(2);
+      if (selectedMesh && selectedMesh.material.metalness !== undefined) {
+        selectedMesh.material.metalness = val;
+      }
+    });
+
+    // --- YARDIMCI FONKSİYONLAR ---
+    let toastTimeout;
+    function showToast(msg) {
+      toastUI.textContent = msg;
+      toastUI.style.opacity = '1';
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { toastUI.style.opacity = '0'; }, 2000);
+    }
+
+    function onWindowResize() {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+  </script>
+</body>
+</html>
