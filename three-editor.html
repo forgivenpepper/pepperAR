@@ -1,409 +1,1193 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>pepperAR — Pro Studio Engine (Vercel Fix)</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <style>
-    :root {
-      --bg: #fafafa; --bg2: #ffffff; --bg3: #f4f4f5;
-      --border: #e4e4e7; --border2: #d4d4d8;
-      --accent: #d97706; --accent-hov: #b45309; --accent-bg: rgba(217, 119, 6, 0.08);
-      --text: #18181b; --text2: #52525b; --text3: #a1a1aa;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; margin: 0; }
-    
-    .topbar { height: 60px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; background: var(--bg2); justify-content: space-between; z-index: 100;}
-    .logo { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--text); }
-    .logo span { color: var(--accent); }
-    .btn-upload { background: var(--accent); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; transition: background 0.2s;}
-    .btn-upload:hover { background: var(--accent-hov); }
-    
-    .main { display: flex; flex: 1; height: calc(100vh - 60px); overflow: hidden; }
-    .sidebar { width: 320px; min-width: 320px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; z-index: 10;}
-    
-    .panel { border-bottom: 1px solid var(--border); }
-    .panel-header { padding: 16px 24px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text2); background: var(--bg3); }
-    .panel-content { padding: 16px 24px; display: flex; flex-direction: column; gap: 16px; }
-    
-    .control-group { display: flex; flex-direction: column; gap: 8px; }
-    .control-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; color: var(--text2); }
-    .control-val { color: var(--accent); font-family: monospace; font-weight: 600; font-size: 14px;}
-    
-    input[type=range] { width: 100%; height: 4px; border-radius: 4px; background: var(--border2); outline: none; -webkit-appearance: none; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; }
-    
-    .color-picker { display: flex; align-items: center; gap: 12px; }
-    .color-btn { width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--border2); cursor: pointer; }
-    input[type=color] { position: absolute; opacity: 0; pointer-events: none; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pepperAR Studio — Pro 3D Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+  (function(){
+    const t = localStorage.getItem('par_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
+<style>
+:root {
+  --bg0:#0d0d0f;--bg1:#111113;--bg2:#161618;--bg3:#1c1c1f;--bg4:#242428;
+  --border:#2a2a2e;--border2:#3a3a3f;
+  --accent:#f97316;--accent2:#fb923c;--accent-bg:rgba(249,115,22,.12);--accent-glow:rgba(249,115,22,.35);
+  --text:#f0f0f2;--text2:#8b8b96;--text3:#55555f;
+  --green:#22c55e;--blue:#3b82f6;--red:#ef4444;--yellow:#eab308;
+  --radius:6px;--mono:'Space Mono',monospace;--sans:'Outfit',sans-serif;
+  --sidebar-w:284px;--topbar-h:52px;--statusbar-h:28px;
+}
+[data-theme="light"] {
+  --bg0:#e4e4e8;--bg1:#eeeeF2;--bg2:#f5f5f8;--bg3:#fafafc;--bg4:#ffffff;
+  --border:#d0d0d6;--border2:#bdbdc7;
+  --accent:#ea6c0a;--accent2:#f97316;--accent-bg:rgba(234,108,10,.10);--accent-glow:rgba(234,108,10,.25);
+  --text:#111115;--text2:#5c5c68;--text3:#aaaaB5;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);background:var(--bg0);color:var(--text);display:flex;flex-direction:column;font-size:13px;user-select:none}
 
-    /* CSS FIX: Canvas'ı ekrana kesin olarak zorlayan yapı */
-    .canvas-wrapper { flex: 1; position: relative; background: #e5e5e5; overflow: hidden; display: block; }
-    #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; outline: none; }
-    
-    .gizmo-toolbar { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 6px; display: flex; gap: 4px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
-    .gizmo-btn { background: transparent; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text2); cursor: pointer;}
-    .gizmo-btn.active { background: var(--accent-bg); color: var(--accent); }
+/* TOPBAR */
+.topbar{height:var(--topbar-h);background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:8px;z-index:100;flex-shrink:0}
+.logo{font-size:14px;font-weight:800;letter-spacing:-.5px;color:var(--text);display:flex;align-items:center;gap:7px;flex-shrink:0}
+.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;box-shadow:0 0 8px var(--accent-glow)}
+.logo em{color:var(--accent);font-style:normal}
+.tb-div{width:1px;height:22px;background:var(--border);flex-shrink:0}
+.tb-spacer{flex:1}
+.tb-btn{height:30px;padding:0 11px;background:transparent;border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.tb-btn:hover{border-color:var(--border2);color:var(--text);background:var(--bg3)}
+.tb-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.tb-btn.primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.tb-btn.icon{width:30px;padding:0;justify-content:center;font-size:13px}
+.tb-btn.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
 
-    .loading { position: absolute; inset: 0; background: rgba(0,0,0,0.7); color: white; display: none; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; z-index: 50; flex-direction: column; gap: 10px;}
-    .loading-sub { font-size: 13px; font-weight: 400; color: #aaa; }
-    
-    #part-name { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 10px; word-break: break-all; }
-  </style>
+/* LAYOUT */
+.workspace{flex:1;display:flex;overflow:hidden}
 
-  <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+/* SIDEBARS */
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg1);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-left{border-right:1px solid var(--border)}
+.sidebar-right{border-left:1px solid var(--border)}
 
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-      }
-    }
-  </script>
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* TABS */
+.stab-bar{display:flex;border-bottom:1px solid var(--border);padding:0 8px;gap:2px;padding-top:6px;flex-shrink:0}
+.stab{padding:6px 10px;border-radius:4px 4px 0 0;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);cursor:pointer;transition:all .15s;border:1px solid transparent;border-bottom:none;position:relative;bottom:-1px}
+.stab:hover{color:var(--text2)}
+.stab.active{color:var(--text);background:var(--bg2);border-color:var(--border);border-bottom-color:var(--bg2)}
+.stab-pane{display:none;flex:1;overflow-y:auto;flex-direction:column}
+.stab-pane.active{display:flex}
+
+/* SECTION */
+.section{border-bottom:1px solid var(--border);flex-shrink:0}
+.section-head{padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:background .15s}
+.section-head:hover{background:var(--bg3)}
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);flex:1}
+.section-arrow{font-size:9px;color:var(--text3);transition:transform .2s}
+.section.closed .section-arrow{transform:rotate(-90deg)}
+.section.closed .section-body{display:none}
+.section-body{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+
+/* CONTROLS */
+.field{display:flex;flex-direction:column;gap:5px}
+.field-row{display:flex;align-items:center;justify-content:space-between}
+.label{font-size:11px;font-weight:600;color:var(--text2)}
+.vbadge{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-bg);padding:1px 5px;border-radius:3px}
+
+input[type=range]{width:100%;height:4px;-webkit-appearance:none;background:var(--bg4);border-radius:4px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg1);box-shadow:0 0 0 2px var(--accent-glow);transition:box-shadow .15s}
+input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 0 4px var(--accent-glow)}
+
+.xyz-row{display:flex;gap:4px}
+.xyz-field{flex:1;display:flex;flex-direction:column;gap:3px}
+.xyz-label{font-size:10px;font-weight:700;text-align:center}
+.xl{color:var(--red)}.yl{color:var(--green)}.zl{color:var(--blue)}
+.xyz-field input{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:10px;padding:4px 5px;border-radius:var(--radius);width:100%;text-align:center;outline:none;transition:border-color .15s}
+.xyz-field input:focus{border-color:var(--accent)}
+
+.color-row{display:flex;align-items:center;gap:8px;margin-top:4px}
+.swatch{width:28px;height:28px;border-radius:5px;border:1px solid var(--border2);cursor:pointer;transition:border-color .15s;flex-shrink:0}
+.swatch:hover{border-color:var(--accent)}
+input[type=color]{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+.hex-input{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:var(--radius);flex:1;outline:none;transition:border-color .15s}
+.hex-input:focus{border-color:var(--accent);color:var(--text)}
+
+.toggle{width:32px;height:18px;background:var(--bg4);border:1px solid var(--border2);border-radius:9px;cursor:pointer;position:relative;transition:all .2s;flex-shrink:0}
+.toggle::after{content:'';position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--text3);transition:all .2s}
+.toggle.on{background:var(--accent-bg);border-color:var(--accent)}
+.toggle.on::after{background:var(--accent);transform:translateX(14px)}
+.toggle-row{display:flex;align-items:center;gap:8px}
+.toggle-label{font-size:12px;color:var(--text2)}
+
+.styled-select{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:12px;padding:5px 8px;border-radius:var(--radius);width:100%;outline:none;cursor:pointer;transition:border-color .15s;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2388888f'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}
+.styled-select:focus{border-color:var(--accent)}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 12px;border-radius:var(--radius);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:var(--bg3);color:var(--text2);width:100%}
+.btn:hover{background:var(--bg4);color:var(--text);border-color:var(--border2)}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.accent:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn.danger{color:var(--red);border-color:transparent;background:transparent}
+.btn.danger:hover{background:rgba(239,68,68,.1);border-color:var(--red)}
+.btn.sm{padding:5px 8px;font-size:11px}
+.btn-row{display:flex;gap:6px}
+.btn-row .btn{flex:1}
+
+/* OUTLINER */
+.outliner{padding:4px 0}
+.ol-item{display:flex;align-items:center;gap:6px;padding:5px 12px;cursor:pointer;transition:background .1s;position:relative}
+.ol-item:hover{background:var(--bg3)}
+.ol-item.selected{background:var(--accent-bg)}
+.ol-item.selected::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent)}
+.ol-icon{font-size:12px;flex-shrink:0}
+.ol-name{font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ol-item.selected .ol-name{color:var(--accent)}
+.ol-type{font-size:10px;color:var(--text3);flex-shrink:0;font-family:var(--mono)}
+.ol-indent{padding-left:24px}
+
+.empty-state{padding:20px 16px;text-align:center;color:var(--text3);font-size:12px;line-height:1.7}
+.empty-state .ei{font-size:26px;margin-bottom:8px;opacity:.45}
+
+/* VIEWPORT */
+.viewport{flex:1;position:relative;background:var(--bg0);overflow:hidden}
+#canvas-container{position:absolute;inset:0}
+
+/* VP TOOLBAR */
+.vp-toolbar{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:3px;display:flex;gap:2px;z-index:10;box-shadow:0 4px 20px rgba(0,0,0,.5);backdrop-filter:blur(10px)}
+.vp-btn{background:transparent;border:none;padding:5px 10px;border-radius:5px;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text2);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.vp-btn:hover{background:var(--bg4);color:var(--text)}
+.vp-btn.active{background:var(--accent-bg);color:var(--accent)}
+.vp-sep{width:1px;background:var(--border);margin:4px 2px}
+
+/* VIEW CONTROLS */
+.view-ctrls{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:4px;z-index:10}
+.vc-btn{width:30px;height:30px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;backdrop-filter:blur(8px);font-weight:700;font-family:var(--mono)}
+.vc-btn:hover{border-color:var(--border2);color:var(--text);background:var(--bg3)}
+
+/* STATS HUD */
+.stats-hud{position:absolute;bottom:12px;left:12px;background:rgba(10,10,12,.85);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.9;backdrop-filter:blur(8px);z-index:10}
+.stats-hud.hidden{display:none}
+.stats-hud span{color:var(--accent)}
+
+/* TOAST */
+.toast{position:absolute;bottom:12px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--bg2);border:1px solid var(--border);padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transition:opacity .25s,transform .25s;z-index:30;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:var(--green);color:var(--green)}
+.toast.err{border-color:var(--red);color:var(--red)}
+
+/* LOADING */
+.loading-ov{position:absolute;inset:0;background:rgba(10,10,12,.88);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;z-index:50;flex-direction:column;gap:14px}
+.loading-ov.show{display:flex}
+.loader{width:38px;height:38px;border-radius:50%;border:3px solid var(--border2);border-top-color:var(--accent);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-text{font-size:12px;font-weight:600;color:var(--text2)}
+
+/* DROP OVERLAY */
+.drop-ov{position:absolute;inset:8px;border:2px dashed var(--accent);border-radius:10px;background:var(--accent-bg);display:none;align-items:center;justify-content:center;z-index:40;pointer-events:none}
+.drop-ov.show{display:flex}
+.drop-text{font-size:18px;font-weight:800;color:var(--accent);letter-spacing:-.5px}
+
+/* STATUS BAR */
+.statusbar{height:var(--statusbar-h);background:var(--bg1);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:14px;font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;z-index:100}
+.sb-item{display:flex;align-items:center;gap:5px}
+.sb-item b{color:var(--text2);font-weight:700}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--text3)}
+.status-dot.ready{background:var(--green);box-shadow:0 0 6px var(--green)}
+.status-dot.err{background:var(--red)}
+.sb-spacer{flex:1}
+kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);border-radius:3px;padding:1px 4px;font-family:var(--mono);font-size:9px;color:var(--text2);line-height:1.4}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:24px;width:460px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.7)}
+.modal-title{font-size:15px;font-weight:800;margin-bottom:18px}
+.sc-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.sc-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg3);border-radius:var(--radius);font-size:11px;color:var(--text2)}
+.sc-keys{display:flex;gap:3px}
+
+/* SAVE PANEL */
+.save-panel{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
 </head>
 <body>
 
-  <div class="topbar">
-    <div class="logo">pepper<span>AR</span> Studio</div>
-    <input type="file" id="file-input" accept=".glb" style="display: none;">
-    <button class="btn-upload" onclick="document.getElementById('file-input').click()">📁 GLB Model Yükle</button>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>pepper<em>AR</em> Studio</div>
+  <div class="tb-div"></div>
+  <input type="file" id="file-input" accept=".glb,.gltf" style="display:none">
+  <button class="tb-btn" id="btn-open">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.22.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.5a.25.25 0 0 1-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1Z"/></svg>
+    Aç
+  </button>
+  <div class="tb-div"></div>
+  <button class="tb-btn icon" id="btn-frame" title="Odaklan (F)">⊙</button>
+  <button class="tb-btn icon" id="btn-ss" title="Screenshot (P)">📷</button>
+  <button class="tb-btn icon" id="btn-wf" title="Wireframe (W)">⬡</button>
+  <button class="tb-btn icon" id="btn-grid" title="Grid (G)">⊞</button>
+  <button class="tb-btn icon" id="btn-stats" title="İstatistik (I)">📊</button>
+  <div class="tb-div"></div>
+  <button class="tb-btn icon" id="btn-theme" title="Tema">◑</button>
+  <button class="tb-btn icon" id="btn-keys" title="Kısayollar (?)" style="font-weight:800">?</button>
+  <div class="tb-spacer"></div>
+  <button class="tb-btn primary" id="btn-save">💾 Kaydet</button>
+</div>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+<!-- LEFT SIDEBAR -->
+<div class="sidebar sidebar-left">
+  <div class="stab-bar">
+    <div class="stab active" data-tab="outliner" data-side="left">Outliner</div>
+    <div class="stab" data-tab="scene" data-side="left">Sahne</div>
   </div>
 
-  <div class="main">
-    <div class="sidebar">
-      
-      <div class="panel">
-        <div class="panel-header">Tüm Modeli Yönet</div>
-        <div class="panel-content">
-          <div class="control-group">
-            <div class="control-header"><span>Ölçek (Büyüt/Küçült)</span><span class="control-val" id="val-scale">100%</span></div>
-            <input type="range" id="in-scale" min="10" max="300" step="1" value="100">
-          </div>
-          <button class="btn-upload" id="btn-reset" style="background: var(--bg3); color: var(--text); border: 1px solid var(--border2); margin-top: 10px;">↺ Orijinal Boyuta Dön</button>
+  <div class="stab-pane active" id="tab-outliner">
+    <div id="outliner" class="outliner">
+      <div class="empty-state"><div class="ei">📦</div>Model yüklenmedi.<br>GLB dosyasını sürükleyin<br>veya yukarıdan açın.</div>
+    </div>
+  </div>
+
+  <div class="stab-pane" id="tab-scene">
+    <div class="section">
+      <div class="section-head"><div class="section-title">💡 Işık</div><span class="section-arrow">▼</span></div>
+      <div class="section-body">
+        <div class="field">
+          <div class="field-row"><span class="label">Exposure</span><span class="vbadge" id="vb-exp">1.00</span></div>
+          <input type="range" id="in-exp" min="0.1" max="3" step="0.05" value="1">
+        </div>
+        <div class="field">
+          <div class="field-row"><span class="label">Ambient</span><span class="vbadge" id="vb-amb">0.40</span></div>
+          <input type="range" id="in-amb" min="0" max="2" step="0.05" value="0.4">
+        </div>
+        <div class="field">
+          <div class="field-row"><span class="label">Directional</span><span class="vbadge" id="vb-dir">1.00</span></div>
+          <input type="range" id="in-dir" min="0" max="3" step="0.05" value="1">
+        </div>
+        <div class="field">
+          <div class="field-row"><span class="label">Gölge Opaklığı</span><span class="vbadge" id="vb-shad">0.20</span></div>
+          <input type="range" id="in-shad" min="0" max="1" step="0.01" value="0.2">
         </div>
       </div>
+    </div>
+    <div class="section">
+      <div class="section-head"><div class="section-title">🎨 Arka Plan</div><span class="section-arrow">▼</span></div>
+      <div class="section-body">
+        <div class="field">
+          <span class="label">Renk</span>
+          <div class="color-row">
+            <div class="swatch" id="bg-sw" style="background:#111113"></div>
+            <input type="color" id="in-bg" value="#111113">
+            <input type="text" class="hex-input" id="bg-hex" value="#111113" maxlength="7">
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-row"><span class="label">Fog Yoğunluğu</span><span class="vbadge" id="vb-fog">0.000</span></div>
+          <input type="range" id="in-fog" min="0" max="0.05" step="0.001" value="0">
+        </div>
+      </div>
+    </div>
+    <div class="section closed">
+      <div class="section-head"><div class="section-title">📷 Kamera</div><span class="section-arrow">▼</span></div>
+      <div class="section-body">
+        <div class="field">
+          <div class="field-row"><span class="label">FOV</span><span class="vbadge" id="vb-fov">45°</span></div>
+          <input type="range" id="in-fov" min="20" max="100" step="1" value="45">
+        </div>
+        <div class="field">
+          <div class="field-row"><span class="label">Near Clip</span><span class="vbadge" id="vb-near">0.01</span></div>
+          <input type="range" id="in-near" min="0.001" max="1" step="0.001" value="0.01">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-      <div class="panel" id="mat-panel" style="opacity: 0.3; pointer-events: none; flex: 1;">
-        <div class="panel-header">Seçili Parça (Materyal)</div>
-        <div class="panel-content">
-          <div id="part-name">Parça seçilmedi</div>
-          
-          <div class="control-group">
-            <div class="control-header"><span>Renk</span></div>
-            <div class="color-picker">
-              <div class="color-btn" id="btn-color" style="background: #ffffff;"></div>
-              <input type="color" id="in-color">
-              <div class="control-val" id="val-color">#ffffff</div>
+<!-- VIEWPORT -->
+<div class="viewport" id="vp">
+  <div class="vp-toolbar" id="vp-tb" style="display:none">
+    <button class="vp-btn active" data-mode="translate">⊕ Taşı</button>
+    <button class="vp-btn" data-mode="rotate">↻ Döndür</button>
+    <button class="vp-btn" data-mode="scale">⤢ Ölçekle</button>
+    <div class="vp-sep"></div>
+    <button class="vp-btn" id="btn-space" style="font-size:10px;padding:5px 8px">WORLD</button>
+  </div>
+
+  <div class="view-ctrls">
+    <button class="vc-btn" id="vc-fr" title="Ön (1)">FR</button>
+    <button class="vc-btn" id="vc-tp" title="Üst (2)">TP</button>
+    <button class="vc-btn" id="vc-rt" title="Sağ (3)">RT</button>
+    <button class="vc-btn" id="vc-is" title="Iso (4)">IS</button>
+  </div>
+
+  <div class="stats-hud hidden" id="stats-hud">
+    FPS: <span id="fps-v">—</span><br>
+    Mesh: <span id="st-m">0</span><br>
+    Vertices: <span id="st-v">0</span><br>
+    Triangles: <span id="st-t">0</span>
+  </div>
+
+  <div class="loading-ov" id="loading-ov">
+    <div class="loader"></div>
+    <div class="load-text">Model yükleniyor...</div>
+  </div>
+  <div class="drop-ov" id="drop-ov"><div class="drop-text">GLB / GLTF Bırak</div></div>
+  <div class="toast" id="toast"></div>
+  <div id="canvas-container"></div>
+</div>
+
+<!-- RIGHT SIDEBAR -->
+<div class="sidebar sidebar-right">
+  <div class="stab-bar">
+    <div class="stab active" data-tab="props" data-side="right">Nesne</div>
+    <div class="stab" data-tab="mat" data-side="right">Malzeme</div>
+  </div>
+
+  <div class="stab-pane active" id="tab-props" style="overflow-y:auto">
+    <div class="section">
+      <div class="section-head"><div class="section-title">⬡ Dönüşüm</div><span class="section-arrow">▼</span></div>
+      <div class="section-body">
+        <div class="field">
+          <span class="label">Konum</span>
+          <div class="xyz-row" style="margin-top:4px">
+            <div class="xyz-field"><div class="xyz-label xl">X</div><input type="number" id="tx-x" value="0" step="0.001"></div>
+            <div class="xyz-field"><div class="xyz-label yl">Y</div><input type="number" id="tx-y" value="0" step="0.001"></div>
+            <div class="xyz-field"><div class="xyz-label zl">Z</div><input type="number" id="tx-z" value="0" step="0.001"></div>
+          </div>
+        </div>
+        <div class="field">
+          <span class="label">Rotasyon (°)</span>
+          <div class="xyz-row" style="margin-top:4px">
+            <div class="xyz-field"><div class="xyz-label xl">X</div><input type="number" id="rx-x" value="0" step="0.1"></div>
+            <div class="xyz-field"><div class="xyz-label yl">Y</div><input type="number" id="rx-y" value="0" step="0.1"></div>
+            <div class="xyz-field"><div class="xyz-label zl">Z</div><input type="number" id="rx-z" value="0" step="0.1"></div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-row"><span class="label">Ölçek (%)</span><span class="vbadge" id="vb-sc">100</span></div>
+          <input type="range" id="in-sc" min="1" max="500" step="1" value="100">
+        </div>
+        <div class="btn-row">
+          <button class="btn sm" id="btn-rpos">Konum</button>
+          <button class="btn sm" id="btn-rall">Tümü ↺</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section closed" id="sec-info">
+      <div class="section-head"><div class="section-title">📋 Model Bilgisi</div><span class="section-arrow">▼</span></div>
+      <div class="section-body" id="info-body"><div class="empty-state" style="padding:4px 0">Henüz model yüklenmedi.</div></div>
+    </div>
+  </div>
+
+  <div class="stab-pane" id="tab-mat" style="overflow-y:auto">
+    <div id="mat-empty" class="empty-state" style="margin:16px 0">
+      <div class="ei">🎨</div>Viewport'tan bir mesh<br>seçerek başlayın.
+    </div>
+    <div id="mat-ed" style="display:none">
+      <div class="section">
+        <div class="section-head"><div class="section-title" id="mat-name">Malzeme</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <div class="field">
+            <span class="label">Albedo Rengi</span>
+            <div class="color-row">
+              <div class="swatch" id="mc-sw" style="background:#ffffff"></div>
+              <input type="color" id="in-mc" value="#ffffff">
+              <input type="text" class="hex-input" id="mc-hex" value="#ffffff" maxlength="7">
             </div>
           </div>
-
-          <div class="control-group" style="margin-top: 10px;">
-            <div class="control-header"><span>Saydamlık</span><span class="control-val" id="val-op">1.00</span></div>
+          <div class="field">
+            <span class="label">Emissive Rengi</span>
+            <div class="color-row">
+              <div class="swatch" id="me-sw" style="background:#000000"></div>
+              <input type="color" id="in-me" value="#000000">
+              <input type="text" class="hex-input" id="me-hex" value="#000000" maxlength="7">
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-row"><span class="label">Saydamlık</span><span class="vbadge" id="vb-op">1.00</span></div>
             <input type="range" id="in-op" min="0" max="1" step="0.01" value="1">
-          </div>
-          
-          <div class="control-group" style="margin-top: 10px;">
-            <div class="control-header"><span>Metalik</span><span class="control-val" id="val-met">0.00</span></div>
-            <input type="range" id="in-met" min="0" max="1" step="0.01" value="0">
-          </div>
-          
-          <div class="control-group" style="margin-top: 10px;">
-            <div class="control-header"><span>Pürüzlülük</span><span class="control-val" id="val-rou">0.50</span></div>
-            <input type="range" id="in-rou" min="0" max="1" step="0.01" value="0.5">
           </div>
         </div>
       </div>
-
-    </div>
-
-    <div class="canvas-wrapper">
-      <div class="gizmo-toolbar" id="gizmo-tools" style="display: none;">
-        <button class="gizmo-btn active" data-mode="translate">📍 Taşı</button>
-        <button class="gizmo-btn" data-mode="rotate">🔄 Çevir</button>
-        <button class="gizmo-btn" data-mode="scale">📐 Büyüt</button>
+      <div class="section">
+        <div class="section-head"><div class="section-title">PBR Parametreler</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <div class="field">
+            <div class="field-row"><span class="label">Roughness</span><span class="vbadge" id="vb-ro">0.50</span></div>
+            <input type="range" id="in-ro" min="0" max="1" step="0.01" value="0.5">
+          </div>
+          <div class="field">
+            <div class="field-row"><span class="label">Metalness</span><span class="vbadge" id="vb-me2">0.00</span></div>
+            <input type="range" id="in-me2" min="0" max="1" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <div class="field-row"><span class="label">Emissive Yoğunluk</span><span class="vbadge" id="vb-ei">1.00</span></div>
+            <input type="range" id="in-ei" min="0" max="5" step="0.1" value="1">
+          </div>
+          <div class="field">
+            <div class="field-row"><span class="label">Normal Ölçeği</span><span class="vbadge" id="vb-ns">1.00</span></div>
+            <input type="range" id="in-ns" min="0" max="3" step="0.05" value="1">
+          </div>
+        </div>
       </div>
-
-      <div id="loading" class="loading">
-        <div>Model İşleniyor...</div>
-        <div class="loading-sub">Lütfen bekleyin, ağır dosyalar zaman alabilir.</div>
+      <div class="section">
+        <div class="section-head"><div class="section-title">Gelişmiş</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <div class="toggle-row"><div class="toggle" id="tgl-wf"></div><span class="toggle-label">Wireframe</span></div>
+          <div class="toggle-row"><div class="toggle" id="tgl-ds"></div><span class="toggle-label">Çift Taraflı</span></div>
+          <div class="toggle-row"><div class="toggle on" id="tgl-dw"></div><span class="toggle-label">Depth Write</span></div>
+          <div class="toggle-row"><div class="toggle" id="tgl-flat"></div><span class="toggle-label">Flat Shading</span></div>
+          <div class="field">
+            <span class="label">Blend Modu</span>
+            <select class="styled-select" id="in-blend">
+              <option value="normal">Normal</option>
+              <option value="additive">Additive</option>
+              <option value="multiply">Multiply</option>
+              <option value="subtract">Subtract</option>
+            </select>
+          </div>
+        </div>
       </div>
-      
-      <div id="canvas-container"></div>
+      <div class="section">
+        <div class="section-head"><div class="section-title">Toplu Uygula</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <div class="btn-row">
+            <button class="btn sm" id="btn-ap-col">Rengi Uygula</button>
+            <button class="btn sm" id="btn-ap-pbr">PBR Uygula</button>
+          </div>
+          <button class="btn sm" id="btn-ap-all">Tüm Ayarları Uygula</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <script type="module">
-    import * as THREE from 'three';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-    import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'; 
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import { TransformControls } from 'three/addons/controls/TransformControls.js';
-    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+  <div class="save-panel">
+    <div class="btn-row">
+      <button class="btn sm" id="btn-ss2" style="flex:0 0 34px;padding:0;font-size:13px">📷</button>
+      <button class="btn accent sm" id="btn-save2">💾 Ayarları Kaydet</button>
+    </div>
+  </div>
+</div>
+</div><!-- /workspace -->
 
-    // Global Değişkenler
-    let scene, camera, renderer, orbit, gizmo, startupCube;
-    let currentModel = null;
-    let selectedMesh = null;
-    let originalEmissive = new THREE.Color();
-    let initialTransform = { pos: new THREE.Vector3(), rot: new THREE.Euler(), scale: new THREE.Vector3(1,1,1) };
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <div class="sb-item"><div class="status-dot" id="sd"></div><b id="st-txt">Hazır</b></div>
+  <div class="tb-div" style="height:14px"></div>
+  <div class="sb-item">Model: <b id="st-mod">—</b></div>
+  <div class="sb-item">Seçili: <b id="st-sel">—</b></div>
+  <div class="sb-spacer"></div>
+  <div class="sb-item"><kbd>T</kbd><kbd>R</kbd><kbd>S</kbd> gizmo</div>
+  <div class="sb-item"><kbd>F</kbd> odak</div>
+  <div class="sb-item"><kbd>G</kbd><kbd>W</kbd><kbd>P</kbd> grid/wire/ss</div>
+  <div class="sb-item"><kbd>?</kbd> kısayollar</div>
+</div>
 
-    // UI Elementleri
-    const container = document.getElementById('canvas-container');
-    const loadingUI = document.getElementById('loading');
-    const gizmoTools = document.getElementById('gizmo-tools');
-    const matPanel = document.getElementById('mat-panel');
-    const uiPartName = document.getElementById('part-name');
+<!-- SHORTCUTS MODAL -->
+<div class="modal-bg" id="modal-keys">
+  <div class="modal">
+    <div class="modal-title">⌨️ Klavye Kısayolları</div>
+    <div class="sc-grid">
+      <div class="sc-item">Dosya Aç <div class="sc-keys"><kbd>Ctrl</kbd><kbd>O</kbd></div></div>
+      <div class="sc-item">Odaklan <div class="sc-keys"><kbd>F</kbd></div></div>
+      <div class="sc-item">Taşı <div class="sc-keys"><kbd>T</kbd></div></div>
+      <div class="sc-item">Döndür <div class="sc-keys"><kbd>R</kbd></div></div>
+      <div class="sc-item">Ölçekle <div class="sc-keys"><kbd>S</kbd></div></div>
+      <div class="sc-item">Grid <div class="sc-keys"><kbd>G</kbd></div></div>
+      <div class="sc-item">Wireframe <div class="sc-keys"><kbd>W</kbd></div></div>
+      <div class="sc-item">Screenshot <div class="sc-keys"><kbd>P</kbd></div></div>
+      <div class="sc-item">Seçimi Kaldır <div class="sc-keys"><kbd>Esc</kbd></div></div>
+      <div class="sc-item">Sıfırla <div class="sc-keys"><kbd>Alt</kbd><kbd>R</kbd></div></div>
+      <div class="sc-item">İstatistik <div class="sc-keys"><kbd>I</kbd></div></div>
+      <div class="sc-item">Tema <div class="sc-keys"><kbd>Alt</kbd><kbd>T</kbd></div></div>
+      <div class="sc-item">Ön Görünüm <div class="sc-keys"><kbd>1</kbd></div></div>
+      <div class="sc-item">Üst Görünüm <div class="sc-keys"><kbd>2</kbd></div></div>
+      <div class="sc-item">Sağ Görünüm <div class="sc-keys"><kbd>3</kbd></div></div>
+      <div class="sc-item">İzometrik <div class="sc-keys"><kbd>4</kbd></div></div>
+    </div>
+    <button class="btn" style="margin-top:18px" onclick="document.getElementById('modal-keys').classList.remove('show')">Kapat</button>
+  </div>
+</div>
 
-    const inScale = document.getElementById('in-scale'), valScale = document.getElementById('val-scale');
-    const inCol = document.getElementById('in-color'), btnCol = document.getElementById('btn-color'), valCol = document.getElementById('val-color');
-    const inOp = document.getElementById('in-op'), valOp = document.getElementById('val-op');
-    const inMet = document.getElementById('in-met'), valMet = document.getElementById('val-met');
-    const inRou = document.getElementById('in-rou'), valRou = document.getElementById('val-rou');
+<!-- ════════════════════════ ENGINE ════════════════════════ -->
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader }      from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader }     from 'three/addons/loaders/DRACOLoader.js';
+import { OrbitControls }   from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-    // Motoru Başlat
-    function init() {
-      // 1. Sahne ve Güvenli Boyutlandırma
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0xd4d4d8); 
+// ── State ──
+let scene, camera, renderer, orbit, gizmo, dirLight, ambLight, shadowPlane, gridHelper;
+let currentModel = null, selectedMesh = null;
+let origEmissive = new THREE.Color();
+let initT = { pos: new THREE.Vector3(), rot: new THREE.Euler(), sc: new THREE.Vector3(1,1,1) };
+let wireMode = false, gridVis = true, worldSpace = true;
+let fpsFrames = 0, fpsLast = performance.now();
+let statsVisible = false;
 
-      // JS FIX 2: Canvas boyutu sıfır gelse bile pencereden zorla hesapla
-      const width = container.clientWidth || (window.innerWidth - 320);
-      const height = container.clientHeight || (window.innerHeight - 60);
-      
-      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-      camera.position.set(3, 3, 5);
+// ── DOM ──
+const $ = id => document.getElementById(id);
+const container = $('canvas-container');
+const vp        = $('vp');
 
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.setSize(width, height);
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.0;
-      container.appendChild(renderer.domElement);
+// ── INIT ──
+function init() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x111113);
 
-      // 2. Işıklandırma ve Ortam
-      const pmrem = new THREE.PMREMGenerator(renderer);
-      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-      
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-      scene.add(ambientLight);
-      
-      const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-      dirLight.position.set(5, 10, 5);
-      scene.add(dirLight);
+  const w = container.clientWidth  || window.innerWidth  - 568;
+  const h = container.clientHeight || window.innerHeight - 80;
 
-      // 3. REFERANS IZGARASI
-      const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0xbbbbbb);
-      scene.add(gridHelper);
+  camera = new THREE.PerspectiveCamera(45, w / h, 0.01, 2000);
+  camera.position.set(3, 2.5, 5);
 
-      // 4. BAŞLANGIÇ TEST KÜPÜ
-      const geo = new THREE.BoxGeometry(1, 1, 1);
-      const mat = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.2, metalness: 0.8 });
-      startupCube = new THREE.Mesh(geo, mat);
-      startupCube.position.y = 0.5;
-      scene.add(startupCube);
+  renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(w, h);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  container.appendChild(renderer.domElement);
 
-      // 5. Kontroller
-      orbit = new OrbitControls(camera, renderer.domElement);
-      orbit.enableDamping = true;
-      orbit.dampingFactor = 0.05;
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-      gizmo = new TransformControls(camera, renderer.domElement);
-      gizmo.addEventListener('dragging-changed', (e) => { orbit.enabled = !e.value; });
-      gizmo.addEventListener('change', () => {
-        if(currentModel) {
-          const sPct = Math.round(currentModel.scale.x * 100);
-          inScale.value = sPct; valScale.textContent = sPct + '%';
-        }
-      });
-      scene.add(gizmo);
+  ambLight = new THREE.AmbientLight(0xffffff, 0.4);
+  scene.add(ambLight);
 
-      // 6. Parça Seçme Mantığı
-      const raycaster = new THREE.Raycaster();
-      const mouse = new THREE.Vector2();
+  dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+  dirLight.position.set(5, 10, 7);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.width  = 2048;
+  dirLight.shadow.mapSize.height = 2048;
+  dirLight.shadow.camera.near   = 0.1;
+  dirLight.shadow.camera.far    = 300;
+  dirLight.shadow.camera.left   = -25;
+  dirLight.shadow.camera.right  = 25;
+  dirLight.shadow.camera.top    = 25;
+  dirLight.shadow.camera.bottom = -25;
+  dirLight.shadow.bias          = -0.0001;
+  dirLight.shadow.normalBias    = 0.02;
+  scene.add(dirLight);
 
-      container.addEventListener('click', (e) => {
-        if (gizmo.dragging) return;
-        const rect = container.getBoundingClientRect();
-        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  const fill = new THREE.DirectionalLight(0x8899ff, 0.25);
+  fill.position.set(-5, 3, -5);
+  scene.add(fill);
 
-        raycaster.setFromCamera(mouse, camera);
-        if (currentModel) {
-          const intersects = raycaster.intersectObject(currentModel, true);
-          if (intersects.length > 0) {
-            selectMesh(intersects[0].object);
-          } else {
-            deselectMesh();
-          }
-        }
-      });
+  const rim = new THREE.DirectionalLight(0xffeedd, 0.15);
+  rim.position.set(0, -3, -8);
+  scene.add(rim);
 
-      window.addEventListener('resize', () => {
-        const newWidth = container.clientWidth || (window.innerWidth - 320);
-        const newHeight = container.clientHeight || (window.innerHeight - 60);
-        camera.aspect = newWidth / newHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(newWidth, newHeight);
-      });
-    }
+  shadowPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 200),
+    new THREE.ShadowMaterial({ opacity: 0.2, depthWrite: false })
+  );
+  shadowPlane.rotation.x = -Math.PI / 2;
+  shadowPlane.receiveShadow = true;
+  shadowPlane.renderOrder = -1;
+  scene.add(shadowPlane);
 
-    // --- GLB YÜKLEME ---
-    document.getElementById('file-input').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+  gridHelper = new THREE.GridHelper(24, 24, 0x333337, 0x222226);
+  gridHelper.material.opacity = 0.55;
+  gridHelper.material.transparent = true;
+  scene.add(gridHelper);
 
-      loadingUI.style.display = 'flex';
-      deselectMesh();
-      
-      if (currentModel) { gizmo.detach(); scene.remove(currentModel); }
-      if (startupCube) { scene.remove(startupCube); startupCube = null; }
+  orbit = new OrbitControls(camera, renderer.domElement);
+  orbit.enableDamping = true;
+  orbit.dampingFactor = 0.06;
+  orbit.screenSpacePanning = true;
+  orbit.minDistance = 0.05;
+  orbit.maxDistance = 800;
 
-      const dracoLoader = new DRACOLoader();
-      dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
-      const loader = new GLTFLoader();
-      loader.setDRACOLoader(dracoLoader);
-      
-      const url = URL.createObjectURL(file);
-      
-      loader.load(url, (gltf) => {
-        currentModel = gltf.scene;
-        
-        currentModel.traverse((child) => {
-          if (child.isMesh && child.material) {
-            if(!child.material.emissive) child.material.emissive = new THREE.Color(0x000000);
-          }
-        });
+  gizmo = new TransformControls(camera, renderer.domElement);
+  gizmo.setSpace('world');
+  gizmo.addEventListener('dragging-changed', e => { orbit.enabled = !e.value; });
+  gizmo.addEventListener('change', syncTUI);
+  scene.add(gizmo);
 
-        scene.add(currentModel);
+  // Click-select
+  const ray = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  let _ptDown = { x: 0, y: 0 };
+  container.addEventListener('pointerdown', e => { _ptDown.x = e.clientX; _ptDown.y = e.clientY; });
+  container.addEventListener('pointerup', e => {
+    if (Math.abs(e.clientX - _ptDown.x) > 4 || Math.abs(e.clientY - _ptDown.y) > 4) return;
+    if (e.button !== 0 || gizmo.dragging) return;
+    const r = container.getBoundingClientRect();
+    mouse.x = ((e.clientX - r.left) / r.width)  * 2 - 1;
+    mouse.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+    ray.setFromCamera(mouse, camera);
+    if (!currentModel) return;
+    const hits = ray.intersectObject(currentModel, true).filter(h => h.object.isMesh);
+    if (hits.length) selectMesh(hits[0].object);
+    else deselectMesh();
+  });
 
-        const box = new THREE.Box3().setFromObject(currentModel);
-        
-        if (box.isEmpty() || !isFinite(box.max.x)) {
-          currentModel.position.set(0,0,0);
-          camera.position.set(3,3,5);
-          orbit.target.set(0,0,0);
-        } else {
-          const center = box.getCenter(new THREE.Vector3());
-          const size = box.getSize(new THREE.Vector3());
-          
-          currentModel.position.sub(center);
-          currentModel.position.y += size.y / 2;
+  // Drag-drop
+  vp.addEventListener('dragover', e => { e.preventDefault(); $('drop-ov').classList.add('show'); });
+  vp.addEventListener('dragleave', () => $('drop-ov').classList.remove('show'));
+  vp.addEventListener('drop', e => {
+    e.preventDefault(); $('drop-ov').classList.remove('show');
+    const f = e.dataTransfer.files[0]; if (f) loadFile(f);
+  });
 
-          const maxDim = Math.max(size.x, size.y, size.z);
-          const dist = maxDim * 1.5;
-          camera.position.set(dist, dist*0.8, dist);
-          orbit.target.set(0, size.y / 2, 0);
-        }
+  window.addEventListener('resize', onResize);
+  animate();
+  setStatus('ready', 'Hazır');
+  loadPreset();
+}
 
-        initialTransform.pos.copy(currentModel.position);
-        initialTransform.rot.copy(currentModel.rotation);
-        initialTransform.scale.copy(currentModel.scale);
+// ── LOAD ──
+function loadFile(file) {
+  if (!/\.(glb|gltf)$/i.test(file.name)) { toast('Desteklenmeyen dosya türü!', 'err'); return; }
+  $('loading-ov').classList.add('show');
+  setStatus('', 'Yükleniyor...');
+  deselectMesh();
+  if (currentModel) { gizmo.detach(); scene.remove(currentModel); currentModel = null; }
 
-        gizmo.attach(currentModel);
-        gizmoTools.style.display = 'flex';
-        inScale.value = 100; valScale.textContent = '100%';
+  const drc = new DRACOLoader();
+  drc.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+  const loader = new GLTFLoader();
+  loader.setDRACOLoader(drc);
 
-        loadingUI.style.display = 'none';
-      }, undefined, (error) => {
-        console.error("YÜKLEME HATASI:", error);
-        loadingUI.style.display = 'none';
-        alert("Bu model okunamıyor. Lütfen farklı bir model ile deneyin.");
-      });
+  const url = URL.createObjectURL(file);
+  loader.load(url, gltf => {
+    URL.revokeObjectURL(url);
+    currentModel = gltf.scene;
+
+    let meshCount = 0, verts = 0, tris = 0;
+    currentModel.traverse(c => {
+      if (!c.isMesh) return;
+      c.castShadow = true;
+      c.receiveShadow = true;
+      if (!c.material.emissive) c.material.emissive = new THREE.Color(0);
+      if (c.material.map) c.material.map.colorSpace = THREE.SRGBColorSpace;
+      const pos = c.geometry.attributes.position;
+      if (pos) { verts += pos.count; tris += c.geometry.index ? c.geometry.index.count / 3 : pos.count / 3; }
+      meshCount++;
     });
 
-    // --- PARÇA SEÇİMİ ---
-    function selectMesh(mesh) {
-      if (!mesh.isMesh || !mesh.material) return;
-      if (selectedMesh) selectedMesh.material.emissive.copy(originalEmissive);
-      
-      selectedMesh = mesh;
-      originalEmissive.copy(selectedMesh.material.emissive);
-      selectedMesh.material.emissive.setHex(0x554400); 
+    scene.add(currentModel);
 
-      uiPartName.textContent = mesh.name || 'İsimsiz Parça';
-      matPanel.style.opacity = '1';
-      matPanel.style.pointerEvents = 'auto';
+    const box = new THREE.Box3().setFromObject(currentModel);
+    const size = box.getSize(new THREE.Vector3());
+    const ctr  = box.getCenter(new THREE.Vector3());
+    if (size.length() < 0.001) size.set(1,1,1);
 
-      const mat = mesh.material;
-      if(mat.color) {
-        const hex = '#' + mat.color.getHexString();
-        inCol.value = hex; btnCol.style.background = hex; valCol.textContent = hex;
-      }
-      
-      inOp.value = mat.opacity !== undefined ? mat.opacity : 1; valOp.textContent = parseFloat(inOp.value).toFixed(2);
-      inMet.value = mat.metalness !== undefined ? mat.metalness : 0; valMet.textContent = parseFloat(inMet.value).toFixed(2);
-      inRou.value = mat.roughness !== undefined ? mat.roughness : 0.5; valRou.textContent = parseFloat(inRou.value).toFixed(2);
-    }
+    currentModel.position.sub(ctr);
+    currentModel.position.y += size.y / 2;
 
-    function deselectMesh() {
-      if (selectedMesh) {
-        selectedMesh.material.emissive.copy(originalEmissive);
-        selectedMesh = null;
-      }
-      uiPartName.textContent = 'Parça seçilmedi';
-      matPanel.style.opacity = '0.3';
-      matPanel.style.pointerEvents = 'none';
-    }
+    initT.pos.copy(currentModel.position);
+    initT.rot.copy(currentModel.rotation);
+    initT.sc.copy(currentModel.scale);
 
-    // --- UI EVENT'LERİ ---
-    inScale.addEventListener('input', (e) => {
-      if(!currentModel) return;
-      const s = e.target.value / 100;
-      currentModel.scale.set(s, s, s);
-      valScale.textContent = e.target.value + '%';
-    });
+    const maxD = Math.max(size.x, size.y, size.z);
+    const fov  = camera.fov * Math.PI / 180;
+    const dist = (maxD / 2 / Math.tan(fov / 2)) * 2;
+    camera.position.set(dist * .55, dist * .45, dist);
+    orbit.target.set(0, size.y / 2, 0);
+    orbit.update();
 
-    document.getElementById('btn-reset').addEventListener('click', () => {
-      if(!currentModel) return;
-      currentModel.position.copy(initialTransform.pos);
-      currentModel.rotation.copy(initialTransform.rot);
-      currentModel.scale.copy(initialTransform.scale);
-      inScale.value = 100; valScale.textContent = '100%';
-    });
+    const by = currentModel.position.y - size.y / 2 + 0.001;
+    shadowPlane.position.y = by;
+    gridHelper.position.y  = by;
 
-    document.querySelectorAll('.gizmo-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.gizmo-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        gizmo.setMode(e.target.dataset.mode);
-      });
-    });
+    gizmo.attach(currentModel);
+    $('vp-tb').style.display = 'flex';
 
-    btnCol.addEventListener('click', () => inCol.click());
-    inCol.addEventListener('input', (e) => {
-      const v = e.target.value; btnCol.style.background = v; valCol.textContent = v;
-      if (selectedMesh) selectedMesh.material.color.set(v);
-    });
+    // Stats
+    $('st-m').textContent = meshCount;
+    $('st-v').textContent = verts.toLocaleString();
+    $('st-t').textContent = Math.round(tris).toLocaleString();
 
-    inOp.addEventListener('input', (e) => {
-      const v = parseFloat(e.target.value); valOp.textContent = v.toFixed(2);
-      if (selectedMesh) {
-        selectedMesh.material.opacity = v;
-        selectedMesh.material.transparent = v < 1.0;
-        selectedMesh.material.depthWrite = v === 1.0;
-        selectedMesh.material.needsUpdate = true;
-      }
-    });
+    buildOutliner(currentModel);
+    buildInfo(file.name, meshCount, verts, tris, size);
+    $('st-mod').textContent = file.name.length > 22 ? file.name.substring(0,20)+'…' : file.name;
+    syncTUI();
 
-    inMet.addEventListener('input', (e) => { const v = parseFloat(e.target.value); valMet.textContent = v.toFixed(2); if(selectedMesh) selectedMesh.material.metalness = v; });
-    inRou.addEventListener('input', (e) => { const v = parseFloat(e.target.value); valRou.textContent = v.toFixed(2); if(selectedMesh) selectedMesh.material.roughness = v; });
+    $('loading-ov').classList.remove('show');
+    toast('Model yüklendi ✓', 'ok');
+    setStatus('ready', 'Hazır');
+  }, undefined, err => {
+    URL.revokeObjectURL(url);
+    $('loading-ov').classList.remove('show');
+    toast('Yüklenemedi: ' + err.message, 'err');
+    setStatus('err', 'Hata');
+    console.error(err);
+  });
+}
 
-    // --- BAŞLATMA ---
-    function animate() {
-      requestAnimationFrame(animate);
-      orbit.update();
-      renderer.render(scene, camera);
-    }
-    
-    // JS FIX 3: Tüm yapı yüklendiğinde motoru tetikle
-    window.onload = () => {
-      init();
-      animate();
-    };
-  </script>
+// ── OUTLINER ──
+function buildOutliner(model) {
+  const ol = $('outliner');
+  ol.innerHTML = '';
+  ol._map = [];
+
+  const root = makeOLItem('🗂️', model.name || 'Sahne', 'Root', false, null);
+  ol.appendChild(root);
+
+  model.traverse(c => {
+    if (!c.isMesh) return;
+    const item = makeOLItem('⬟', c.name || 'Mesh', 'Mesh', true, c);
+    ol.appendChild(item);
+    ol._map.push({ el: item, mesh: c });
+  });
+}
+
+function makeOLItem(icon, name, type, indent, mesh) {
+  const d = document.createElement('div');
+  d.className = 'ol-item' + (indent ? ' ol-indent' : '');
+  d.innerHTML = `<span class="ol-icon">${icon}</span><span class="ol-name">${name}</span><span class="ol-type">${type}</span>`;
+  if (mesh) d.addEventListener('click', e => { e.stopPropagation(); selectMesh(mesh); });
+  return d;
+}
+
+function syncOL(mesh) {
+  const ol = $('outliner');
+  if (!ol._map) return;
+  ol._map.forEach(({ el, mesh: m }) => el.classList.toggle('selected', m === mesh));
+}
+
+// ── MODEL INFO ──
+function buildInfo(name, mc, v, t, sz) {
+  $('info-body').innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
+    ${ir('Dosya', name.length>24?name.substring(0,22)+'…':name)}
+    ${ir('Meshler', mc)}
+    ${ir('Vertices', v.toLocaleString())}
+    ${ir('Triangles', Math.round(t).toLocaleString())}
+    ${ir('Boyut W', sz.x.toFixed(3))}
+    ${ir('Boyut H', sz.y.toFixed(3))}
+    ${ir('Boyut D', sz.z.toFixed(3))}
+  </div>`;
+}
+const ir = (k,v) => `<div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--text2)">${k}</span><span style="font-family:var(--mono);font-size:10px">${v}</span></div>`;
+
+// ── SELECT / DESELECT ──
+function selectMesh(mesh) {
+  if (!mesh?.isMesh || !mesh.material) return;
+  if (selectedMesh?.material?.emissive) selectedMesh.material.emissive.copy(origEmissive);
+
+  selectedMesh = mesh;
+  if (mesh.material.emissive) {
+    origEmissive.copy(mesh.material.emissive);
+    mesh.material.emissive.setHex(0x221100);
+  }
+
+  const mat = mesh.material;
+  const col = mat.color     ? '#' + mat.color.getHexString()     : '#ffffff';
+  const em  = mat.emissive  ? '#' + mat.emissive.getHexString()  : '#000000';
+
+  setC('mc', col); setC('me', em);
+  setSL('in-op', 'vb-op', mat.opacity ?? 1,              v => v.toFixed(2));
+  setSL('in-ro', 'vb-ro', mat.roughness ?? 0.5,          v => v.toFixed(2));
+  setSL('in-me2','vb-me2',mat.metalness ?? 0,            v => v.toFixed(2));
+  setSL('in-ei', 'vb-ei', mat.emissiveIntensity ?? 1,    v => v.toFixed(2));
+  setSL('in-ns', 'vb-ns', mat.normalScale?.x ?? 1,       v => v.toFixed(2));
+
+  setTgl('tgl-wf', mat.wireframe ?? false);
+  setTgl('tgl-ds', mat.side === THREE.DoubleSide);
+  setTgl('tgl-dw', mat.depthWrite ?? true);
+  setTgl('tgl-flat', mat.flatShading ?? false);
+
+  $('mat-name').textContent = mesh.name || 'Mesh';
+  $('mat-empty').style.display = 'none';
+  $('mat-ed').style.display = 'block';
+  $('st-sel').textContent = mesh.name || 'Mesh';
+  syncOL(mesh);
+  switchTab('mat', 'right');
+}
+
+function deselectMesh() {
+  if (selectedMesh?.material?.emissive) selectedMesh.material.emissive.copy(origEmissive);
+  selectedMesh = null;
+  $('mat-empty').style.display = 'block';
+  $('mat-ed').style.display = 'none';
+  $('st-sel').textContent = '—';
+  const ol = $('outliner');
+  if (ol._map) ol._map.forEach(({ el }) => el.classList.remove('selected'));
+}
+
+// ── TRANSFORM UI ──
+function syncTUI() {
+  if (!currentModel) return;
+  const p = currentModel.position, r = currentModel.rotation, s = currentModel.scale;
+  $('tx-x').value = p.x.toFixed(3);
+  $('tx-y').value = p.y.toFixed(3);
+  $('tx-z').value = p.z.toFixed(3);
+  $('rx-x').value = (r.x * 180/Math.PI).toFixed(1);
+  $('rx-y').value = (r.y * 180/Math.PI).toFixed(1);
+  $('rx-z').value = (r.z * 180/Math.PI).toFixed(1);
+  const sp = Math.round(s.x * 100);
+  $('in-sc').value = sp;
+  $('vb-sc').textContent = sp;
+}
+
+// ── HELPERS ──
+function setC(id, hex) {
+  const sw = $(`${id}-sw`), inp = $(`in-${id}`), hx = $(`${id}-hex`);
+  if (sw) sw.style.background = hex;
+  if (inp) inp.value = hex;
+  if (hx) hx.value = hex;
+}
+function setSL(inId, bdId, val, fmt) {
+  $(inId).value = val;
+  $(bdId).textContent = fmt(val);
+}
+function setTgl(id, on) {
+  const el = $(id); if (el) el.classList.toggle('on', on);
+}
+
+function colorSetup(id, cb) {
+  const sw = $(`${id}-sw`), inp = $(`in-${id}`), hx = $(`${id}-hex`);
+  if (!sw || !inp) return;
+  sw.addEventListener('click', () => inp.click());
+  inp.addEventListener('input', e => {
+    const v = e.target.value;
+    sw.style.background = v;
+    if (hx) hx.value = v;
+    cb(v);
+  });
+  if (hx) hx.addEventListener('change', e => {
+    const v = e.target.value;
+    if (/^#[0-9a-f]{6}$/i.test(v)) { inp.value = v; sw.style.background = v; cb(v); }
+  });
+}
+
+// ── BIND SCENE CONTROLS ──
+$('in-exp').addEventListener('input', e => {
+  renderer.toneMappingExposure = +e.target.value;
+  $('vb-exp').textContent = (+e.target.value).toFixed(2);
+});
+$('in-amb').addEventListener('input', e => {
+  ambLight.intensity = +e.target.value;
+  $('vb-amb').textContent = (+e.target.value).toFixed(2);
+});
+$('in-dir').addEventListener('input', e => {
+  dirLight.intensity = +e.target.value;
+  $('vb-dir').textContent = (+e.target.value).toFixed(2);
+});
+$('in-shad').addEventListener('input', e => {
+  shadowPlane.material.opacity = +e.target.value;
+  $('vb-shad').textContent = (+e.target.value).toFixed(2);
+});
+$('in-fog').addEventListener('input', e => {
+  const d = +e.target.value;
+  $('vb-fog').textContent = d.toFixed(3);
+  scene.fog = d > 0 ? new THREE.FogExp2(scene.background, d) : null;
+});
+$('in-fov').addEventListener('input', e => {
+  camera.fov = +e.target.value;
+  camera.updateProjectionMatrix();
+  $('vb-fov').textContent = e.target.value + '°';
+});
+$('in-near').addEventListener('input', e => {
+  camera.near = +e.target.value;
+  camera.updateProjectionMatrix();
+  $('vb-near').textContent = (+e.target.value).toFixed(3);
+});
+
+colorSetup('bg', hex => {
+  scene.background = new THREE.Color(hex);
+  if (scene.fog) scene.fog.color = scene.background;
+});
+
+// ── BIND TRANSFORM CONTROLS ──
+['tx-x','tx-y','tx-z'].forEach((id,i) => {
+  $(id).addEventListener('input', () => {
+    if (!currentModel) return;
+    currentModel.position[['x','y','z'][i]] = parseFloat($(id).value) || 0;
+  });
+});
+['rx-x','rx-y','rx-z'].forEach((id,i) => {
+  $(id).addEventListener('input', () => {
+    if (!currentModel) return;
+    currentModel.rotation[['x','y','z'][i]] = (parseFloat($(id).value) || 0) * Math.PI / 180;
+  });
+});
+$('in-sc').addEventListener('input', e => {
+  if (!currentModel) return;
+  const s = e.target.value / 100;
+  currentModel.scale.set(s,s,s);
+  $('vb-sc').textContent = e.target.value;
+});
+$('btn-rpos').addEventListener('click', () => {
+  if (!currentModel) return;
+  currentModel.position.copy(initT.pos);
+  syncTUI(); toast('Konum sıfırlandı');
+});
+$('btn-rall').addEventListener('click', () => {
+  if (!currentModel) return;
+  currentModel.position.copy(initT.pos);
+  currentModel.rotation.copy(initT.rot);
+  currentModel.scale.copy(initT.sc);
+  syncTUI(); toast('Dönüşüm sıfırlandı');
+});
+
+// ── BIND MATERIAL CONTROLS ──
+colorSetup('mc', hex => { if (selectedMesh?.material?.color) selectedMesh.material.color.set(hex); });
+colorSetup('me', hex => { if (selectedMesh?.material?.emissive) { selectedMesh.material.emissive.set(hex); origEmissive.set(hex); } });
+
+$('in-op').addEventListener('input', e => {
+  const v = +e.target.value; $('vb-op').textContent = v.toFixed(2);
+  if (!selectedMesh) return;
+  selectedMesh.material.opacity = v;
+  selectedMesh.material.transparent = v < 1;
+  selectedMesh.material.depthWrite = v === 1;
+  selectedMesh.material.needsUpdate = true;
+});
+$('in-ro').addEventListener('input', e => {
+  const v = +e.target.value; $('vb-ro').textContent = v.toFixed(2);
+  if (selectedMesh?.material?.roughness !== undefined) selectedMesh.material.roughness = v;
+});
+$('in-me2').addEventListener('input', e => {
+  const v = +e.target.value; $('vb-me2').textContent = v.toFixed(2);
+  if (selectedMesh?.material?.metalness !== undefined) selectedMesh.material.metalness = v;
+});
+$('in-ei').addEventListener('input', e => {
+  const v = +e.target.value; $('vb-ei').textContent = v.toFixed(2);
+  if (selectedMesh?.material?.emissiveIntensity !== undefined) selectedMesh.material.emissiveIntensity = v;
+});
+$('in-ns').addEventListener('input', e => {
+  const v = +e.target.value; $('vb-ns').textContent = v.toFixed(2);
+  if (selectedMesh?.material?.normalScale) selectedMesh.material.normalScale.set(v,v);
+});
+
+function bindTgl(id, cb) {
+  $(id).addEventListener('click', function() { this.classList.toggle('on'); cb(this.classList.contains('on')); });
+}
+bindTgl('tgl-wf', v => { if (selectedMesh) selectedMesh.material.wireframe = v; });
+bindTgl('tgl-ds', v => { if (selectedMesh) { selectedMesh.material.side = v ? THREE.DoubleSide : THREE.FrontSide; selectedMesh.material.needsUpdate = true; } });
+bindTgl('tgl-dw', v => { if (selectedMesh) selectedMesh.material.depthWrite = v; });
+bindTgl('tgl-flat', v => { if (selectedMesh) { selectedMesh.material.flatShading = v; selectedMesh.material.needsUpdate = true; } });
+
+$('in-blend').addEventListener('change', e => {
+  if (!selectedMesh) return;
+  const map = { normal: THREE.NormalBlending, additive: THREE.AdditiveBlending, multiply: THREE.MultiplyBlending, subtract: THREE.SubtractiveBlending };
+  selectedMesh.material.blending = map[e.target.value] ?? THREE.NormalBlending;
+  selectedMesh.material.needsUpdate = true;
+});
+
+$('btn-ap-col').addEventListener('click', () => {
+  if (!currentModel || !selectedMesh?.material?.color) return;
+  const c = selectedMesh.material.color.clone();
+  currentModel.traverse(m => { if (m.isMesh && m.material?.color) m.material.color.copy(c); });
+  toast('Renk tüm meshlere uygulandı');
+});
+$('btn-ap-pbr').addEventListener('click', () => {
+  if (!currentModel || !selectedMesh) return;
+  const ro = selectedMesh.material.roughness, me = selectedMesh.material.metalness;
+  currentModel.traverse(m => {
+    if (!m.isMesh) return;
+    if (m.material.roughness !== undefined) m.material.roughness = ro;
+    if (m.material.metalness !== undefined) m.material.metalness = me;
+  });
+  toast('PBR tüm meshlere uygulandı');
+});
+$('btn-ap-all').addEventListener('click', () => {
+  $('btn-ap-col').click(); $('btn-ap-pbr').click();
+  toast('Tüm ayarlar uygulandı');
+});
+
+// ── VP TOOLBAR ──
+document.querySelectorAll('.vp-btn[data-mode]').forEach(b => {
+  b.addEventListener('click', () => { setGizmo(b.dataset.mode); });
+});
+$('btn-space').addEventListener('click', function() {
+  worldSpace = !worldSpace;
+  gizmo.setSpace(worldSpace ? 'world' : 'local');
+  this.textContent = worldSpace ? 'WORLD' : 'LOCAL';
+});
+
+function setGizmo(mode) {
+  gizmo.setMode(mode);
+  document.querySelectorAll('.vp-btn[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+}
+
+// ── VIEW PRESETS ──
+function setView(px,py,pz,tx,ty,tz) {
+  if (!currentModel) { toast('Model yüklenmedi'); return; }
+  const box = new THREE.Box3().setFromObject(currentModel);
+  const ctr = box.getCenter(new THREE.Vector3());
+  const sz  = box.getSize(new THREE.Vector3());
+  const d   = Math.max(sz.x, sz.y, sz.z) * 1.8;
+  orbit.target.set(ctr.x + tx, ctr.y + ty, ctr.z + tz);
+  camera.position.set(ctr.x + px*d, ctr.y + py*d, ctr.z + pz*d);
+  orbit.update();
+}
+$('vc-fr').addEventListener('click', () => setView(0,0,1,  0,0,0));
+$('vc-tp').addEventListener('click', () => setView(0,1,.001, 0,0,0));
+$('vc-rt').addEventListener('click', () => setView(1,0,0,  0,0,0));
+$('vc-is').addEventListener('click', () => setView(.6,.5,.6,0,0,0));
+
+// ── TOP ACTIONS ──
+$('btn-open').addEventListener('click', () => $('file-input').click());
+$('file-input').addEventListener('change', e => { if (e.target.files[0]) { loadFile(e.target.files[0]); e.target.value = ''; } });
+
+$('btn-frame').addEventListener('click', frameModel);
+function frameModel() {
+  if (!currentModel) { toast('Model yüklenmedi'); return; }
+  const box = new THREE.Box3().setFromObject(currentModel);
+  const ctr = box.getCenter(new THREE.Vector3());
+  const sz  = box.getSize(new THREE.Vector3());
+  const d   = Math.max(sz.x, sz.y, sz.z) / 2 / Math.tan(camera.fov * Math.PI / 360) * 1.8;
+  orbit.target.copy(ctr);
+  camera.position.set(ctr.x + d*.55, ctr.y + d*.4, ctr.z + d);
+  orbit.update();
+}
+
+function takeScreenshot() {
+  renderer.render(scene, camera);
+  const a = document.createElement('a');
+  a.download = `pepperAR_${Date.now()}.png`;
+  a.href = renderer.domElement.toDataURL('image/png');
+  a.click();
+  toast('Screenshot kaydedildi 📷', 'ok');
+}
+[$('btn-ss'), $('btn-ss2')].forEach(b => b?.addEventListener('click', takeScreenshot));
+
+function toggleWireframe() {
+  wireMode = !wireMode;
+  $('btn-wf').classList.toggle('active', wireMode);
+  if (currentModel) currentModel.traverse(c => { if (c.isMesh) c.material.wireframe = wireMode; });
+  toast(wireMode ? 'Wireframe açık' : 'Wireframe kapalı');
+}
+$('btn-wf').addEventListener('click', toggleWireframe);
+
+$('btn-grid').addEventListener('click', () => {
+  gridVis = !gridVis;
+  gridHelper.visible = gridVis;
+  shadowPlane.visible = gridVis;
+  $('btn-grid').classList.toggle('active', gridVis);
+});
+
+$('btn-stats').addEventListener('click', () => {
+  statsVisible = !statsVisible;
+  $('stats-hud').classList.toggle('hidden', !statsVisible);
+  $('btn-stats').classList.toggle('active', statsVisible);
+});
+
+function toggleTheme() {
+  const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('par_theme', t);
+  const bg = t === 'dark' ? '#111113' : '#e4e4e8';
+  scene.background = new THREE.Color(bg);
+  $('bg-sw').style.background = bg;
+  $('in-bg').value = bg;
+  $('bg-hex').value = bg;
+}
+$('btn-theme').addEventListener('click', toggleTheme);
+
+$('btn-keys').addEventListener('click', () => $('modal-keys').classList.add('show'));
+$('modal-keys').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('show'); });
+
+[$('btn-save'), $('btn-save2')].forEach(b => b?.addEventListener('click', savePreset));
+function savePreset() {
+  const p = {
+    exp:  $('in-exp').value,  amb:  $('in-amb').value,
+    dir:  $('in-dir').value,  shad: $('in-shad').value,
+    bg:   $('bg-hex').value,  fog:  $('in-fog').value,
+    fov:  $('in-fov').value,
+  };
+  localStorage.setItem('par_preset', JSON.stringify(p));
+  toast('Ayarlar kaydedildi ✓', 'ok');
+}
+function loadPreset() {
+  try {
+    const p = JSON.parse(localStorage.getItem('par_preset') || '{}');
+    if (p.exp)  { $('in-exp').value  = p.exp;  renderer.toneMappingExposure = +p.exp; $('vb-exp').textContent = (+p.exp).toFixed(2); }
+    if (p.amb)  { $('in-amb').value  = p.amb;  ambLight.intensity = +p.amb; $('vb-amb').textContent = (+p.amb).toFixed(2); }
+    if (p.dir)  { $('in-dir').value  = p.dir;  dirLight.intensity = +p.dir; $('vb-dir').textContent = (+p.dir).toFixed(2); }
+    if (p.shad) { $('in-shad').value = p.shad; shadowPlane.material.opacity = +p.shad; $('vb-shad').textContent = (+p.shad).toFixed(2); }
+    if (p.bg)   { scene.background = new THREE.Color(p.bg); $('bg-sw').style.background = p.bg; $('in-bg').value = p.bg; $('bg-hex').value = p.bg; }
+    if (p.fov)  { camera.fov = +p.fov; camera.updateProjectionMatrix(); $('vb-fov').textContent = p.fov + '°'; $('in-fov').value = p.fov; }
+  } catch(e){}
+}
+
+// ── TABS ──
+document.querySelectorAll('.stab').forEach(t => {
+  t.addEventListener('click', () => switchTab(t.dataset.tab, t.dataset.side));
+});
+function switchTab(tabId, side) {
+  const sel = `.sidebar-${side}`;
+  document.querySelectorAll(`${sel} .stab`).forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+  document.querySelectorAll(`${sel} .stab-pane`).forEach(p => p.classList.toggle('active', p.id === `tab-${tabId}`));
+}
+
+// ── SECTION ACCORDION ──
+document.querySelectorAll('.section-head').forEach(h => {
+  h.addEventListener('click', () => h.parentElement.classList.toggle('closed'));
+});
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement?.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+  if (e.ctrlKey && e.key === 'o') { e.preventDefault(); $('file-input').click(); return; }
+  switch(e.key) {
+    case '?': $('modal-keys').classList.toggle('show'); break;
+    case 'Escape': deselectMesh(); $('modal-keys').classList.remove('show'); break;
+    case 'f': case 'F': frameModel(); break;
+    case 'g': case 'G': $('btn-grid').click(); break;
+    case 'w': case 'W': toggleWireframe(); break;
+    case 'p': case 'P': takeScreenshot(); break;
+    case 'i': case 'I': $('btn-stats').click(); break;
+    case 't': case 'T': setGizmo('translate'); break;
+    case 'r': case 'R': if (!e.altKey) setGizmo('rotate'); break;
+    case 's': case 'S': setGizmo('scale'); break;
+    case '1': $('vc-fr').click(); break;
+    case '2': $('vc-tp').click(); break;
+    case '3': $('vc-rt').click(); break;
+    case '4': $('vc-is').click(); break;
+    case 'Delete': deselectMesh(); break;
+  }
+  if (e.altKey && e.key === 'r') $('btn-rall').click();
+  if (e.altKey && e.key === 't') toggleTheme();
+});
+
+// ── STATUS / TOAST ──
+function setStatus(type, text) {
+  $('sd').className  = 'status-dot' + (type === 'ready' ? ' ready' : type === 'err' ? ' err' : '');
+  $('st-txt').textContent = text;
+}
+
+let toastTmr;
+function toast(msg, type = '') {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ── RESIZE ──
+function onResize() {
+  const w = container.clientWidth, h = container.clientHeight;
+  if (!w || !h) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}
+
+// ── FPS ──
+function updateFPS() {
+  fpsFrames++;
+  const now = performance.now();
+  if (now - fpsLast >= 1000) {
+    $('fps-v').textContent = fpsFrames;
+    fpsFrames = 0; fpsLast = now;
+  }
+}
+
+// ── RENDER LOOP ──
+function animate() {
+  requestAnimationFrame(animate);
+  orbit.update();
+  renderer.render(scene, camera);
+  updateFPS();
+}
+
+// ── START ──
+init();
+window._par = { scene, camera, renderer };
+</script>
 </body>
 </html>
