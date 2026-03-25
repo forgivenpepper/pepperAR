@@ -63,20 +63,14 @@
     .color-btn { width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--border2); cursor: pointer; }
     input[type=color] { position: absolute; opacity: 0; pointer-events: none; }
 
-    /* Numeric Grid */
-    .num-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .num-box { display: flex; flex-direction: column; gap: 4px; }
-    .num-lbl { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; }
-    .num-inp { width: 100%; border: 1px solid var(--border2); border-radius: 4px; padding: 6px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); background: var(--bg); outline: none; text-align: center;}
-    .num-inp:focus { border-color: var(--accent); }
-
     /* Save Area */
     .save-area { padding: 24px; margin-top: auto; border-top: var(--border-w) solid var(--border); background: var(--bg2); }
     .btn-save { width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-weight: 600; font-size: 14px; cursor: pointer; transition: transform 0.2s; font-family: inherit;}
     .btn-save:hover { background: var(--accent-hov); transform: translateY(-1px); }
 
-    /* 3D Canvas Area */
-    .canvas-wrapper { flex: 1; position: relative; background: var(--bg); display: flex; flex-direction: column;}
+    /* 3D Canvas Area - CSS FIX: Absolute positioning to guarantee height */
+    .canvas-wrapper { flex: 1; position: relative; background: var(--bg); overflow: hidden; }
+    #canvas-container { position: absolute; inset: 0; outline: none; }
     
     /* Gizmo Toolbar */
     .gizmo-toolbar { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 4px; display: flex; gap: 4px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.05);}
@@ -84,8 +78,6 @@
     .gizmo-btn.active { background: var(--accent-bg); color: var(--accent); }
     .gizmo-btn:hover:not(.active) { background: var(--bg3); }
 
-    #canvas-container { flex: 1; outline: none; }
-    
     .loading { position: absolute; inset: 0; background: rgba(0,0,0,0.6); color: white; display: none; align-items: center; justify-content: center; font-weight: 600; z-index: 20; backdrop-filter: blur(4px);}
     .toast { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--bg2); padding: 8px 16px; border-radius: 20px; border: 1px solid var(--accent); color: var(--text); font-size: 13px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1); pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 20;}
   </style>
@@ -108,9 +100,7 @@
   </div>
 
   <div class="main">
-    
     <div class="sidebar">
-      
       <div class="panel">
         <div class="panel-header"><div class="panel-title">💡 Işık &amp; Ortam</div></div>
         <div class="panel-content">
@@ -151,11 +141,7 @@
             <div class="control-header"><span>Y Ekseni Döndür (Rotate)</span><span class="control-val" id="val-rot-y">0°</span></div>
             <input type="range" id="in-rot-y" min="0" max="360" step="1" value="0">
           </div>
-
-          <div style="font-size: 11px; color: var(--text3); margin-top: 8px; line-height: 1.4;">
-            * Detaylı taşıma, çevirme ve ölçekleme işlemleri için ekrandaki <b>Gizmo (Araçları)</b> kullanabilirsin.
-          </div>
-          <button class="btn-upload" id="btn-reset-transform" style="margin-top: 4px; width: 100%; text-align: center;">↺ Orijinal Boyuta Dön</button>
+          <button class="btn-upload" id="btn-reset-transform" style="margin-top: 8px; width: 100%; text-align: center;">↺ Orijinal Boyuta Dön</button>
         </div>
       </div>
 
@@ -179,12 +165,12 @@
           </div>
 
           <div class="control-group" style="margin-top: 8px;">
-            <div class="control-header"><span>Pürüzlülük (Roughness)</span><span class="control-val" id="val-mat-ro">0.50</span></div>
+            <div class="control-header"><span>Pürüzlülük</span><span class="control-val" id="val-mat-ro">0.50</span></div>
             <input type="range" id="in-mat-ro" min="0" max="1" step="0.01" value="0.5">
           </div>
 
           <div class="control-group" style="margin-top: 8px;">
-            <div class="control-header"><span>Metalik (Metalness)</span><span class="control-val" id="val-mat-me">0.00</span></div>
+            <div class="control-header"><span>Metalik</span><span class="control-val" id="val-mat-me">0.00</span></div>
             <input type="range" id="in-mat-me" min="0" max="1" step="0.01" value="0">
           </div>
         </div>
@@ -196,7 +182,6 @@
     </div>
 
     <div class="canvas-wrapper">
-      
       <div class="gizmo-toolbar" id="gizmo-tools" style="display: none;">
         <button class="gizmo-btn active" data-mode="translate">📍 Taşı</button>
         <button class="gizmo-btn" data-mode="rotate">🔄 Çevir</button>
@@ -213,42 +198,36 @@
   <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    // --- DRACO DECODER EKLENDİ (EN KRİTİK ÇÖZÜM) ---
+    import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'; 
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { TransformControls } from 'three/addons/controls/TransformControls.js';
     import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-    // --- MOTOR DEĞİŞKENLERİ ---
     let scene, camera, renderer, orbit, gizmo, dirLight, shadowPlane;
     let currentModel = null;
     let selectedMesh = null;
     let originalEmissive = new THREE.Color();
     let initialTransform = { pos: new THREE.Vector3(), rot: new THREE.Euler(), scale: new THREE.Vector3(1,1,1) };
 
-    // --- DOM ELEMENTLERİ ---
     const container = document.getElementById('canvas-container');
     const loadingUI = document.getElementById('loading');
     const toastUI = document.getElementById('toast');
     const gizmoTools = document.getElementById('gizmo-tools');
     
-    // Akordeon İşleyişi
     document.querySelectorAll('.panel-header').forEach(header => {
-      header.addEventListener('click', (e) => {
+      header.addEventListener('click', () => {
         if(header.style.pointerEvents === 'none') return;
         header.parentElement.classList.toggle('collapsed');
       });
     });
 
-    // UI Inputlar - Işık & Arka Plan
     const inExp = document.getElementById('in-exp'), valExp = document.getElementById('val-exp');
     const inShadow = document.getElementById('in-shadow'), valShadow = document.getElementById('val-shadow');
     const inBg = document.getElementById('in-bg'), btnBg = document.getElementById('bg-btn'), valBg = document.getElementById('val-bg');
-
-    // UI Inputlar - Tüm Model Transform
     const inScaleU = document.getElementById('in-scale-u'), valScaleU = document.getElementById('val-scale-u');
     const inRotY = document.getElementById('in-rot-y'), valRotY = document.getElementById('val-rot-y');
     const btnResetTrans = document.getElementById('btn-reset-transform');
-
-    // UI Inputlar - Parça Materyali
     const matPanel = document.getElementById('mat-panel');
     const uiPartName = document.getElementById('part-name');
     const inMatCol = document.getElementById('in-mat-color'), btnMatCol = document.getElementById('mat-color-btn'), valMatCol = document.getElementById('val-mat-color');
@@ -259,51 +238,46 @@
     initEngine();
     animate();
 
-    // ==========================================
-    // 1. MOTOR & SAHNE KURULUMU
-    // ==========================================
     function initEngine() {
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0xf4f4f5);
 
-      camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+      // Canvas Boyutlandırma Güvencesi
+      const width = container.clientWidth || window.innerWidth - 320;
+      const height = container.clientHeight || window.innerHeight - 60;
+
+      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
       camera.position.set(2, 2, 4);
 
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setSize(width, height);
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.0;
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
 
-      // Çevre & Işık
       const pmrem = new THREE.PMREMGenerator(renderer);
       scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
       
       scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-
       dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
       dirLight.position.set(5, 10, 5);
       dirLight.castShadow = true;
-      dirLight.shadow.camera.top = 2;
-      dirLight.shadow.camera.bottom = -2;
-      dirLight.shadow.camera.left = -2;
-      dirLight.shadow.camera.right = 2;
+      dirLight.shadow.mapSize.width = 2048; // Kaliteli gölgeler
+      dirLight.shadow.mapSize.height = 2048;
       dirLight.shadow.bias = -0.0001;
       scene.add(dirLight);
 
-      // Gölgeleri yakalayacak görünmez zemin
       const planeGeo = new THREE.PlaneGeometry(100, 100);
       const planeMat = new THREE.ShadowMaterial({ opacity: 0.2 });
       shadowPlane = new THREE.Mesh(planeGeo, planeMat);
       shadowPlane.rotation.x = -Math.PI / 2;
       shadowPlane.receiveShadow = true;
-      shadowPlane.position.y = -0.01; // Nesnenin hemen altı
+      shadowPlane.position.y = -0.01; 
       scene.add(shadowPlane);
 
-      // Kontroller
       orbit = new OrbitControls(camera, renderer.domElement);
       orbit.enableDamping = true;
       orbit.dampingFactor = 0.05;
@@ -313,7 +287,6 @@
       gizmo.addEventListener('change', updateTransformUIFromGizmo);
       scene.add(gizmo);
 
-      // Parça Seçimi (Raycaster)
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
 
@@ -325,7 +298,6 @@
 
         raycaster.setFromCamera(mouse, camera);
         if (currentModel) {
-          // Sadece meshleri (parçaları) tara
           const intersects = raycaster.intersectObject(currentModel, true);
           if (intersects.length > 0) {
             selectMesh(intersects[0].object);
@@ -338,9 +310,6 @@
       window.addEventListener('resize', onResize);
     }
 
-    // ==========================================
-    // 2. MODEL YÜKLEME
-    // ==========================================
     document.getElementById('file-input').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -352,27 +321,35 @@
         scene.remove(currentModel);
       }
 
+      // --- DRACO YÜKLEYİCİ AYARLARI (KRİTİK) ---
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+      const loader = new GLTFLoader();
+      loader.setDRACOLoader(dracoLoader);
+      
       const url = URL.createObjectURL(file);
-      new GLTFLoader().load(url, (gltf) => {
+      
+      loader.load(url, (gltf) => {
         currentModel = gltf.scene;
         
-        // Gölgeleri aç
         currentModel.traverse((child) => {
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
+            if(!child.material.emissive) child.material.emissive = new THREE.Color(0x000000);
           }
         });
 
         scene.add(currentModel);
 
-        // Ortala
         const box = new THREE.Box3().setFromObject(currentModel);
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
+        
+        // Hatalı boyutta dosyalar için koruma
+        if(size.x === 0 && size.y === 0) size.set(1,1,1);
 
         currentModel.position.sub(center);
-        // Zemin hizalama
         currentModel.position.y += size.y / 2;
 
         initialTransform.pos.copy(currentModel.position);
@@ -385,42 +362,42 @@
         camera.position.set(cameraZ * 0.5, cameraZ * 0.5, cameraZ);
         orbit.target.set(0, size.y / 2, 0);
         
-        // Gölge zeminini modelin altına koy
         shadowPlane.position.y = 0;
-
-        // Gizmo'yu ana modele bağla (Tüm modeli hareket ettirir)
+        
         gizmo.attach(currentModel);
         gizmoTools.style.display = 'flex';
 
         loadingUI.style.display = 'none';
-        showToast("Model yüklendi. Tümünü hareket ettirmek için okları kullanın.");
+        showToast("Model yüklendi.");
         updateTransformUIFromGizmo();
+      }, undefined, (error) => {
+        console.error('Yükleme hatası:', error);
+        loadingUI.style.display = 'none';
+        alert('Model yüklenemedi! Olası bozuk dosya. Hata: ' + error.message);
       });
     });
 
-    // ==========================================
-    // 3. PARÇA SEÇİMİ (MATERYAL)
-    // ==========================================
     function selectMesh(mesh) {
       if (!mesh.isMesh || !mesh.material) return;
       if (selectedMesh) selectedMesh.material.emissive.copy(originalEmissive);
       
       selectedMesh = mesh;
       originalEmissive.copy(selectedMesh.material.emissive);
-      selectedMesh.material.emissive.setHex(0x332200); // Parlama
+      selectedMesh.material.emissive.setHex(0x332200); 
 
       uiPartName.textContent = mesh.name || 'İsimsiz Parça';
       matPanel.style.opacity = '1';
       matPanel.style.pointerEvents = 'auto';
 
       const mat = mesh.material;
-      const hex = '#' + mat.color.getHexString();
-      inMatCol.value = hex; btnMatCol.style.background = hex; valMatCol.textContent = hex;
-      inMatOp.value = mat.opacity; valMatOp.textContent = mat.opacity.toFixed(2);
+      if(mat.color) {
+        const hex = '#' + mat.color.getHexString();
+        inMatCol.value = hex; btnMatCol.style.background = hex; valMatCol.textContent = hex;
+      }
+      inMatOp.value = mat.opacity !== undefined ? mat.opacity : 1; valMatOp.textContent = parseFloat(inMatOp.value).toFixed(2);
       inMatRo.value = mat.roughness !== undefined ? mat.roughness : 0.5; valMatRo.textContent = parseFloat(inMatRo.value).toFixed(2);
       inMatMe.value = mat.metalness !== undefined ? mat.metalness : 0; valMatMe.textContent = parseFloat(inMatMe.value).toFixed(2);
       
-      // Akordeonu otomatik aç
       matPanel.classList.remove('collapsed');
     }
 
@@ -435,22 +412,13 @@
       matPanel.classList.add('collapsed');
     }
 
-    // ==========================================
-    // 4. UI DİNLEYİCİLERİ
-    // ==========================================
-    
-    // Işık ve Arka Plan
+    // -- UI Dinleyicileri --
     inExp.addEventListener('input', (e) => { renderer.toneMappingExposure = e.target.value; valExp.textContent = parseFloat(e.target.value).toFixed(2); });
     inShadow.addEventListener('input', (e) => { shadowPlane.material.opacity = e.target.value * 0.2; valShadow.textContent = parseFloat(e.target.value).toFixed(2); });
     
     btnBg.addEventListener('click', () => inBg.click());
-    inBg.addEventListener('input', (e) => {
-      scene.background.set(e.target.value);
-      btnBg.style.background = e.target.value;
-      valBg.textContent = e.target.value;
-    });
+    inBg.addEventListener('input', (e) => { scene.background.set(e.target.value); btnBg.style.background = e.target.value; valBg.textContent = e.target.value; });
 
-    // Gizmo Toolbar Modları
     document.querySelectorAll('.gizmo-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.gizmo-btn').forEach(b => b.classList.remove('active'));
@@ -459,7 +427,6 @@
       });
     });
 
-    // Tüm Model Transformu (UI'dan Model'e)
     inScaleU.addEventListener('input', (e) => {
       if(!currentModel) return;
       const s = e.target.value / 100;
@@ -482,7 +449,6 @@
       showToast("Boyutlar sıfırlandı.");
     });
 
-    // Gizmo Model'i değiştirdiğinde UI'ı güncelle
     function updateTransformUIFromGizmo() {
       if(!currentModel) return;
       const sPct = Math.round(currentModel.scale.x * 100);
@@ -493,7 +459,6 @@
       inRotY.value = degY; valRotY.textContent = degY + '°';
     }
 
-    // Materyal Değişimleri
     btnMatCol.addEventListener('click', () => inMatCol.click());
     inMatCol.addEventListener('input', (e) => {
       const v = e.target.value; btnMatCol.style.background = v; valMatCol.textContent = v;
@@ -513,13 +478,6 @@
     inMatRo.addEventListener('input', (e) => { const v = parseFloat(e.target.value); valMatRo.textContent = v.toFixed(2); if(selectedMesh && selectedMesh.material.roughness !== undefined) selectedMesh.material.roughness = v; });
     inMatMe.addEventListener('input', (e) => { const v = parseFloat(e.target.value); valMatMe.textContent = v.toFixed(2); if(selectedMesh && selectedMesh.material.metalness !== undefined) selectedMesh.material.metalness = v; });
 
-    // Kaydet Butonu (Supabase Entegrasyonuna Hazır)
-    document.getElementById('btn-save').addEventListener('click', () => {
-      showToast("Bu aşamada Supabase kayıt fonksiyonu tetiklenir.");
-      // Burada önceki uploadFile ve upsert mantığını koyabilirsin.
-    });
-
-    // --- YARDIMCI ---
     let toastT;
     function showToast(msg) {
       toastUI.innerHTML = msg; toastUI.style.opacity = '1';
@@ -527,9 +485,11 @@
     }
 
     function onResize() {
-      camera.aspect = container.clientWidth / container.clientHeight;
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setSize(width, height);
     }
 
     function animate() {
