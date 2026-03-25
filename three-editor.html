@@ -3,83 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>pepperAR — Pro Studio Engine</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <title>pepperAR — Pro Studio Engine (Safe Mode)</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <script>
-    const savedTheme = localStorage.getItem('pepper_theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  </script>
-
   <style>
     :root {
       --bg: #fafafa; --bg2: #ffffff; --bg3: #f4f4f5;
       --border: #e4e4e7; --border2: #d4d4d8;
       --accent: #d97706; --accent-hov: #b45309; --accent-bg: rgba(217, 119, 6, 0.08);
       --text: #18181b; --text2: #52525b; --text3: #a1a1aa;
-      --radius: 8px; --border-w: 1px; --green: #10b981;
-    }
-    [data-theme="dark"] {
-      --bg: #0a0a0a; --bg2: #121212; --bg3: #1a1a1a;
-      --border: #27272a; --border2: #3f3f46;
-      --accent: #facc15; --accent-hov: #eab308; --accent-bg: rgba(250, 204, 21, 0.1);
-      --text: #f4f4f5; --text2: #a1a1aa; --text3: #71717a;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     
-    /* Topbar */
-    .topbar { height: 60px; border-bottom: var(--border-w) solid var(--border); display: flex; align-items: center; padding: 0 24px; background: var(--bg2); justify-content: space-between; z-index: 100; position: relative;}
-    .logo { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none; letter-spacing: -0.5px;}
+    .topbar { height: 60px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; background: var(--bg2); justify-content: space-between; z-index: 100;}
+    .logo { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--text); }
     .logo span { color: var(--accent); }
-    .btn-upload { background: var(--bg); color: var(--text); border: 1px solid var(--border2); padding: 8px 16px; border-radius: var(--radius); font-weight: 600; cursor: pointer; font-family: inherit; font-size: 13px; transition: all 0.2s;}
-    .btn-upload:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-upload { background: var(--accent); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; transition: background 0.2s;}
+    .btn-upload:hover { background: var(--accent-hov); }
     
-    /* Layout */
-    .main { display: flex; flex: 1; height: calc(100vh - 60px); position: relative;}
+    .main { display: flex; flex: 1; height: calc(100vh - 60px); }
+    .sidebar { width: 320px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; z-index: 10;}
     
-    /* Sidebar */
-    .sidebar { width: 320px; min-width: 320px; background: var(--bg2); border-right: var(--border-w) solid var(--border); display: flex; flex-direction: column; overflow-y: auto; z-index: 10;}
+    .panel { border-bottom: 1px solid var(--border); }
+    .panel-header { padding: 16px 24px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text2); background: var(--bg3); }
+    .panel-content { padding: 16px 24px; display: flex; flex-direction: column; gap: 16px; }
     
-    /* Accordion Panel */
-    .panel { border-bottom: var(--border-w) solid var(--border); display: flex; flex-direction: column; }
-    .panel-header { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; transition: background-color 0.2s; }
-    .panel-header:hover { background-color: var(--bg3); }
-    .panel-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text2); letter-spacing: 0.05em; }
-    .panel-header::after { content: '▼'; font-size: 10px; transition: transform 0.3s ease; color: var(--text3); }
-    .panel.collapsed .panel-header::after { transform: rotate(-90deg); }
-    .panel.collapsed .panel-content { display: none; }
-    .panel-content { padding: 0 24px 24px; display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }
-    
-    /* Controls */
     .control-group { display: flex; flex-direction: column; gap: 8px; }
     .control-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; color: var(--text2); }
-    .control-val { color: var(--accent); font-family: 'DM Mono', monospace; font-weight: 600; }
-    input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; border-radius: 4px; background: var(--border2); outline: none; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg2); }
+    .control-val { color: var(--accent); font-family: monospace; font-weight: 600; font-size: 14px;}
+    
+    input[type=range] { width: 100%; height: 4px; border-radius: 4px; background: var(--border2); outline: none; -webkit-appearance: none; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; }
     
     .color-picker { display: flex; align-items: center; gap: 12px; }
     .color-btn { width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--border2); cursor: pointer; }
     input[type=color] { position: absolute; opacity: 0; pointer-events: none; }
 
-    /* Save Area */
-    .save-area { padding: 24px; margin-top: auto; border-top: var(--border-w) solid var(--border); background: var(--bg2); }
-    .btn-save { width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-weight: 600; font-size: 14px; cursor: pointer; transition: transform 0.2s; font-family: inherit;}
-    .btn-save:hover { background: var(--accent-hov); transform: translateY(-1px); }
-
-    /* 3D Canvas Area - CSS FIX: Absolute positioning to guarantee height */
-    .canvas-wrapper { flex: 1; position: relative; background: var(--bg); overflow: hidden; }
-    #canvas-container { position: absolute; inset: 0; outline: none; }
+    /* Canvas CSS Safe Mode */
+    .canvas-wrapper { flex: 1; position: relative; background: #e5e5e5; overflow: hidden; }
+    #canvas-container { width: 100%; height: 100%; display: block; outline: none; }
     
-    /* Gizmo Toolbar */
-    .gizmo-toolbar { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 4px; display: flex; gap: 4px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.05);}
-    .gizmo-btn { background: transparent; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer; transition: all 0.2s;}
+    .gizmo-toolbar { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 6px; display: flex; gap: 4px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
+    .gizmo-btn { background: transparent; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text2); cursor: pointer;}
     .gizmo-btn.active { background: var(--accent-bg); color: var(--accent); }
-    .gizmo-btn:hover:not(.active) { background: var(--bg3); }
 
-    .loading { position: absolute; inset: 0; background: rgba(0,0,0,0.6); color: white; display: none; align-items: center; justify-content: center; font-weight: 600; z-index: 20; backdrop-filter: blur(4px);}
-    .toast { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--bg2); padding: 8px 16px; border-radius: 20px; border: 1px solid var(--accent); color: var(--text); font-size: 13px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1); pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 20;}
+    .loading { position: absolute; inset: 0; background: rgba(0,0,0,0.7); color: white; display: none; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; z-index: 50; flex-direction: column; gap: 10px;}
+    .loading-sub { font-size: 13px; font-weight: 400; color: #aaa; }
+    
+    #part-name { font-size: 14px; font-weight: 700; color: var(--accent); margin-bottom: 10px; word-break: break-all; }
   </style>
 
   <script type="importmap">
@@ -94,91 +66,56 @@
 <body>
 
   <div class="topbar">
-    <div class="logo">pepper<span>AR</span> Studio</div>
+    <div class="logo">pepper<span>AR</span> Studio <i>(Safe Mode)</i></div>
     <input type="file" id="file-input" accept=".glb" style="display: none;">
-    <button class="btn-upload" onclick="document.getElementById('file-input').click()">📁 Yerel GLB Yükle</button>
+    <button class="btn-upload" onclick="document.getElementById('file-input').click()">📁 GLB Model Yükle</button>
   </div>
 
   <div class="main">
     <div class="sidebar">
+      
       <div class="panel">
-        <div class="panel-header"><div class="panel-title">💡 Işık &amp; Ortam</div></div>
+        <div class="panel-header">Tüm Modeli Yönet</div>
         <div class="panel-content">
           <div class="control-group">
-            <div class="control-header"><span>Parlaklık (Exposure)</span><span class="control-val" id="val-exp">1.00</span></div>
-            <input type="range" id="in-exp" min="0.1" max="3" step="0.05" value="1">
+            <div class="control-header"><span>Ölçek (Büyüt/Küçült)</span><span class="control-val" id="val-scale">100%</span></div>
+            <input type="range" id="in-scale" min="10" max="300" step="1" value="100">
           </div>
-          <div class="control-group">
-            <div class="control-header"><span>Gölge Şiddeti</span><span class="control-val" id="val-shadow">1.00</span></div>
-            <input type="range" id="in-shadow" min="0" max="2" step="0.1" value="1">
-          </div>
+          <button class="btn-upload" id="btn-reset" style="background: var(--bg3); color: var(--text); border: 1px solid var(--border2); margin-top: 10px;">↺ Orijinal Boyuta Dön</button>
         </div>
       </div>
 
-      <div class="panel collapsed">
-        <div class="panel-header"><div class="panel-title">🎨 Arka Plan</div></div>
+      <div class="panel" id="mat-panel" style="opacity: 0.3; pointer-events: none; flex: 1;">
+        <div class="panel-header">Seçili Parça (Materyal)</div>
         <div class="panel-content">
-          <div class="color-picker">
-            <div class="color-btn" id="bg-btn" style="background: #f4f4f5;"></div>
-            <input type="color" id="in-bg" value="#f4f4f5">
-            <div>
-              <div style="font-size: 13px; font-weight: 500; color: var(--text2);">Renk</div>
-              <div class="control-val" id="val-bg">#f4f4f5</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header"><div class="panel-title">📐 Bütün Modeli Yönet</div></div>
-        <div class="panel-content">
-          <div class="control-group">
-            <div class="control-header"><span>Tümünü Ölçekle (Scale)</span><span class="control-val" id="val-scale-u">100%</span></div>
-            <input type="range" id="in-scale-u" min="10" max="300" step="1" value="100">
-          </div>
-          
-          <div class="control-group" style="margin-top: 8px;">
-            <div class="control-header"><span>Y Ekseni Döndür (Rotate)</span><span class="control-val" id="val-rot-y">0°</span></div>
-            <input type="range" id="in-rot-y" min="0" max="360" step="1" value="0">
-          </div>
-          <button class="btn-upload" id="btn-reset-transform" style="margin-top: 8px; width: 100%; text-align: center;">↺ Orijinal Boyuta Dön</button>
-        </div>
-      </div>
-
-      <div class="panel" id="mat-panel" style="opacity: 0.4; pointer-events: none; flex: 1;">
-        <div class="panel-header" style="pointer-events: none;"><div class="panel-title">🎭 Seçili Parça</div></div>
-        <div class="panel-content">
-          <div id="part-name" style="font-size: 13px; font-weight: 600; color: var(--accent); word-break: break-all; margin-bottom: 8px;">Modelden parça seçin...</div>
+          <div id="part-name">Parça seçilmedi</div>
           
           <div class="control-group">
             <div class="control-header"><span>Renk</span></div>
             <div class="color-picker">
-              <div class="color-btn" id="mat-color-btn" style="background: #ffffff;"></div>
-              <input type="color" id="in-mat-color">
-              <div class="control-val" id="val-mat-color">#ffffff</div>
+              <div class="color-btn" id="btn-color" style="background: #ffffff;"></div>
+              <input type="color" id="in-color">
+              <div class="control-val" id="val-color">#ffffff</div>
             </div>
           </div>
 
-          <div class="control-group" style="margin-top: 8px;">
-            <div class="control-header"><span>Saydamlık (Opacity)</span><span class="control-val" id="val-mat-op">1.00</span></div>
-            <input type="range" id="in-mat-op" min="0" max="1" step="0.01" value="1">
+          <div class="control-group" style="margin-top: 10px;">
+            <div class="control-header"><span>Saydamlık</span><span class="control-val" id="val-op">1.00</span></div>
+            <input type="range" id="in-op" min="0" max="1" step="0.01" value="1">
           </div>
-
-          <div class="control-group" style="margin-top: 8px;">
-            <div class="control-header"><span>Pürüzlülük</span><span class="control-val" id="val-mat-ro">0.50</span></div>
-            <input type="range" id="in-mat-ro" min="0" max="1" step="0.01" value="0.5">
+          
+          <div class="control-group" style="margin-top: 10px;">
+            <div class="control-header"><span>Metalik</span><span class="control-val" id="val-met">0.00</span></div>
+            <input type="range" id="in-met" min="0" max="1" step="0.01" value="0">
           </div>
-
-          <div class="control-group" style="margin-top: 8px;">
-            <div class="control-header"><span>Metalik</span><span class="control-val" id="val-mat-me">0.00</span></div>
-            <input type="range" id="in-mat-me" min="0" max="1" step="0.01" value="0">
+          
+          <div class="control-group" style="margin-top: 10px;">
+            <div class="control-header"><span>Pürüzlülük</span><span class="control-val" id="val-rou">0.50</span></div>
+            <input type="range" id="in-rou" min="0" max="1" step="0.01" value="0.5">
           </div>
         </div>
       </div>
 
-      <div class="save-area">
-        <button class="btn-save" id="btn-save">💾 Ayarları Kaydet</button>
-      </div>
     </div>
 
     <div class="canvas-wrapper">
@@ -188,105 +125,102 @@
         <button class="gizmo-btn" data-mode="scale">📐 Büyüt</button>
       </div>
 
-      <div id="loading" class="loading">Model Yükleniyor...</div>
-      <div id="toast" class="toast"></div>
+      <div id="loading" class="loading">
+        <div>Model İşleniyor...</div>
+        <div class="loading-sub">Lütfen bekleyin, ağır dosyalar zaman alabilir.</div>
+      </div>
+      
       <div id="canvas-container"></div>
     </div>
-
   </div>
 
   <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-    // --- DRACO DECODER EKLENDİ (EN KRİTİK ÇÖZÜM) ---
     import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'; 
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     import { TransformControls } from 'three/addons/controls/TransformControls.js';
     import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-    let scene, camera, renderer, orbit, gizmo, dirLight, shadowPlane;
+    // Global Değişkenler
+    let scene, camera, renderer, orbit, gizmo, startupCube;
     let currentModel = null;
     let selectedMesh = null;
     let originalEmissive = new THREE.Color();
     let initialTransform = { pos: new THREE.Vector3(), rot: new THREE.Euler(), scale: new THREE.Vector3(1,1,1) };
 
+    // UI Elementleri
     const container = document.getElementById('canvas-container');
     const loadingUI = document.getElementById('loading');
-    const toastUI = document.getElementById('toast');
     const gizmoTools = document.getElementById('gizmo-tools');
-    
-    document.querySelectorAll('.panel-header').forEach(header => {
-      header.addEventListener('click', () => {
-        if(header.style.pointerEvents === 'none') return;
-        header.parentElement.classList.toggle('collapsed');
-      });
-    });
-
-    const inExp = document.getElementById('in-exp'), valExp = document.getElementById('val-exp');
-    const inShadow = document.getElementById('in-shadow'), valShadow = document.getElementById('val-shadow');
-    const inBg = document.getElementById('in-bg'), btnBg = document.getElementById('bg-btn'), valBg = document.getElementById('val-bg');
-    const inScaleU = document.getElementById('in-scale-u'), valScaleU = document.getElementById('val-scale-u');
-    const inRotY = document.getElementById('in-rot-y'), valRotY = document.getElementById('val-rot-y');
-    const btnResetTrans = document.getElementById('btn-reset-transform');
     const matPanel = document.getElementById('mat-panel');
     const uiPartName = document.getElementById('part-name');
-    const inMatCol = document.getElementById('in-mat-color'), btnMatCol = document.getElementById('mat-color-btn'), valMatCol = document.getElementById('val-mat-color');
-    const inMatOp = document.getElementById('in-mat-op'), valMatOp = document.getElementById('val-mat-op');
-    const inMatRo = document.getElementById('in-mat-ro'), valMatRo = document.getElementById('val-mat-ro');
-    const inMatMe = document.getElementById('in-mat-me'), valMatMe = document.getElementById('val-mat-me');
 
-    initEngine();
+    const inScale = document.getElementById('in-scale'), valScale = document.getElementById('val-scale');
+    const inCol = document.getElementById('in-color'), btnCol = document.getElementById('btn-color'), valCol = document.getElementById('val-color');
+    const inOp = document.getElementById('in-op'), valOp = document.getElementById('val-op');
+    const inMet = document.getElementById('in-met'), valMet = document.getElementById('val-met');
+    const inRou = document.getElementById('in-rou'), valRou = document.getElementById('val-rou');
+
+    init();
     animate();
 
-    function initEngine() {
+    function init() {
+      // 1. Sahne ve Kamera Kurulumu (Güvenli Boyutlandırma)
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0xf4f4f5);
+      scene.background = new THREE.Color(0xd4d4d8); // Gri arka plan (Modelin daha net görünmesi için)
 
-      // Canvas Boyutlandırma Güvencesi
-      const width = container.clientWidth || window.innerWidth - 320;
-      const height = container.clientHeight || window.innerHeight - 60;
-
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      
       camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-      camera.position.set(2, 2, 4);
+      camera.position.set(3, 3, 5);
 
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(width, height);
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.0;
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
 
+      // 2. Işıklandırma ve Ortam
       const pmrem = new THREE.PMREMGenerator(renderer);
       scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
       
-      scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-      dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+      
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
       dirLight.position.set(5, 10, 5);
-      dirLight.castShadow = true;
-      dirLight.shadow.mapSize.width = 2048; // Kaliteli gölgeler
-      dirLight.shadow.mapSize.height = 2048;
-      dirLight.shadow.bias = -0.0001;
       scene.add(dirLight);
 
-      const planeGeo = new THREE.PlaneGeometry(100, 100);
-      const planeMat = new THREE.ShadowMaterial({ opacity: 0.2 });
-      shadowPlane = new THREE.Mesh(planeGeo, planeMat);
-      shadowPlane.rotation.x = -Math.PI / 2;
-      shadowPlane.receiveShadow = true;
-      shadowPlane.position.y = -0.01; 
-      scene.add(shadowPlane);
+      // 3. REFERANS IZGARASI (Motorun çalıştığını gösterir)
+      const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0xbbbbbb);
+      scene.add(gridHelper);
 
+      // 4. BAŞLANGIÇ TEST KÜPÜ (Model yüklenene kadar ekranda durur)
+      const geo = new THREE.BoxGeometry(1, 1, 1);
+      const mat = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.2, metalness: 0.8 });
+      startupCube = new THREE.Mesh(geo, mat);
+      startupCube.position.y = 0.5;
+      scene.add(startupCube);
+
+      // 5. Kontroller (Orbit & Transform)
       orbit = new OrbitControls(camera, renderer.domElement);
       orbit.enableDamping = true;
       orbit.dampingFactor = 0.05;
 
       gizmo = new TransformControls(camera, renderer.domElement);
       gizmo.addEventListener('dragging-changed', (e) => { orbit.enabled = !e.value; });
-      gizmo.addEventListener('change', updateTransformUIFromGizmo);
+      gizmo.addEventListener('change', () => {
+        if(currentModel) {
+          const sPct = Math.round(currentModel.scale.x * 100);
+          inScale.value = sPct; valScale.textContent = sPct + '%';
+        }
+      });
       scene.add(gizmo);
 
+      // 6. Parça Seçme Mantığı (Raycaster)
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
 
@@ -307,21 +241,26 @@
         }
       });
 
-      window.addEventListener('resize', onResize);
+      window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      });
     }
 
+    // --- GLB YÜKLEME VE GÜVENLİK ALGORİTMASI ---
     document.getElementById('file-input').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
       loadingUI.style.display = 'flex';
       deselectMesh();
-      if (currentModel) {
-        gizmo.detach();
-        scene.remove(currentModel);
-      }
+      
+      // Eski modeli ve başlangıç küpünü temizle
+      if (currentModel) { gizmo.detach(); scene.remove(currentModel); }
+      if (startupCube) { scene.remove(startupCube); startupCube = null; }
 
-      // --- DRACO YÜKLEYİCİ AYARLARI (KRİTİK) ---
+      // Stabil Draco Ayarları
       const dracoLoader = new DRACOLoader();
       dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
       const loader = new GLTFLoader();
@@ -332,58 +271,67 @@
       loader.load(url, (gltf) => {
         currentModel = gltf.scene;
         
+        // Güvenli Materyal Ataması
         currentModel.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
+          if (child.isMesh && child.material) {
             if(!child.material.emissive) child.material.emissive = new THREE.Color(0x000000);
           }
         });
 
         scene.add(currentModel);
 
+        // --- MATEMATİKSEL ÇÖKME KORUMASI ---
         const box = new THREE.Box3().setFromObject(currentModel);
-        const center = box.getCenter(new THREE.Vector3());
-        const size = box.getSize(new THREE.Vector3());
         
-        // Hatalı boyutta dosyalar için koruma
-        if(size.x === 0 && size.y === 0) size.set(1,1,1);
+        // Eğer GLB bozuksa ve boyutu yoksa (Infinity dönerse), manuel boyut ata
+        if (box.isEmpty() || !isFinite(box.max.x)) {
+          console.warn("Modelin Bounding Box'ı bozuk! Standart konuma alınıyor.");
+          currentModel.position.set(0,0,0);
+          camera.position.set(3,3,5);
+          orbit.target.set(0,0,0);
+        } else {
+          const center = box.getCenter(new THREE.Vector3());
+          const size = box.getSize(new THREE.Vector3());
+          
+          // Modeli tam merkeze ve zemine oturt
+          currentModel.position.sub(center);
+          currentModel.position.y += size.y / 2;
 
-        currentModel.position.sub(center);
-        currentModel.position.y += size.y / 2;
+          // Kamerayı modelin boyutuna göre akıllıca konumlandır
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const dist = maxDim * 1.5;
+          camera.position.set(dist, dist*0.8, dist);
+          orbit.target.set(0, size.y / 2, 0);
+        }
 
+        // Orijinal verileri kaydet
         initialTransform.pos.copy(currentModel.position);
         initialTransform.rot.copy(currentModel.rotation);
         initialTransform.scale.copy(currentModel.scale);
 
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const fov = camera.fov * (Math.PI / 180);
-        let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.5;
-        camera.position.set(cameraZ * 0.5, cameraZ * 0.5, cameraZ);
-        orbit.target.set(0, size.y / 2, 0);
-        
-        shadowPlane.position.y = 0;
-        
+        // Gizmo'yu bağla
         gizmo.attach(currentModel);
         gizmoTools.style.display = 'flex';
+        inScale.value = 100; valScale.textContent = '100%';
 
         loadingUI.style.display = 'none';
-        showToast("Model yüklendi.");
-        updateTransformUIFromGizmo();
-      }, undefined, (error) => {
-        console.error('Yükleme hatası:', error);
+      }, 
+      (progress) => { /* Yükleme animasyonu istenirse buraya eklenebilir */ }, 
+      (error) => {
+        console.error("YÜKLEME HATASI:", error);
         loadingUI.style.display = 'none';
-        alert('Model yüklenemedi! Olası bozuk dosya. Hata: ' + error.message);
+        alert("Bu GLB dosyası okunamıyor veya bozuk.\nLütfen farklı bir model ile deneyin.");
       });
     });
 
+    // --- PARÇA SEÇİMİ VE MATERYAL ---
     function selectMesh(mesh) {
       if (!mesh.isMesh || !mesh.material) return;
       if (selectedMesh) selectedMesh.material.emissive.copy(originalEmissive);
       
       selectedMesh = mesh;
       originalEmissive.copy(selectedMesh.material.emissive);
-      selectedMesh.material.emissive.setHex(0x332200); 
+      selectedMesh.material.emissive.setHex(0x554400); // Seçimi belli et
 
       uiPartName.textContent = mesh.name || 'İsimsiz Parça';
       matPanel.style.opacity = '1';
@@ -392,13 +340,12 @@
       const mat = mesh.material;
       if(mat.color) {
         const hex = '#' + mat.color.getHexString();
-        inMatCol.value = hex; btnMatCol.style.background = hex; valMatCol.textContent = hex;
+        inCol.value = hex; btnCol.style.background = hex; valCol.textContent = hex;
       }
-      inMatOp.value = mat.opacity !== undefined ? mat.opacity : 1; valMatOp.textContent = parseFloat(inMatOp.value).toFixed(2);
-      inMatRo.value = mat.roughness !== undefined ? mat.roughness : 0.5; valMatRo.textContent = parseFloat(inMatRo.value).toFixed(2);
-      inMatMe.value = mat.metalness !== undefined ? mat.metalness : 0; valMatMe.textContent = parseFloat(inMatMe.value).toFixed(2);
       
-      matPanel.classList.remove('collapsed');
+      inOp.value = mat.opacity !== undefined ? mat.opacity : 1; valOp.textContent = parseFloat(inOp.value).toFixed(2);
+      inMet.value = mat.metalness !== undefined ? mat.metalness : 0; valMet.textContent = parseFloat(inMet.value).toFixed(2);
+      inRou.value = mat.roughness !== undefined ? mat.roughness : 0.5; valRou.textContent = parseFloat(inRou.value).toFixed(2);
     }
 
     function deselectMesh() {
@@ -406,19 +353,30 @@
         selectedMesh.material.emissive.copy(originalEmissive);
         selectedMesh = null;
       }
-      uiPartName.textContent = 'Modelden parça seçin...';
-      matPanel.style.opacity = '0.4';
+      uiPartName.textContent = 'Parça seçilmedi';
+      matPanel.style.opacity = '0.3';
       matPanel.style.pointerEvents = 'none';
-      matPanel.classList.add('collapsed');
     }
 
-    // -- UI Dinleyicileri --
-    inExp.addEventListener('input', (e) => { renderer.toneMappingExposure = e.target.value; valExp.textContent = parseFloat(e.target.value).toFixed(2); });
-    inShadow.addEventListener('input', (e) => { shadowPlane.material.opacity = e.target.value * 0.2; valShadow.textContent = parseFloat(e.target.value).toFixed(2); });
+    // --- UI EVENT LİSTENER'LAR ---
     
-    btnBg.addEventListener('click', () => inBg.click());
-    inBg.addEventListener('input', (e) => { scene.background.set(e.target.value); btnBg.style.background = e.target.value; valBg.textContent = e.target.value; });
+    // Model Büyüt/Küçült
+    inScale.addEventListener('input', (e) => {
+      if(!currentModel) return;
+      const s = e.target.value / 100;
+      currentModel.scale.set(s, s, s);
+      valScale.textContent = e.target.value + '%';
+    });
 
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      if(!currentModel) return;
+      currentModel.position.copy(initialTransform.pos);
+      currentModel.rotation.copy(initialTransform.rot);
+      currentModel.scale.copy(initialTransform.scale);
+      inScale.value = 100; valScale.textContent = '100%';
+    });
+
+    // Gizmo Modları
     document.querySelectorAll('.gizmo-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.gizmo-btn').forEach(b => b.classList.remove('active'));
@@ -427,46 +385,15 @@
       });
     });
 
-    inScaleU.addEventListener('input', (e) => {
-      if(!currentModel) return;
-      const s = e.target.value / 100;
-      currentModel.scale.set(s, s, s);
-      valScaleU.textContent = e.target.value + '%';
-    });
-
-    inRotY.addEventListener('input', (e) => {
-      if(!currentModel) return;
-      currentModel.rotation.y = e.target.value * (Math.PI / 180);
-      valRotY.textContent = e.target.value + '°';
-    });
-
-    btnResetTrans.addEventListener('click', () => {
-      if(!currentModel) return;
-      currentModel.position.copy(initialTransform.pos);
-      currentModel.rotation.copy(initialTransform.rot);
-      currentModel.scale.copy(initialTransform.scale);
-      updateTransformUIFromGizmo();
-      showToast("Boyutlar sıfırlandı.");
-    });
-
-    function updateTransformUIFromGizmo() {
-      if(!currentModel) return;
-      const sPct = Math.round(currentModel.scale.x * 100);
-      inScaleU.value = sPct; valScaleU.textContent = sPct + '%';
-
-      let degY = Math.round(currentModel.rotation.y * (180 / Math.PI));
-      degY = (degY + 360) % 360;
-      inRotY.value = degY; valRotY.textContent = degY + '°';
-    }
-
-    btnMatCol.addEventListener('click', () => inMatCol.click());
-    inMatCol.addEventListener('input', (e) => {
-      const v = e.target.value; btnMatCol.style.background = v; valMatCol.textContent = v;
+    // Materyal Düzenlemeleri
+    btnCol.addEventListener('click', () => inCol.click());
+    inCol.addEventListener('input', (e) => {
+      const v = e.target.value; btnCol.style.background = v; valCol.textContent = v;
       if (selectedMesh) selectedMesh.material.color.set(v);
     });
 
-    inMatOp.addEventListener('input', (e) => {
-      const v = parseFloat(e.target.value); valMatOp.textContent = v.toFixed(2);
+    inOp.addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value); valOp.textContent = v.toFixed(2);
       if (selectedMesh) {
         selectedMesh.material.opacity = v;
         selectedMesh.material.transparent = v < 1.0;
@@ -475,23 +402,10 @@
       }
     });
 
-    inMatRo.addEventListener('input', (e) => { const v = parseFloat(e.target.value); valMatRo.textContent = v.toFixed(2); if(selectedMesh && selectedMesh.material.roughness !== undefined) selectedMesh.material.roughness = v; });
-    inMatMe.addEventListener('input', (e) => { const v = parseFloat(e.target.value); valMatMe.textContent = v.toFixed(2); if(selectedMesh && selectedMesh.material.metalness !== undefined) selectedMesh.material.metalness = v; });
+    inMet.addEventListener('input', (e) => { const v = parseFloat(e.target.value); valMet.textContent = v.toFixed(2); if(selectedMesh) selectedMesh.material.metalness = v; });
+    inRou.addEventListener('input', (e) => { const v = parseFloat(e.target.value); valRou.textContent = v.toFixed(2); if(selectedMesh) selectedMesh.material.roughness = v; });
 
-    let toastT;
-    function showToast(msg) {
-      toastUI.innerHTML = msg; toastUI.style.opacity = '1';
-      clearTimeout(toastT); toastT = setTimeout(() => toastUI.style.opacity = '0', 3000);
-    }
-
-    function onResize() {
-      const width = container.clientWidth;
-      const height = container.clientHeight;
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-      renderer.setSize(width, height);
-    }
-
+    // --- RENDER DÖNGÜSÜ ---
     function animate() {
       requestAnimationFrame(animate);
       orbit.update();
