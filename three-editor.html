@@ -203,7 +203,6 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
 </head>
 <body>
 
-<!-- TOPBAR -->
 <div class="topbar">
   <div class="logo"><div class="logo-dot"></div>pepper<em>AR</em> Studio</div>
   <div class="tb-div"></div>
@@ -225,10 +224,8 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
   <button class="tb-btn primary" id="btn-save">💾 Kaydet</button>
 </div>
 
-<!-- WORKSPACE -->
 <div class="workspace">
 
-<!-- LEFT SIDEBAR -->
 <div class="sidebar sidebar-left">
   <div class="stab-bar">
     <div class="stab active" data-tab="outliner" data-side="left">Outliner</div>
@@ -296,7 +293,6 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
   </div>
 </div>
 
-<!-- VIEWPORT -->
 <div class="viewport" id="vp">
   <div class="vp-toolbar" id="vp-tb" style="display:none">
     <button class="vp-btn active" data-mode="translate">⊕ Taşı</button>
@@ -329,7 +325,6 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
   <div id="canvas-container"></div>
 </div>
 
-<!-- RIGHT SIDEBAR -->
 <div class="sidebar sidebar-right">
   <div class="stab-bar">
     <div class="stab active" data-tab="props" data-side="right">Nesne</div>
@@ -462,10 +457,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
     </div>
   </div>
 </div>
-</div><!-- /workspace -->
-
-<!-- STATUS BAR -->
-<div class="statusbar">
+</div><div class="statusbar">
   <div class="sb-item"><div class="status-dot" id="sd"></div><b id="st-txt">Hazır</b></div>
   <div class="tb-div" style="height:14px"></div>
   <div class="sb-item">Model: <b id="st-mod">—</b></div>
@@ -477,7 +469,6 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
   <div class="sb-item"><kbd>?</kbd> kısayollar</div>
 </div>
 
-<!-- SHORTCUTS MODAL -->
 <div class="modal-bg" id="modal-keys">
   <div class="modal">
     <div class="modal-title">⌨️ Klavye Kısayolları</div>
@@ -503,7 +494,6 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
   </div>
 </div>
 
-<!-- ════════════════════════ ENGINE ════════════════════════ -->
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader }      from 'three/addons/loaders/GLTFLoader.js';
@@ -534,10 +524,16 @@ function init() {
   const w = container.clientWidth  || window.innerWidth  - 568;
   const h = container.clientHeight || window.innerHeight - 80;
 
-  camera = new THREE.PerspectiveCamera(45, w / h, 0.01, 2000);
+  // Z-FIGHTING OPTIMIZATION 1: camera.near 0.01'den 0.1'e çıkarıldı.
+  camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 2000);
   camera.position.set(3, 2.5, 5);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  // Z-FIGHTING OPTIMIZATION 2: logarithmicDepthBuffer: true eklendi.
+  renderer = new THREE.WebGLRenderer({ 
+    antialias: true, 
+    preserveDrawingBuffer: true,
+    logarithmicDepthBuffer: true 
+  });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(w, h);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -553,19 +549,20 @@ function init() {
   ambLight = new THREE.AmbientLight(0xffffff, 0.4);
   scene.add(ambLight);
 
+  // GÖLGE LEKELENMESİ (SHADOW ACNE) OPTIMIZASYONLARI EKLENDİ
   dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
   dirLight.position.set(5, 10, 7);
   dirLight.castShadow = true;
   dirLight.shadow.mapSize.width  = 2048;
   dirLight.shadow.mapSize.height = 2048;
-  dirLight.shadow.camera.near   = 0.1;
-  dirLight.shadow.camera.far    = 300;
-  dirLight.shadow.camera.left   = -25;
-  dirLight.shadow.camera.right  = 25;
-  dirLight.shadow.camera.top    = 25;
-  dirLight.shadow.camera.bottom = -25;
-  dirLight.shadow.bias          = -0.0001;
-  dirLight.shadow.normalBias    = 0.02;
+  dirLight.shadow.camera.near   = 0.5;
+  dirLight.shadow.camera.far    = 50;
+  dirLight.shadow.camera.left   = -10;
+  dirLight.shadow.camera.right  = 10;
+  dirLight.shadow.camera.top    = 10;
+  dirLight.shadow.camera.bottom = -10;
+  dirLight.shadow.bias          = -0.0005;
+  dirLight.shadow.normalBias    = 0.05;
   scene.add(dirLight);
 
   const fill = new THREE.DirectionalLight(0x8899ff, 0.25);
@@ -576,6 +573,7 @@ function init() {
   rim.position.set(0, -3, -8);
   scene.add(rim);
 
+  // ZEMİN ÇAKIŞMASI KORUMASI EKLENDİ
   shadowPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(200, 200),
     new THREE.ShadowMaterial({ opacity: 0.2, depthWrite: false })
@@ -583,6 +581,9 @@ function init() {
   shadowPlane.rotation.x = -Math.PI / 2;
   shadowPlane.receiveShadow = true;
   shadowPlane.renderOrder = -1;
+  shadowPlane.material.polygonOffset = true;
+  shadowPlane.material.polygonOffsetFactor = 1;
+  shadowPlane.material.polygonOffsetUnits = 1;
   scene.add(shadowPlane);
 
   gridHelper = new THREE.GridHelper(24, 24, 0x333337, 0x222226);
