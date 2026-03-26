@@ -965,34 +965,41 @@ $('btn-rall').addEventListener('click', () => {
   syncTUI(); toast('Dönüşüm sıfırlandı');
 });
 
-// YENİ: GEOMETRİYİ METREYE ÇEVİRME
+// YENİ: GEOMETRİYİ METREYE ÇEVİRME DÜZELTİLDİ
 function convertToMeters(factor, unitName) {
   if (!currentModel) return toast('Model yüklenmedi', 'err');
   
-  // Transform bilgilerini güvene al ve modeli sıfırla ki orjin bazlı düzgün küçülsün
-  const oldPos = currentModel.position.clone();
+  // Modeli geçici olarak orijine alalım ki pozisyonlar düzgün çarpılabilsin
   currentModel.position.set(0,0,0);
-  currentModel.updateMatrixWorld();
+  currentModel.updateMatrixWorld(true);
+
+  // KAYBOLMA SORUNUNUN ÇÖZÜMÜ: Paylaşılan geometrileri (shared geometry) 
+  // sadece BİR KERE ölçeklemek için Set yapısını kullanıyoruz.
+  const processedGeoms = new Set();
 
   currentModel.traverse(c => {
-    if (c.isMesh && c.geometry) {
+    if (c.isMesh && c.geometry && !processedGeoms.has(c.geometry)) {
       c.geometry.scale(factor, factor, factor);
       c.geometry.computeBoundingBox();
       c.geometry.computeBoundingSphere();
+      processedGeoms.add(c.geometry);
     }
-    // Sadece alt node'ların mesafelerini de küçült (Root hariç)
+    // Alt objelerin (node) lokal pozisyonlarını ölçekle
     if (c !== currentModel) {
       c.position.multiplyScalar(factor);
+      c.updateMatrix();
     }
   });
 
-  // Yeni boyutlara göre modeli sahnenin merkezine geri oturt
+  // Modeli tekrar yeni boyutlarına göre merkezleyelim
   const box = new THREE.Box3().setFromObject(currentModel);
   const size = box.getSize(new THREE.Vector3());
   const ctr = box.getCenter(new THREE.Vector3());
   
   currentModel.position.sub(ctr);
   currentModel.position.y += size.y / 2;
+  
+  initT.pos.copy(currentModel.position);
   
   // Arayüzü yenile
   const m = parseInt($('st-m').textContent) || 0;
@@ -1129,7 +1136,7 @@ function takeScreenshot() {
 }
 [$('btn-ss'), $('btn-ss2')].forEach(b => b?.addEventListener('click', takeScreenshot));
 
-// YENİ: DIŞA AKTARMA (GLB & USDZ)
+// DIŞA AKTARMA (GLB & USDZ)
 $('btn-exp-glb').addEventListener('click', () => {
   if (!currentModel) return toast('Model yüklenmedi', 'err');
   const exporter = new GLTFExporter();
