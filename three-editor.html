@@ -221,6 +221,8 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
   <button class="tb-btn icon" id="btn-theme" title="Tema">◑</button>
   <button class="tb-btn icon" id="btn-keys" title="Kısayollar (?)" style="font-weight:800">?</button>
   <div class="tb-spacer"></div>
+  <button class="tb-btn" id="btn-exp-glb">↓ GLB</button>
+  <button class="tb-btn" id="btn-exp-usdz">↓ USDZ</button>
   <button class="tb-btn primary" id="btn-save">💾 Kaydet</button>
 </div>
 
@@ -358,6 +360,13 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
         <div class="btn-row">
           <button class="btn sm" id="btn-rpos">Konum</button>
           <button class="btn sm" id="btn-rall">Tümü ↺</button>
+        </div>
+        <div class="field" style="margin-top: 8px; border-top: 1px dashed var(--border2); padding-top: 8px;">
+          <span class="label" title="Modelin gerçek dünyadaki boyutunu (Geometri) metre cinsine adapte eder">Birim Çevirici (Metreye)</span>
+          <div class="btn-row" style="margin-top:4px">
+            <button class="btn sm" id="btn-unit-cm">cm → m (x0.01)</button>
+            <button class="btn sm" id="btn-unit-mm">mm → m (x0.001)</button>
+          </div>
         </div>
       </div>
     </div>
@@ -511,6 +520,8 @@ import { DRACOLoader }     from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls }   from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { GLTFExporter }    from 'three/addons/exporters/GLTFExporter.js';
+import { USDZExporter }    from 'three/addons/exporters/USDZExporter.js';
 
 // ── State ──
 let scene, camera, renderer, orbit, gizmo, dirLight, ambLight, shadowPlane, gridHelper;
@@ -534,7 +545,6 @@ function init() {
   const w = container.clientWidth  || window.innerWidth  - 568;
   const h = container.clientHeight || window.innerHeight - 80;
 
-  // UZAKLAŞMA (ZOOM OUT) SINIRLARI GENİŞLETİLDİ (far: 20000 yapıldı)
   camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 20000);
   camera.position.set(3, 2.5, 5);
 
@@ -603,7 +613,6 @@ function init() {
   orbit.dampingFactor = 0.06;
   orbit.screenSpacePanning = true;
   orbit.minDistance = 0.05;
-  // ORBIT CONTROLS UZAKLAŞMA LİMİTİ GENİŞLETİLDİ (800'den 20000'e)
   orbit.maxDistance = 20000;
 
   gizmo = new TransformControls(camera, renderer.domElement);
@@ -785,9 +794,9 @@ function selectMesh(mesh) {
   const em  = mat.emissive  ? '#' + mat.emissive.getHexString()  : '#000000';
 
   setC('mc', col); setC('me', em);
-  setSL('in-op', 'vb-op', mat.opacity ?? 1,              v => v.toFixed(2));
-  setSL('in-ro', 'vb-ro', mat.roughness ?? 0.5,          v => v.toFixed(2));
-  setSL('in-me2','vb-me2',mat.metalness ?? 0,            v => v.toFixed(2));
+  setSL('in-op', 'vb-op', mat.opacity ?? 1,             v => v.toFixed(2));
+  setSL('in-ro', 'vb-ro', mat.roughness ?? 0.5,         v => v.toFixed(2));
+  setSL('in-me2','vb-me2',mat.metalness ?? 0,             v => v.toFixed(2));
   setSL('in-ei', 'vb-ei', mat.emissiveIntensity ?? 1,    v => v.toFixed(2));
   setSL('in-ns', 'vb-ns', mat.normalScale?.x ?? 1,       v => v.toFixed(2));
 
@@ -814,17 +823,14 @@ function deselectMesh() {
   if (ol._map) ol._map.forEach(({ el }) => el.classList.remove('selected'));
 }
 
-// YENİ EKLENEN: SİLME FONKSİYONU
 function deleteSelectedMesh() {
   if (!selectedMesh) {
     toast('Silmek için bir parça seçmelisiniz', 'err');
     return;
   }
   
-  // Parçayı sahneden tamamen ayır
   selectedMesh.removeFromParent();
   
-  // Bellek temizliği (Memory Leak önlemi)
   if (selectedMesh.geometry) selectedMesh.geometry.dispose();
   if (selectedMesh.material) {
     if (Array.isArray(selectedMesh.material)) {
@@ -837,11 +843,9 @@ function deleteSelectedMesh() {
   const meshName = selectedMesh.name || 'Parça';
   deselectMesh();
   
-  // Outliner'ı (Sol paneldeki ağacı) güncelle
   if (currentModel) buildOutliner(currentModel);
   toast(`${meshName} başarıyla silindi 🗑️`, 'ok');
 }
-// Silme Butonuna Bağla
 if($('btn-delete-mesh')) $('btn-delete-mesh').addEventListener('click', deleteSelectedMesh);
 
 // ── TRANSFORM UI ──
@@ -942,7 +946,6 @@ colorSetup('bg', hex => {
   });
 });
 
-// UFALTMA/BÜYÜTME LİMİTİ GENİŞLETİLDİ (1'den 1000'e kadar)
 $('in-sc').addEventListener('input', e => {
   if (!currentModel) return;
   const s = e.target.value / 100;
@@ -961,6 +964,48 @@ $('btn-rall').addEventListener('click', () => {
   currentModel.scale.copy(initT.sc);
   syncTUI(); toast('Dönüşüm sıfırlandı');
 });
+
+// YENİ: GEOMETRİYİ METREYE ÇEVİRME
+function convertToMeters(factor, unitName) {
+  if (!currentModel) return toast('Model yüklenmedi', 'err');
+  
+  // Transform bilgilerini güvene al ve modeli sıfırla ki orjin bazlı düzgün küçülsün
+  const oldPos = currentModel.position.clone();
+  currentModel.position.set(0,0,0);
+  currentModel.updateMatrixWorld();
+
+  currentModel.traverse(c => {
+    if (c.isMesh && c.geometry) {
+      c.geometry.scale(factor, factor, factor);
+      c.geometry.computeBoundingBox();
+      c.geometry.computeBoundingSphere();
+    }
+    // Sadece alt node'ların mesafelerini de küçült (Root hariç)
+    if (c !== currentModel) {
+      c.position.multiplyScalar(factor);
+    }
+  });
+
+  // Yeni boyutlara göre modeli sahnenin merkezine geri oturt
+  const box = new THREE.Box3().setFromObject(currentModel);
+  const size = box.getSize(new THREE.Vector3());
+  const ctr = box.getCenter(new THREE.Vector3());
+  
+  currentModel.position.sub(ctr);
+  currentModel.position.y += size.y / 2;
+  
+  // Arayüzü yenile
+  const m = parseInt($('st-m').textContent) || 0;
+  const v = parseInt($('st-v').textContent.replace(/[\D]/g, '')) || 0;
+  const t = parseInt($('st-t').textContent.replace(/[\D]/g, '')) || 0;
+  buildInfo($('st-mod').textContent, m, v, t, size);
+  
+  syncTUI();
+  frameModel();
+  toast(`${unitName.toUpperCase()} biriminden Metreye kalıcı olarak çevrildi`, 'ok');
+}
+$('btn-unit-cm').addEventListener('click', () => convertToMeters(0.01, 'cm'));
+$('btn-unit-mm').addEventListener('click', () => convertToMeters(0.001, 'mm'));
 
 // ── BIND MATERIAL CONTROLS ──
 colorSetup('mc', hex => { if (selectedMesh?.material?.color) selectedMesh.material.color.set(hex); });
@@ -1084,6 +1129,47 @@ function takeScreenshot() {
 }
 [$('btn-ss'), $('btn-ss2')].forEach(b => b?.addEventListener('click', takeScreenshot));
 
+// YENİ: DIŞA AKTARMA (GLB & USDZ)
+$('btn-exp-glb').addEventListener('click', () => {
+  if (!currentModel) return toast('Model yüklenmedi', 'err');
+  const exporter = new GLTFExporter();
+  exporter.parse(currentModel, (buffer) => {
+    const blob = new Blob([buffer], { type: 'application/octet-stream' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `model_export_${Date.now()}.glb`;
+    link.click();
+    toast('GLB dışa aktarıldı ✓', 'ok');
+  }, (err) => {
+    console.error(err); toast('GLB Hatası', 'err');
+  }, { binary: true });
+});
+
+$('btn-exp-usdz').addEventListener('click', () => {
+  if (!currentModel) return toast('Model yüklenmedi', 'err');
+  $('loading-ov').classList.add('show');
+  document.querySelector('.load-text').textContent = 'USDZ hazırlanıyor...';
+  
+  // Arayüzün render alabilmesi için kısa bir gecikme veriyoruz
+  setTimeout(async () => {
+    const exporter = new USDZExporter();
+    try {
+      const arraybuffer = await exporter.parse(currentModel);
+      const blob = new Blob([arraybuffer], { type: 'application/octet-stream' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `model_export_${Date.now()}.usdz`;
+      link.click();
+      toast('USDZ dışa aktarıldı ✓', 'ok');
+    } catch (err) {
+      console.error(err); toast('USDZ Hatası', 'err');
+    } finally {
+      $('loading-ov').classList.remove('show');
+      document.querySelector('.load-text').textContent = 'Model yükleniyor...';
+    }
+  }, 50);
+});
+
 function toggleWireframe() {
   wireMode = !wireMode;
   $('btn-wf').classList.toggle('active', wireMode);
@@ -1178,8 +1264,6 @@ document.addEventListener('keydown', e => {
     case '2': $('vc-tp').click(); break;
     case '3': $('vc-rt').click(); break;
     case '4': $('vc-is').click(); break;
-    
-    // YENİ KLAVYE KISAYOLU: DELETE İLE SİLME
     case 'Delete': deleteSelectedMesh(); break; 
   }
   if (e.altKey && e.key === 'r') $('btn-rall').click();
