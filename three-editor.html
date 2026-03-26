@@ -121,6 +121,11 @@ input[type=color]{position:absolute;opacity:0;pointer-events:none;width:0;height
 .btn-row{display:flex;gap:6px}
 .btn-row .btn{flex:1}
 
+/* BULK TAB STYLES */
+.bulk-slot{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px}
+.bulk-slot-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.bulk-file-name{font-family:var(--mono);font-size:10px;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:8px;display:block}
+
 /* OUTLINER */
 .outliner{padding:4px 0}
 .ol-item{display:flex;align-items:center;gap:6px;padding:5px 12px;cursor:pointer;transition:background .1s;position:relative}
@@ -232,6 +237,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
   <div class="stab-bar">
     <div class="stab active" data-tab="outliner" data-side="left">Outliner</div>
     <div class="stab" data-tab="scene" data-side="left">Sahne</div>
+    <div class="stab" data-tab="bulk" data-side="left">Toplu AR</div>
   </div>
 
   <div class="stab-pane active" id="tab-outliner">
@@ -293,6 +299,27 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
       </div>
     </div>
   </div>
+
+  <div class="stab-pane" id="tab-bulk">
+    <div class="section">
+      <div class="section-head"><div class="section-title">📦 5'li Toplu Düzenleme</div></div>
+      <div class="section-body" style="padding-top: 4px">
+        <div class="toggle-row" style="margin-bottom:8px">
+          <div class="toggle on" id="cb-bulk-center"></div>
+          <span class="toggle-label" title="Dışa aktarım sırasında modeli tam merkeze hizalar">Pivot'u Merkeze Al (Otomatik)</span>
+        </div>
+        
+        <div id="bulk-slots">
+          </div>
+
+        <div class="btn-row" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border)">
+          <button class="btn sm accent" id="btn-bulk-glb-export">↓ Tümünü GLB İndir</button>
+          <button class="btn sm accent" id="btn-bulk-usdz-export">↓ Tümünü USDZ İndir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="viewport" id="vp">
@@ -320,7 +347,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
 
   <div class="loading-ov" id="loading-ov">
     <div class="loader"></div>
-    <div class="load-text">Model yükleniyor...</div>
+    <div class="load-text" id="load-text">Model yükleniyor...</div>
   </div>
   <div class="drop-ov" id="drop-ov"><div class="drop-text">GLB / GLTF Bırak</div></div>
   <div class="toast" id="toast"></div>
@@ -648,9 +675,181 @@ function init() {
   });
 
   window.addEventListener('resize', onResize);
+  initBulkUI(); // Yeni toplu islem arayüzü başlatılıyor
   animate();
   setStatus('ready', 'Hazır');
   loadPreset();
+}
+
+// ── BULK AR LOGIC (TOPLU DÜZENLEME) ──
+const bulkModels = [null, null, null, null, null];
+const bulkNames = ['', '', '', '', ''];
+let currentBulkSlot = -1;
+
+function initBulkUI() {
+  const container = $('bulk-slots');
+  // 5 Adet Slot Oluştur
+  for(let i=0; i<5; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'bulk-slot';
+    slot.innerHTML = `
+      <div class="bulk-slot-title">Kayıt Yeri ${i+1}</div>
+      <div class="btn-row" style="margin-bottom:6px">
+        <button class="btn sm" id="btn-bs-load-${i}">Yükle</button>
+        <button class="btn danger sm" id="btn-bs-clear-${i}" style="display:none">Kaldır</button>
+      </div>
+      <span class="bulk-file-name" id="bs-name-${i}">Boş</span>
+      <div class="btn-row" id="bs-actions-${i}" style="display:none">
+        <button class="btn sm" id="btn-bs-cm-${i}">cm→m (x0.01)</button>
+        <button class="btn sm" id="btn-bs-mm-${i}">mm→m (x0.001)</button>
+      </div>
+    `;
+    container.appendChild(slot);
+  }
+
+  // Gizli File Input (Toplu işlemler için ayrı input)
+  const bulkFileInput = document.createElement('input');
+  bulkFileInput.type = 'file';
+  bulkFileInput.id = 'bulk-file-input';
+  bulkFileInput.accept = '.glb,.gltf';
+  bulkFileInput.style.display = 'none';
+  document.body.appendChild(bulkFileInput);
+
+  bulkFileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file || currentBulkSlot < 0) return;
+    loadBulkFile(file, currentBulkSlot);
+    e.target.value = '';
+  });
+
+  // Slot İçi Buton Eventleri
+  for(let i=0; i<5; i++) {
+    $(`btn-bs-load-${i}`).addEventListener('click', () => { currentBulkSlot = i; bulkFileInput.click(); });
+    $(`btn-bs-clear-${i}`).addEventListener('click', () => {
+      bulkModels[i] = null; bulkNames[i] = '';
+      $(`bs-name-${i}`).textContent = 'Boş';
+      $(`btn-bs-clear-${i}`).style.display = 'none';
+      $(`btn-bs-load-${i}`).style.display = 'block';
+      $(`bs-actions-${i}`).style.display = 'none';
+    });
+    $(`btn-bs-cm-${i}`).addEventListener('click', () => scaleBulkModel(i, 0.01, 'cm'));
+    $(`btn-bs-mm-${i}`).addEventListener('click', () => scaleBulkModel(i, 0.001, 'mm'));
+  }
+
+  // Toplu İndirme Eventleri
+  $('btn-bulk-glb-export').addEventListener('click', () => exportBulk('glb'));
+  $('btn-bulk-usdz-export').addEventListener('click', () => exportBulk('usdz'));
+  
+  // Pivot Merkezle Toggle Bağlantısı (Sadece görsel state)
+  $('cb-bulk-center').addEventListener('click', function() { this.classList.toggle('on'); });
+}
+
+function loadBulkFile(file, index) {
+  $('loading-ov').classList.add('show');
+  $('load-text').textContent = `Ürün ${index+1} Arka Planda Yükleniyor...`;
+
+  const drc = new DRACOLoader();
+  drc.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+  const loader = new GLTFLoader();
+  loader.setDRACOLoader(drc);
+
+  const url = URL.createObjectURL(file);
+  loader.load(url, gltf => {
+    URL.revokeObjectURL(url);
+    bulkModels[index] = gltf.scene;
+    bulkNames[index] = file.name;
+    
+    $(`bs-name-${index}`).textContent = file.name.length > 20 ? file.name.substring(0,18)+'…' : file.name;
+    $(`btn-bs-load-${index}`).style.display = 'none';
+    $(`btn-bs-clear-${index}`).style.display = 'block';
+    $(`bs-actions-${index}`).style.display = 'flex';
+    
+    $('loading-ov').classList.remove('show');
+    $('load-text').textContent = 'Model yükleniyor...';
+    toast(`Ürün ${index+1} hafızaya eklendi`, 'ok');
+  });
+}
+
+function scaleBulkModel(index, factor, unitName) {
+  const model = bulkModels[index];
+  if (!model) return;
+  
+  const processedGeoms = new Set();
+  model.traverse(c => {
+    if (c.isMesh && c.geometry && !processedGeoms.has(c.geometry)) {
+      c.geometry.scale(factor, factor, factor);
+      c.geometry.computeBoundingBox();
+      c.geometry.computeBoundingSphere();
+      processedGeoms.add(c.geometry);
+    }
+    // Alt objelerin pozisyonlarını da ölçekle
+    if (c !== model) {
+      c.position.multiplyScalar(factor);
+      c.updateMatrix();
+    }
+  });
+  toast(`Ürün ${index+1} çevrildi (${unitName} → m)`, 'ok');
+}
+
+async function exportBulk(format) {
+  const hasModels = bulkModels.some(m => m !== null);
+  if(!hasModels) return toast('Toplu işlem için en az bir ürün yükleyin', 'err');
+
+  $('loading-ov').classList.add('show');
+  $('load-text').textContent = `Toplu ${format.toUpperCase()} İndiriliyor...`;
+
+  const isCenter = $('cb-bulk-center').classList.contains('on');
+  
+  for(let i=0; i<5; i++) {
+    const model = bulkModels[i];
+    if (!model) continue;
+
+    // Pivot merkezleme (eğer seçiliyse ve daha önce bu model için yapılmamışsa)
+    if (isCenter && !model.userData.isCentered) {
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      
+      // Tüm alt elemanları merkezden sapma miktarı kadar geriye kaydırıyoruz
+      model.children.forEach(child => {
+        child.position.sub(center);
+        child.updateMatrixWorld(true);
+      });
+      model.userData.isCentered = true;
+    }
+
+    const fileName = bulkNames[i].replace(/\.[^/.]+$/, ""); // Uzantıyı sil
+    
+    if (format === 'glb') {
+      const exporter = new GLTFExporter();
+      await new Promise(resolve => {
+        exporter.parse(model, (buffer) => {
+          const blob = new Blob([buffer], { type: 'application/octet-stream' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = `${fileName}_AR.glb`;
+          link.click();
+          resolve();
+        }, (err) => { console.error(err); resolve(); }, { binary: true });
+      });
+    } else if (format === 'usdz') {
+      const exporter = new USDZExporter();
+      try {
+        const arraybuffer = await exporter.parse(model);
+        const blob = new Blob([arraybuffer], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${fileName}_AR.usdz`;
+        link.click();
+      } catch(e) { console.error(e); }
+    }
+    
+    // Tarayıcı indirmeleri bloklamasın diye arada ufak bekleme süresi koyuyoruz
+    await new Promise(r => setTimeout(r, 600));
+  }
+
+  $('loading-ov').classList.remove('show');
+  $('load-text').textContent = 'Model yükleniyor...';
+  toast(`Toplu ${format.toUpperCase()} dışa aktarma tamamlandı ✓`, 'ok');
 }
 
 // ── LOAD ──
@@ -965,18 +1164,13 @@ $('btn-rall').addEventListener('click', () => {
   syncTUI(); toast('Dönüşüm sıfırlandı');
 });
 
-// YENİ: GEOMETRİYİ METREYE ÇEVİRME DÜZELTİLDİ
 function convertToMeters(factor, unitName) {
   if (!currentModel) return toast('Model yüklenmedi', 'err');
   
-  // Modeli geçici olarak orijine alalım ki pozisyonlar düzgün çarpılabilsin
   currentModel.position.set(0,0,0);
   currentModel.updateMatrixWorld(true);
 
-  // KAYBOLMA SORUNUNUN ÇÖZÜMÜ: Paylaşılan geometrileri (shared geometry) 
-  // sadece BİR KERE ölçeklemek için Set yapısını kullanıyoruz.
   const processedGeoms = new Set();
-
   currentModel.traverse(c => {
     if (c.isMesh && c.geometry && !processedGeoms.has(c.geometry)) {
       c.geometry.scale(factor, factor, factor);
@@ -984,14 +1178,12 @@ function convertToMeters(factor, unitName) {
       c.geometry.computeBoundingSphere();
       processedGeoms.add(c.geometry);
     }
-    // Alt objelerin (node) lokal pozisyonlarını ölçekle
     if (c !== currentModel) {
       c.position.multiplyScalar(factor);
       c.updateMatrix();
     }
   });
 
-  // Modeli tekrar yeni boyutlarına göre merkezleyelim
   const box = new THREE.Box3().setFromObject(currentModel);
   const size = box.getSize(new THREE.Vector3());
   const ctr = box.getCenter(new THREE.Vector3());
@@ -1001,7 +1193,6 @@ function convertToMeters(factor, unitName) {
   
   initT.pos.copy(currentModel.position);
   
-  // Arayüzü yenile
   const m = parseInt($('st-m').textContent) || 0;
   const v = parseInt($('st-v').textContent.replace(/[\D]/g, '')) || 0;
   const t = parseInt($('st-t').textContent.replace(/[\D]/g, '')) || 0;
@@ -1136,7 +1327,7 @@ function takeScreenshot() {
 }
 [$('btn-ss'), $('btn-ss2')].forEach(b => b?.addEventListener('click', takeScreenshot));
 
-// DIŞA AKTARMA (GLB & USDZ)
+// DIŞA AKTARMA (GLB & USDZ) SAHNE İÇİN
 $('btn-exp-glb').addEventListener('click', () => {
   if (!currentModel) return toast('Model yüklenmedi', 'err');
   const exporter = new GLTFExporter();
@@ -1155,9 +1346,8 @@ $('btn-exp-glb').addEventListener('click', () => {
 $('btn-exp-usdz').addEventListener('click', () => {
   if (!currentModel) return toast('Model yüklenmedi', 'err');
   $('loading-ov').classList.add('show');
-  document.querySelector('.load-text').textContent = 'USDZ hazırlanıyor...';
+  $('load-text').textContent = 'USDZ hazırlanıyor...';
   
-  // Arayüzün render alabilmesi için kısa bir gecikme veriyoruz
   setTimeout(async () => {
     const exporter = new USDZExporter();
     try {
@@ -1172,7 +1362,7 @@ $('btn-exp-usdz').addEventListener('click', () => {
       console.error(err); toast('USDZ Hatası', 'err');
     } finally {
       $('loading-ov').classList.remove('show');
-      document.querySelector('.load-text').textContent = 'Model yükleniyor...';
+      $('load-text').textContent = 'Model yükleniyor...';
     }
   }, 50);
 });
