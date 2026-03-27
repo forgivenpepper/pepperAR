@@ -537,7 +537,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
       <div class="sc-item">Sağ Görünüm <div class="sc-keys"><kbd>3</kbd></div></div>
       <div class="sc-item">İzometrik <div class="sc-keys"><kbd>4</kbd></div></div>
     </div>
-    <button class="btn" style="margin-top:18px" onclick="document.getElementById('modal-keys').classList.remove('show')">Kapat</button>
+    <button class="btn" style="margin-top:18px" id="btn-close-keys">Kapat</button>
   </div>
 </div>
 
@@ -551,10 +551,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFExporter }    from 'three/addons/exporters/GLTFExporter.js';
 import { USDZExporter }    from 'three/addons/exporters/USDZExporter.js';
 
-// ── KORUMALI DOM SEÇİCİ ──
+// ── YARDIMCI FONKSİYONLAR ──
 const _el = id => document.getElementById(id);
 
-// ── State ──
+// ── STATE ──
 let scene, camera, renderer, orbit, gizmo, dirLight, ambLight, shadowPlane, gridHelper;
 let currentModel = null, selectedMesh = null;
 let origEmissive = new THREE.Color();
@@ -563,19 +563,20 @@ let wireMode = false, gridVis = true, worldSpace = true;
 let fpsFrames = 0, fpsLast = performance.now();
 let statsVisible = false;
 
-const container = _el('canvas-container');
-const vp        = _el('vp');
-
-// ── TAM İZOLE EDİLMİŞ LOADER MOTORU (Çakışmaları Önler) ──
-function getNewIsolatedLoader() {
-  const drc = new DRACOLoader();
-  drc.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
-  const loader = new GLTFLoader();
-  loader.setDRACOLoader(drc);
-  return loader;
+// ── PAYLAŞILAN (SINGLETON) LOADER MOTORU ──
+// Tarayıcının çökmemesi için sadece bir kere yaratılır
+let sharedLoader = null;
+function getLoader() {
+  if (!sharedLoader) {
+    const drc = new DRACOLoader();
+    drc.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+    sharedLoader = new GLTFLoader();
+    sharedLoader.setDRACOLoader(drc);
+  }
+  return sharedLoader;
 }
 
-// ── PROFESYONEL BELLEK YÖNETİMİ ──
+// ── BELLEK TEMİZLEME MOTORU ──
 function disposeHierarchy(node) {
   if (!node) return;
   node.traverse(c => {
@@ -594,27 +595,27 @@ function disposeHierarchy(node) {
   });
 }
 
-// ── AR PLATFORMLARI İÇİN GÜVENLİ DIŞA AKTARIM SAHNESİ ──
+// ── AR İÇİN GÜVENLİ DIŞA AKTARIM (EXPORT) SAHNESİ ──
 function createExportScene(originalModel, centerPivot) {
   const exportScene = new THREE.Scene();
   const clone = originalModel.clone();
-  
   if (centerPivot) {
     const box = new THREE.Box3().setFromObject(clone);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
-    
     clone.position.sub(center); 
     clone.position.y += size.y / 2; 
   }
-  
   exportScene.add(clone);
   exportScene.updateMatrixWorld(true);
   return exportScene;
 }
 
-// ── INIT ──
+// ── BAŞLATMA (INIT) ──
 function init() {
+  const container = _el('canvas-container');
+  if(!container) return;
+
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x111113);
 
@@ -624,11 +625,7 @@ function init() {
   camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 20000);
   camera.position.set(3, 2.5, 5);
 
-  renderer = new THREE.WebGLRenderer({ 
-    antialias: true, 
-    preserveDrawingBuffer: true,
-    logarithmicDepthBuffer: true
-  });
+  renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, logarithmicDepthBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(w, h);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -656,7 +653,6 @@ function init() {
   dirLight.shadow.camera.top    = 10;
   dirLight.shadow.camera.bottom = -10;
   dirLight.shadow.bias          = -0.0005;
-  dirLight.shadow.normalBias    = 0.05;
   scene.add(dirLight);
 
   const fill = new THREE.DirectionalLight(0x8899ff, 0.25);
@@ -676,7 +672,6 @@ function init() {
   shadowPlane.renderOrder = -1;
   shadowPlane.material.polygonOffset = true;
   shadowPlane.material.polygonOffsetFactor = 1;
-  shadowPlane.material.polygonOffsetUnits = 1;
   scene.add(shadowPlane);
 
   gridHelper = new THREE.GridHelper(24, 24, 0x333337, 0x222226);
@@ -687,7 +682,6 @@ function init() {
   orbit = new OrbitControls(camera, renderer.domElement);
   orbit.enableDamping = true;
   orbit.dampingFactor = 0.06;
-  orbit.screenSpacePanning = true;
   orbit.minDistance = 0.05;
   orbit.maxDistance = 20000;
 
@@ -697,6 +691,31 @@ function init() {
   gizmo.addEventListener('change', syncTUI);
   scene.add(gizmo);
 
+  // Olay Dinleyicileri Kur
+  initEvents();
+  initBulkUI();
+  
+  window.addEventListener('resize', onResize);
+  animate();
+  setStatus('ready', 'Hazır');
+  loadPreset();
+}
+
+function recalculateGround(model) {
+  if (!model) return;
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const by = model.position.y - size.y / 2 + 0.001;
+  shadowPlane.position.y = by;
+  gridHelper.position.y  = by;
+}
+
+// ── GÜVENLİ DOM OLAY DİNLEYİCİLERİ (EVENTS) ──
+function initEvents() {
+  const container = _el('canvas-container');
+  const vp = _el('vp');
+  
+  // Tıklayarak Seçme
   const ray = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
   let _ptDown = { x: 0, y: 0 };
@@ -714,30 +733,210 @@ function init() {
     else deselectMesh();
   });
 
-  vp.addEventListener('dragover', e => { e.preventDefault(); _el('drop-ov').classList.add('show'); });
-  vp.addEventListener('dragleave', () => _el('drop-ov').classList.remove('show'));
-  vp.addEventListener('drop', e => {
-    e.preventDefault(); _el('drop-ov').classList.remove('show');
-    const f = e.dataTransfer.files[0]; if (f) loadFile(f);
+  // Kusursuz Sürükle Bırak (Tüm pencere bazlı güvenli yaklaşım)
+  const dropOv = _el('drop-ov');
+  window.addEventListener('dragenter', e => { e.preventDefault(); dropOv?.classList.add('show'); });
+  window.addEventListener('dragover', e => { e.preventDefault(); dropOv?.classList.add('show'); });
+  window.addEventListener('dragleave', e => {
+    if (!e.clientX && !e.clientY) dropOv?.classList.remove('show');
+  });
+  window.addEventListener('drop', e => {
+    e.preventDefault();
+    dropOv?.classList.remove('show');
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
   });
 
-  window.addEventListener('resize', onResize);
-  initBulkUI(); 
-  animate();
-  setStatus('ready', 'Hazır');
-  loadPreset();
+  // Dosya Açma Butonu
+  _el('btn-open')?.addEventListener('click', () => {
+    const fi = _el('file-input');
+    if(fi) { fi.value = ''; fi.click(); }
+  });
+  _el('file-input')?.addEventListener('change', e => {
+    if (e.target.files[0]) loadFile(e.target.files[0]);
+  });
+
+  // Üst Bar Kontrolleri
+  _el('btn-frame')?.addEventListener('click', frameModel);
+  _el('btn-ss')?.addEventListener('click', takeScreenshot);
+  _el('btn-ss2')?.addEventListener('click', takeScreenshot);
+  _el('btn-wf')?.addEventListener('click', toggleWireframe);
+  _el('btn-grid')?.addEventListener('click', () => {
+    gridVis = !gridVis;
+    gridHelper.visible = gridVis;
+    shadowPlane.visible = gridVis;
+    _el('btn-grid').classList.toggle('active', gridVis);
+  });
+  _el('btn-stats')?.addEventListener('click', () => {
+    statsVisible = !statsVisible;
+    _el('stats-hud')?.classList.toggle('hidden', !statsVisible);
+    _el('btn-stats')?.classList.toggle('active', statsVisible);
+  });
+  _el('btn-theme')?.addEventListener('click', toggleTheme);
+  _el('btn-keys')?.addEventListener('click', () => _el('modal-keys')?.classList.add('show'));
+  _el('btn-close-keys')?.addEventListener('click', () => _el('modal-keys')?.classList.remove('show'));
+  _el('modal-keys')?.addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('show'); });
+  _el('btn-save')?.addEventListener('click', savePreset);
+  _el('btn-save2')?.addEventListener('click', savePreset);
+
+  // Ana Sahne Dışa Aktarımlar (GLB & USDZ)
+  _el('btn-exp-glb')?.addEventListener('click', () => exportMainScene('glb'));
+  _el('btn-exp-usdz')?.addEventListener('click', () => exportMainScene('usdz'));
+
+  // Silme Butonu
+  _el('btn-delete-mesh')?.addEventListener('click', deleteSelectedMesh);
+
+  // Tablar & Akordiyonlar
+  document.querySelectorAll('.stab').forEach(t => {
+    t.addEventListener('click', () => switchTab(t.dataset.tab, t.dataset.side));
+  });
+  document.querySelectorAll('.section-head').forEach(h => {
+    h.addEventListener('click', () => h.parentElement.classList.toggle('closed'));
+  });
+
+  // Dönüşüm UI
+  ['tx-x','tx-y','tx-z'].forEach((id,i) => {
+    _el(id)?.addEventListener('input', () => {
+      if (currentModel) currentModel.position[['x','y','z'][i]] = parseFloat(_el(id).value) || 0;
+    });
+  });
+  ['rx-x','rx-y','rx-z'].forEach((id,i) => {
+    _el(id)?.addEventListener('input', () => {
+      if (currentModel) currentModel.rotation[['x','y','z'][i]] = (parseFloat(_el(id).value) || 0) * Math.PI / 180;
+    });
+  });
+  _el('in-sc')?.addEventListener('input', e => {
+    if (!currentModel) return;
+    const s = e.target.value / 100;
+    currentModel.scale.set(s,s,s);
+    if(_el('vb-sc')) _el('vb-sc').textContent = e.target.value;
+  });
+  _el('btn-rpos')?.addEventListener('click', () => {
+    if (currentModel) { currentModel.position.copy(initT.pos); syncTUI(); toast('Konum sıfırlandı'); }
+  });
+  _el('btn-rall')?.addEventListener('click', () => {
+    if (currentModel) { currentModel.position.copy(initT.pos); currentModel.rotation.copy(initT.rot); currentModel.scale.copy(initT.sc); syncTUI(); toast('Dönüşüm sıfırlandı'); }
+  });
+  _el('btn-unit-cm')?.addEventListener('click', () => convertToMeters(0.01, 'cm'));
+  _el('btn-unit-mm')?.addEventListener('click', () => convertToMeters(0.001, 'mm'));
+
+  // Araç Çubukları (VP)
+  document.querySelectorAll('.vp-btn[data-mode]').forEach(b => {
+    b.addEventListener('click', () => {
+      gizmo.setMode(b.dataset.mode);
+      document.querySelectorAll('.vp-btn[data-mode]').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === b.dataset.mode));
+    });
+  });
+  _el('btn-space')?.addEventListener('click', function() {
+    worldSpace = !worldSpace;
+    gizmo.setSpace(worldSpace ? 'world' : 'local');
+    this.textContent = worldSpace ? 'WORLD' : 'LOCAL';
+  });
+
+  // Kamera Presets
+  _el('vc-fr')?.addEventListener('click', () => setView(0,0,1,  0,0,0));
+  _el('vc-tp')?.addEventListener('click', () => setView(0,1,.001, 0,0,0));
+  _el('vc-rt')?.addEventListener('click', () => setView(1,0,0,  0,0,0));
+  _el('vc-is')?.addEventListener('click', () => setView(.6,.5,.6,0,0,0));
+
+  // Işık ve Çevre
+  _el('in-exp')?.addEventListener('input', e => { renderer.toneMappingExposure = +e.target.value; if(_el('vb-exp')) _el('vb-exp').textContent = (+e.target.value).toFixed(2); });
+  _el('in-amb')?.addEventListener('input', e => { ambLight.intensity = +e.target.value; if(_el('vb-amb')) _el('vb-amb').textContent = (+e.target.value).toFixed(2); });
+  _el('in-dir')?.addEventListener('input', e => { dirLight.intensity = +e.target.value; if(_el('vb-dir')) _el('vb-dir').textContent = (+e.target.value).toFixed(2); });
+  _el('in-shad')?.addEventListener('input', e => { shadowPlane.material.opacity = +e.target.value; if(_el('vb-shad')) _el('vb-shad').textContent = (+e.target.value).toFixed(2); });
+  _el('in-fog')?.addEventListener('input', e => { const d = +e.target.value; if(_el('vb-fog')) _el('vb-fog').textContent = d.toFixed(3); scene.fog = d > 0 ? new THREE.FogExp2(scene.background, d) : null; });
+  _el('in-fov')?.addEventListener('input', e => { camera.fov = +e.target.value; camera.updateProjectionMatrix(); if(_el('vb-fov')) _el('vb-fov').textContent = e.target.value + '°'; });
+  _el('in-near')?.addEventListener('input', e => { camera.near = +e.target.value; camera.updateProjectionMatrix(); if(_el('vb-near')) _el('vb-near').textContent = (+e.target.value).toFixed(3); });
+
+  colorSetup('bg', hex => { scene.background = new THREE.Color(hex); if (scene.fog) scene.fog.color = scene.background; });
+
+  // Materyal Kontrolleri
+  colorSetup('mc', hex => { if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.color) m.color.set(hex); }); });
+  colorSetup('me', hex => { if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.emissive) { m.emissive.set(hex); origEmissive.set(hex); } }); });
+
+  _el('in-op')?.addEventListener('input', e => { const v = +e.target.value; if(_el('vb-op')) _el('vb-op').textContent = v.toFixed(2); if (selectedMesh) updateMatArray(selectedMesh, m => { m.opacity = v; m.transparent = v < 1; m.depthWrite = v === 1; }); });
+  _el('in-ro')?.addEventListener('input', e => { const v = +e.target.value; if(_el('vb-ro')) _el('vb-ro').textContent = v.toFixed(2); if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.roughness !== undefined) m.roughness = v; }); });
+  _el('in-me2')?.addEventListener('input', e => { const v = +e.target.value; if(_el('vb-me2')) _el('vb-me2').textContent = v.toFixed(2); if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.metalness !== undefined) m.metalness = v; }); });
+  _el('in-ei')?.addEventListener('input', e => { const v = +e.target.value; if(_el('vb-ei')) _el('vb-ei').textContent = v.toFixed(2); if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.emissiveIntensity !== undefined) m.emissiveIntensity = v; }); });
+  _el('in-ns')?.addEventListener('input', e => { const v = +e.target.value; if(_el('vb-ns')) _el('vb-ns').textContent = v.toFixed(2); if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.normalScale) m.normalScale.set(v,v); }); });
+
+  bindTgl('tgl-wf', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.wireframe = v); });
+  bindTgl('tgl-ds', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.side = v ? THREE.DoubleSide : THREE.FrontSide); });
+  bindTgl('tgl-dw', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.depthWrite = v); });
+  bindTgl('tgl-flat', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.flatShading = v); });
+
+  _el('in-blend')?.addEventListener('change', e => {
+    if (!selectedMesh) return;
+    const map = { normal: THREE.NormalBlending, additive: THREE.AdditiveBlending, multiply: THREE.MultiplyBlending, subtract: THREE.SubtractiveBlending };
+    updateMatArray(selectedMesh, m => m.blending = map[e.target.value] ?? THREE.NormalBlending);
+  });
+
+  _el('btn-ap-col')?.addEventListener('click', () => {
+    const mat = getPrimaryMaterial(selectedMesh);
+    if (!currentModel || !mat?.color) return;
+    const c = mat.color.clone();
+    currentModel.traverse(m => { if (m.isMesh) updateMatArray(m, mtr => { if(mtr.color) mtr.color.copy(c); }); });
+    toast('Renk tüm meshlere uygulandı');
+  });
+  _el('btn-ap-pbr')?.addEventListener('click', () => {
+    const mat = getPrimaryMaterial(selectedMesh);
+    if (!currentModel || !mat) return;
+    const ro = mat.roughness, me = mat.metalness;
+    currentModel.traverse(m => {
+      if (m.isMesh) updateMatArray(m, mtr => { if (mtr.roughness !== undefined) mtr.roughness = ro; if (mtr.metalness !== undefined) mtr.metalness = me; });
+    });
+    toast('PBR tüm meshlere uygulandı');
+  });
+  _el('btn-ap-all')?.addEventListener('click', () => {
+    _el('btn-ap-col')?.click(); _el('btn-ap-pbr')?.click(); toast('Tüm ayarlar uygulandı');
+  });
 }
 
-function recalculateGround(model) {
-  if (!model) return;
-  const box = new THREE.Box3().setFromObject(model);
-  const size = box.getSize(new THREE.Vector3());
-  const by = model.position.y - size.y / 2 + 0.001;
-  shadowPlane.position.y = by;
-  gridHelper.position.y  = by;
+// ── ANA SAHNE İÇİN GÜVENLİ İNDİRİCİLER ──
+function downloadLink(url, filename) {
+  const link = document.createElement('a');
+  link.style.display = 'none';
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link); // Bu satır Firefox vb tarayıcılarda kırılmayı önler
+  link.click();
+  setTimeout(() => { document.body.removeChild(link); }, 100);
 }
 
-// ── BULK AR LOGIC (TAM GÜVENLİ DOM) ──
+async function exportMainScene(format) {
+  if (!currentModel) return toast('Önce bir model yükleyin!', 'err');
+  _el('loading-ov')?.classList.add('show');
+  if(_el('load-text')) _el('load-text').textContent = 'Dışa aktarılıyor...';
+  
+  setTimeout(async () => {
+    try {
+      const exportScene = createExportScene(currentModel, false);
+      const safeName = (_el('st-mod')?.textContent || 'Model').replace(/[^a-z0-9_-]/gi, '_');
+
+      if (format === 'glb') {
+        const exporter = new GLTFExporter();
+        exporter.parse(exportScene, (buffer) => {
+          const blob = new Blob([buffer], { type: 'application/octet-stream' });
+          downloadLink(URL.createObjectURL(blob), `${safeName}_AR.glb`);
+          toast('GLB indirildi ✓', 'ok');
+        }, (err) => { console.error(err); toast('GLB Hatası', 'err'); }, { binary: true });
+      } 
+      else if (format === 'usdz') {
+        const exporter = new USDZExporter();
+        const arraybuffer = await exporter.parse(exportScene);
+        const blob = new Blob([arraybuffer], { type: 'model/vnd.usdz+zip' });
+        downloadLink(URL.createObjectURL(blob), `${safeName}_AR.usdz`);
+        toast('USDZ indirildi ✓', 'ok');
+      }
+    } catch(err) {
+      console.error(err);
+      toast('Dışa aktarım hatası!', 'err');
+    } finally {
+      _el('loading-ov')?.classList.remove('show');
+    }
+  }, 50);
+}
+
+// ── BULK AR LOGIC (TOPLU DÜZENLEME) ──
 const bulkModels = [null, null, null, null, null];
 const bulkNames = ['', '', '', '', ''];
 const bulkUIRefs = []; 
@@ -829,21 +1028,17 @@ function initBulkUI() {
     bulkUIRefs[i] = { btnLoad, btnClear, nameLbl, btnRow2 };
   }
 
-  const btnGlb = _el('btn-bulk-glb-export');
-  const btnUsdz = _el('btn-bulk-usdz-export');
-  const cbCenter = _el('cb-bulk-center');
-  
-  if(btnGlb) btnGlb.addEventListener('click', () => exportBulk('glb'));
-  if(btnUsdz) btnUsdz.addEventListener('click', () => exportBulk('usdz'));
-  if(cbCenter) cbCenter.addEventListener('click', function() { this.classList.toggle('on'); });
+  _el('btn-bulk-glb-export')?.addEventListener('click', () => exportBulk('glb'));
+  _el('btn-bulk-usdz-export')?.addEventListener('click', () => exportBulk('usdz'));
+  _el('cb-bulk-center')?.addEventListener('click', function() { this.classList.toggle('on'); });
 }
 
 function loadBulkFile(file, index) {
-  _el('loading-ov').classList.add('show');
-  _el('load-text').textContent = `Ürün ${index+1} Arka Planda Yükleniyor...`;
+  _el('loading-ov')?.classList.add('show');
+  if(_el('load-text')) _el('load-text').textContent = `Ürün ${index+1} Yükleniyor...`;
 
   const url = URL.createObjectURL(file);
-  getNewIsolatedLoader().load(url, gltf => {
+  getLoader().load(url, gltf => {
     URL.revokeObjectURL(url);
     if (bulkModels[index]) disposeHierarchy(bulkModels[index]); 
     bulkModels[index] = gltf.scene;
@@ -855,12 +1050,10 @@ function loadBulkFile(file, index) {
     refs.btnClear.style.display = 'block';
     refs.btnRow2.style.display = 'flex';
     
-    _el('loading-ov').classList.remove('show');
-    _el('load-text').textContent = 'Model yükleniyor...';
+    _el('loading-ov')?.classList.remove('show');
     toast(`Ürün ${index+1} hafızaya eklendi`, 'ok');
   }, undefined, err => {
-    _el('loading-ov').classList.remove('show');
-    _el('load-text').textContent = 'Model yükleniyor...';
+    _el('loading-ov')?.classList.remove('show');
     toast('Yüklenemedi: ' + err.message, 'err');
   });
 }
@@ -868,7 +1061,6 @@ function loadBulkFile(file, index) {
 function scaleBulkModel(index, factor, unitName) {
   const model = bulkModels[index];
   if (!model) return;
-  
   const processedGeoms = new Set();
   model.traverse(c => {
     if (c.isMesh && c.geometry && !processedGeoms.has(c.geometry)) {
@@ -887,12 +1079,12 @@ function scaleBulkModel(index, factor, unitName) {
 
 async function exportBulk(format) {
   const hasModels = bulkModels.some(m => m !== null);
-  if(!hasModels) return toast('Toplu işlem için en az bir ürün yükleyin', 'err');
+  if(!hasModels) return toast('Toplu işlem için ürün yükleyin', 'err');
 
-  _el('loading-ov').classList.add('show');
-  _el('load-text').textContent = `Toplu ${format.toUpperCase()} İndiriliyor...`;
+  _el('loading-ov')?.classList.add('show');
+  if(_el('load-text')) _el('load-text').textContent = `Toplu ${format.toUpperCase()} İndiriliyor...`;
 
-  const isCenter = _el('cb-bulk-center') && _el('cb-bulk-center').classList.contains('on');
+  const isCenter = _el('cb-bulk-center')?.classList.contains('on');
   
   for(let i=0; i<5; i++) {
     const model = bulkModels[i];
@@ -907,40 +1099,31 @@ async function exportBulk(format) {
         await new Promise(resolve => {
           exporter.parse(exportScene, (buffer) => {
             const blob = new Blob([buffer], { type: 'application/octet-stream' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `${safeName}_AR.glb`;
-            link.click();
+            downloadLink(URL.createObjectURL(blob), `${safeName}_AR.glb`);
             resolve();
           }, (err) => { console.error(err); resolve(); }, { binary: true });
         });
       } else if (format === 'usdz') {
         const exporter = new USDZExporter();
         const arraybuffer = await exporter.parse(exportScene);
-        // USDZ MIME Tipi Düzeltildi
         const blob = new Blob([arraybuffer], { type: 'model/vnd.usdz+zip' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `${safeName}_AR.usdz`;
-        link.click();
+        downloadLink(URL.createObjectURL(blob), `${safeName}_AR.usdz`);
       }
     } catch(e) {
       console.error(e);
       toast(`Hata Slot ${i+1}`, 'err');
     }
-    
-    await new Promise(r => setTimeout(r, 600));
+    await new Promise(r => setTimeout(r, 600)); // İndirme atlamasın diye
   }
 
-  _el('loading-ov').classList.remove('show');
-  _el('load-text').textContent = 'Model yükleniyor...';
-  toast(`Toplu ${format.toUpperCase()} dışa aktarma tamamlandı ✓`, 'ok');
+  _el('loading-ov')?.classList.remove('show');
+  toast(`Toplu dışa aktarma tamamlandı ✓`, 'ok');
 }
 
-// ── LOAD ──
+// ── YÜKLEME METODU (ANA SAHNE) ──
 function loadFile(file) {
-  if (!/\.(glb|gltf)$/i.test(file.name)) { toast('Desteklenmeyen dosya türü!', 'err'); return; }
-  _el('loading-ov').classList.add('show');
+  if (!/\.(glb|gltf)$/i.test(file.name)) { toast('Sadece GLB/GLTF!', 'err'); return; }
+  _el('loading-ov')?.classList.add('show');
   setStatus('', 'Yükleniyor...');
   deselectMesh();
   
@@ -952,7 +1135,7 @@ function loadFile(file) {
   }
 
   const url = URL.createObjectURL(file);
-  getNewIsolatedLoader().load(url, gltf => {
+  getLoader().load(url, gltf => {
     URL.revokeObjectURL(url);
     currentModel = gltf.scene;
 
@@ -997,39 +1180,36 @@ function loadFile(file) {
     recalculateGround(currentModel);
 
     gizmo.attach(currentModel);
-    _el('vp-tb').style.display = 'flex';
+    if(_el('vp-tb')) _el('vp-tb').style.display = 'flex';
 
-    _el('st-m').textContent = meshCount;
-    _el('st-v').textContent = verts.toLocaleString();
-    _el('st-t').textContent = Math.round(tris).toLocaleString();
+    if(_el('st-m')) _el('st-m').textContent = meshCount;
+    if(_el('st-v')) _el('st-v').textContent = verts.toLocaleString();
+    if(_el('st-t')) _el('st-t').textContent = Math.round(tris).toLocaleString();
 
     buildOutliner(currentModel);
     buildInfo(file.name, meshCount, verts, tris, size);
-    _el('st-mod').textContent = file.name.length > 22 ? file.name.substring(0,20)+'…' : file.name;
+    if(_el('st-mod')) _el('st-mod').textContent = file.name.length > 22 ? file.name.substring(0,20)+'…' : file.name;
     syncTUI();
 
-    _el('loading-ov').classList.remove('show');
+    _el('loading-ov')?.classList.remove('show');
     toast('Model yüklendi ✓', 'ok');
     setStatus('ready', 'Hazır');
   }, undefined, err => {
     URL.revokeObjectURL(url);
-    _el('loading-ov').classList.remove('show');
-    toast('Yüklenemedi: ' + err.message, 'err');
+    _el('loading-ov')?.classList.remove('show');
+    toast('Yüklenemedi!', 'err');
     setStatus('err', 'Hata');
     console.error(err);
   });
 }
 
-// ── OUTLINER ──
 function buildOutliner(model) {
   const ol = _el('outliner');
   if(!ol) return;
   ol.innerHTML = '';
   ol._map = [];
-
   const root = makeOLItem('🗂️', model.name || 'Sahne', 'Root', false, null);
   ol.appendChild(root);
-
   model.traverse(c => {
     if (!c.isMesh) return;
     const item = makeOLItem('⬟', c.name || 'Mesh', 'Mesh', true, c);
@@ -1052,7 +1232,6 @@ function syncOL(mesh) {
   ol._map.forEach(({ el, mesh: m }) => el.classList.toggle('selected', m === mesh));
 }
 
-// ── MODEL INFO ──
 function buildInfo(name, mc, v, t, sz) {
   const info = _el('info-body');
   if(!info) return;
@@ -1068,7 +1247,6 @@ function buildInfo(name, mc, v, t, sz) {
 }
 const ir = (k,v) => `<div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--text2)">${k}</span><span style="font-family:var(--mono);font-size:10px">${v}</span></div>`;
 
-// ── SELECT / DESELECT / DELETE ──
 function getPrimaryMaterial(mesh) {
   if (!mesh || !mesh.material) return null;
   return Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
@@ -1091,14 +1269,12 @@ function selectMesh(mesh) {
   if (mat) {
     const col = mat.color     ? '#' + mat.color.getHexString()     : '#ffffff';
     const em  = mat.emissive  ? '#' + mat.emissive.getHexString()  : '#000000';
-
     setC('mc', col); setC('me', em);
     setSL('in-op', 'vb-op', mat.opacity ?? 1,             v => v.toFixed(2));
     setSL('in-ro', 'vb-ro', mat.roughness ?? 0.5,         v => v.toFixed(2));
     setSL('in-me2','vb-me2',mat.metalness ?? 0,           v => v.toFixed(2));
     setSL('in-ei', 'vb-ei', mat.emissiveIntensity ?? 1,   v => v.toFixed(2));
     setSL('in-ns', 'vb-ns', mat.normalScale?.x ?? 1,      v => v.toFixed(2));
-
     setTgl('tgl-wf', mat.wireframe ?? false);
     setTgl('tgl-ds', mat.side === THREE.DoubleSide);
     setTgl('tgl-dw', mat.depthWrite ?? true);
@@ -1126,18 +1302,14 @@ function deselectMesh() {
 
 function deleteSelectedMesh() {
   if (!selectedMesh) return toast('Silmek için bir parça seçmelisiniz', 'err');
-  
   const meshName = selectedMesh.name || 'Parça';
   selectedMesh.removeFromParent();
   disposeHierarchy(selectedMesh); 
   deselectMesh();
-  
   if (currentModel) buildOutliner(currentModel);
-  toast(`${meshName} başarıyla silindi 🗑️`, 'ok');
+  toast(`${meshName} başarıyla silindi`, 'ok');
 }
-if(_el('btn-delete-mesh')) _el('btn-delete-mesh').addEventListener('click', deleteSelectedMesh);
 
-// ── TRANSFORM UI ──
 function syncTUI() {
   if (!currentModel) return;
   const p = currentModel.position, r = currentModel.rotation, s = currentModel.scale;
@@ -1152,17 +1324,18 @@ function syncTUI() {
   if(_el('vb-sc')) _el('vb-sc').textContent = sp;
 }
 
-// ── HELPERS ──
 function setC(id, hex) {
   const sw = _el(`${id}-sw`), inp = _el(`in-${id}`), hx = _el(`${id}-hex`);
   if (sw) sw.style.background = hex;
   if (inp) inp.value = hex;
   if (hx) hx.value = hex;
 }
+
 function setSL(inId, bdId, val, fmt) {
   if(_el(inId)) _el(inId).value = val;
   if(_el(bdId)) _el(bdId).textContent = fmt(val);
 }
+
 function setTgl(id, on) {
   const el = _el(id); if (el) el.classList.toggle('on', on);
 }
@@ -1183,120 +1356,6 @@ function colorSetup(id, cb) {
   });
 }
 
-// ── BIND SCENE CONTROLS ──
-if(_el('in-exp')) _el('in-exp').addEventListener('input', e => {
-  renderer.toneMappingExposure = +e.target.value;
-  if(_el('vb-exp')) _el('vb-exp').textContent = (+e.target.value).toFixed(2);
-});
-if(_el('in-amb')) _el('in-amb').addEventListener('input', e => {
-  ambLight.intensity = +e.target.value;
-  if(_el('vb-amb')) _el('vb-amb').textContent = (+e.target.value).toFixed(2);
-});
-if(_el('in-dir')) _el('in-dir').addEventListener('input', e => {
-  dirLight.intensity = +e.target.value;
-  if(_el('vb-dir')) _el('vb-dir').textContent = (+e.target.value).toFixed(2);
-});
-if(_el('in-shad')) _el('in-shad').addEventListener('input', e => {
-  shadowPlane.material.opacity = +e.target.value;
-  if(_el('vb-shad')) _el('vb-shad').textContent = (+e.target.value).toFixed(2);
-});
-if(_el('in-fog')) _el('in-fog').addEventListener('input', e => {
-  const d = +e.target.value;
-  if(_el('vb-fog')) _el('vb-fog').textContent = d.toFixed(3);
-  scene.fog = d > 0 ? new THREE.FogExp2(scene.background, d) : null;
-});
-if(_el('in-fov')) _el('in-fov').addEventListener('input', e => {
-  camera.fov = +e.target.value;
-  camera.updateProjectionMatrix();
-  if(_el('vb-fov')) _el('vb-fov').textContent = e.target.value + '°';
-});
-if(_el('in-near')) _el('in-near').addEventListener('input', e => {
-  camera.near = +e.target.value;
-  camera.updateProjectionMatrix();
-  if(_el('vb-near')) _el('vb-near').textContent = (+e.target.value).toFixed(3);
-});
-
-colorSetup('bg', hex => {
-  scene.background = new THREE.Color(hex);
-  if (scene.fog) scene.fog.color = scene.background;
-});
-
-// ── BIND TRANSFORM CONTROLS ──
-['tx-x','tx-y','tx-z'].forEach((id,i) => {
-  if(_el(id)) _el(id).addEventListener('input', () => {
-    if (!currentModel) return;
-    currentModel.position[['x','y','z'][i]] = parseFloat(_el(id).value) || 0;
-  });
-});
-['rx-x','rx-y','rx-z'].forEach((id,i) => {
-  if(_el(id)) _el(id).addEventListener('input', () => {
-    if (!currentModel) return;
-    currentModel.rotation[['x','y','z'][i]] = (parseFloat(_el(id).value) || 0) * Math.PI / 180;
-  });
-});
-
-if(_el('in-sc')) _el('in-sc').addEventListener('input', e => {
-  if (!currentModel) return;
-  const s = e.target.value / 100;
-  currentModel.scale.set(s,s,s);
-  if(_el('vb-sc')) _el('vb-sc').textContent = e.target.value;
-});
-if(_el('btn-rpos')) _el('btn-rpos').addEventListener('click', () => {
-  if (!currentModel) return;
-  currentModel.position.copy(initT.pos);
-  syncTUI(); toast('Konum sıfırlandı');
-});
-if(_el('btn-rall')) _el('btn-rall').addEventListener('click', () => {
-  if (!currentModel) return;
-  currentModel.position.copy(initT.pos);
-  currentModel.rotation.copy(initT.rot);
-  currentModel.scale.copy(initT.sc);
-  syncTUI(); toast('Dönüşüm sıfırlandı');
-});
-
-function convertToMeters(factor, unitName) {
-  if (!currentModel) return toast('Model yüklenmedi', 'err');
-  
-  currentModel.position.set(0,0,0);
-  currentModel.updateMatrixWorld(true);
-
-  const processedGeoms = new Set();
-  currentModel.traverse(c => {
-    if (c.isMesh && c.geometry && !processedGeoms.has(c.geometry)) {
-      c.geometry.scale(factor, factor, factor);
-      c.geometry.computeBoundingBox();
-      c.geometry.computeBoundingSphere();
-      processedGeoms.add(c.geometry);
-    }
-    if (c !== currentModel) {
-      c.position.multiplyScalar(factor);
-      c.updateMatrix();
-    }
-  });
-
-  const box = new THREE.Box3().setFromObject(currentModel);
-  const size = box.getSize(new THREE.Vector3());
-  const ctr = box.getCenter(new THREE.Vector3());
-  
-  currentModel.position.sub(ctr);
-  currentModel.position.y += size.y / 2;
-  initT.pos.copy(currentModel.position);
-  
-  recalculateGround(currentModel);
-  
-  const m = parseInt((_el('st-m')||{}).textContent) || 0;
-  const v = parseInt(((_el('st-v')||{}).textContent||'').replace(/[\D]/g, '')) || 0;
-  const t = parseInt(((_el('st-t')||{}).textContent||'').replace(/[\D]/g, '')) || 0;
-  buildInfo((_el('st-mod')||{}).textContent || 'Model', m, v, t, size);
-  
-  syncTUI();
-  frameModel();
-  toast(`${unitName.toUpperCase()} biriminden Metreye kalıcı olarak çevrildi`, 'ok');
-}
-if(_el('btn-unit-cm')) _el('btn-unit-cm').addEventListener('click', () => convertToMeters(0.01, 'cm'));
-if(_el('btn-unit-mm')) _el('btn-unit-mm').addEventListener('click', () => convertToMeters(0.001, 'mm'));
-
-// ── BIND MATERIAL CONTROLS ──
 function updateMatArray(mesh, updater) {
   if(!mesh || !mesh.material) return;
   const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
@@ -1304,88 +1363,10 @@ function updateMatArray(mesh, updater) {
   mats.forEach(m => m.needsUpdate = true);
 }
 
-colorSetup('mc', hex => { if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.color) m.color.set(hex); }); });
-colorSetup('me', hex => { if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.emissive) { m.emissive.set(hex); origEmissive.set(hex); } }); });
-
-if(_el('in-op')) _el('in-op').addEventListener('input', e => {
-  const v = +e.target.value; if(_el('vb-op')) _el('vb-op').textContent = v.toFixed(2);
-  if (selectedMesh) updateMatArray(selectedMesh, m => {
-    m.opacity = v;
-    m.transparent = v < 1;
-    m.depthWrite = v === 1;
-  });
-});
-if(_el('in-ro')) _el('in-ro').addEventListener('input', e => {
-  const v = +e.target.value; if(_el('vb-ro')) _el('vb-ro').textContent = v.toFixed(2);
-  if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.roughness !== undefined) m.roughness = v; });
-});
-if(_el('in-me2')) _el('in-me2').addEventListener('input', e => {
-  const v = +e.target.value; if(_el('vb-me2')) _el('vb-me2').textContent = v.toFixed(2);
-  if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.metalness !== undefined) m.metalness = v; });
-});
-if(_el('in-ei')) _el('in-ei').addEventListener('input', e => {
-  const v = +e.target.value; if(_el('vb-ei')) _el('vb-ei').textContent = v.toFixed(2);
-  if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.emissiveIntensity !== undefined) m.emissiveIntensity = v; });
-});
-if(_el('in-ns')) _el('in-ns').addEventListener('input', e => {
-  const v = +e.target.value; if(_el('vb-ns')) _el('vb-ns').textContent = v.toFixed(2);
-  if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.normalScale) m.normalScale.set(v,v); });
-});
-
-bindTgl('tgl-wf', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.wireframe = v); });
-bindTgl('tgl-ds', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.side = v ? THREE.DoubleSide : THREE.FrontSide); });
-bindTgl('tgl-dw', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.depthWrite = v); });
-bindTgl('tgl-flat', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.flatShading = v); });
-
-if(_el('in-blend')) _el('in-blend').addEventListener('change', e => {
-  if (!selectedMesh) return;
-  const map = { normal: THREE.NormalBlending, additive: THREE.AdditiveBlending, multiply: THREE.MultiplyBlending, subtract: THREE.SubtractiveBlending };
-  updateMatArray(selectedMesh, m => m.blending = map[e.target.value] ?? THREE.NormalBlending);
-});
-
-if(_el('btn-ap-col')) _el('btn-ap-col').addEventListener('click', () => {
-  const mat = getPrimaryMaterial(selectedMesh);
-  if (!currentModel || !mat?.color) return;
-  const c = mat.color.clone();
-  currentModel.traverse(m => {
-    if (m.isMesh) updateMatArray(m, mtr => { if(mtr.color) mtr.color.copy(c); });
-  });
-  toast('Renk tüm meshlere uygulandı');
-});
-if(_el('btn-ap-pbr')) _el('btn-ap-pbr').addEventListener('click', () => {
-  const mat = getPrimaryMaterial(selectedMesh);
-  if (!currentModel || !mat) return;
-  const ro = mat.roughness, me = mat.metalness;
-  currentModel.traverse(m => {
-    if (m.isMesh) updateMatArray(m, mtr => {
-      if (mtr.roughness !== undefined) mtr.roughness = ro;
-      if (mtr.metalness !== undefined) mtr.metalness = me;
-    });
-  });
-  toast('PBR tüm meshlere uygulandı');
-});
-if(_el('btn-ap-all')) _el('btn-ap-all').addEventListener('click', () => {
-  if(_el('btn-ap-col')) _el('btn-ap-col').click(); 
-  if(_el('btn-ap-pbr')) _el('btn-ap-pbr').click();
-  toast('Tüm ayarlar uygulandı');
-});
-
-// ── VP TOOLBAR ──
-document.querySelectorAll('.vp-btn[data-mode]').forEach(b => {
-  b.addEventListener('click', () => { setGizmo(b.dataset.mode); });
-});
-if(_el('btn-space')) _el('btn-space').addEventListener('click', function() {
-  worldSpace = !worldSpace;
-  gizmo.setSpace(worldSpace ? 'world' : 'local');
-  this.textContent = worldSpace ? 'WORLD' : 'LOCAL';
-});
-
 function setGizmo(mode) {
   gizmo.setMode(mode);
-  document.querySelectorAll('.vp-btn[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
 }
 
-// ── VIEW PRESETS ──
 function setView(px,py,pz,tx,ty,tz) {
   if (!currentModel) { toast('Model yüklenmedi'); return; }
   const box = new THREE.Box3().setFromObject(currentModel);
@@ -1396,18 +1377,9 @@ function setView(px,py,pz,tx,ty,tz) {
   camera.position.set(ctr.x + px*d, ctr.y + py*d, ctr.z + pz*d);
   orbit.update();
 }
-if(_el('vc-fr')) _el('vc-fr').addEventListener('click', () => setView(0,0,1,  0,0,0));
-if(_el('vc-tp')) _el('vc-tp').addEventListener('click', () => setView(0,1,.001, 0,0,0));
-if(_el('vc-rt')) _el('vc-rt').addEventListener('click', () => setView(1,0,0,  0,0,0));
-if(_el('vc-is')) _el('vc-is').addEventListener('click', () => setView(.6,.5,.6,0,0,0));
 
-// ── TOP ACTIONS ──
-if(_el('btn-open')) _el('btn-open').addEventListener('click', () => _el('file-input').click());
-if(_el('file-input')) _el('file-input').addEventListener('change', e => { if (e.target.files[0]) { loadFile(e.target.files[0]); e.target.value = ''; } });
-
-if(_el('btn-frame')) _el('btn-frame').addEventListener('click', frameModel);
 function frameModel() {
-  if (!currentModel) { toast('Model yüklenmedi'); return; }
+  if (!currentModel) return;
   const box = new THREE.Box3().setFromObject(currentModel);
   const ctr = box.getCenter(new THREE.Vector3());
   const sz  = box.getSize(new THREE.Vector3());
@@ -1422,52 +1394,11 @@ function takeScreenshot() {
   const a = document.createElement('a');
   a.download = `pepperAR_${Date.now()}.png`;
   a.href = renderer.domElement.toDataURL('image/png');
+  document.body.appendChild(a);
   a.click();
-  toast('Screenshot kaydedildi 📷', 'ok');
+  document.body.removeChild(a);
+  toast('Screenshot kaydedildi', 'ok');
 }
-[_el('btn-ss'), _el('btn-ss2')].forEach(b => b?.addEventListener('click', takeScreenshot));
-
-// SAHNE İÇİN DIŞA AKTARMA (GLB & USDZ)
-if(_el('btn-exp-glb')) _el('btn-exp-glb').addEventListener('click', () => {
-  if (!currentModel) return toast('Model yüklenmedi', 'err');
-  const exporter = new GLTFExporter();
-  const exportScene = createExportScene(currentModel, false);
-  exporter.parse(exportScene, (buffer) => {
-    const blob = new Blob([buffer], { type: 'application/octet-stream' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `model_export_${Date.now()}.glb`;
-    link.click();
-    toast('GLB dışa aktarıldı ✓', 'ok');
-  }, (err) => {
-    console.error(err); toast('GLB Hatası', 'err');
-  }, { binary: true });
-});
-
-if(_el('btn-exp-usdz')) _el('btn-exp-usdz').addEventListener('click', () => {
-  if (!currentModel) return toast('Model yüklenmedi', 'err');
-  _el('loading-ov').classList.add('show');
-  _el('load-text').textContent = 'USDZ hazırlanıyor...';
-  
-  setTimeout(async () => {
-    try {
-      const exportScene = createExportScene(currentModel, false);
-      const exporter = new USDZExporter();
-      const arraybuffer = await exporter.parse(exportScene);
-      const blob = new Blob([arraybuffer], { type: 'model/vnd.usdz+zip' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `model_export_${Date.now()}.usdz`;
-      link.click();
-      toast('USDZ dışa aktarıldı ✓', 'ok');
-    } catch (err) {
-      console.error(err); toast('USDZ Hatası', 'err');
-    } finally {
-      _el('loading-ov').classList.remove('show');
-      _el('load-text').textContent = 'Model yükleniyor...';
-    }
-  }, 50);
-});
 
 function toggleWireframe() {
   wireMode = !wireMode;
@@ -1475,20 +1406,6 @@ function toggleWireframe() {
   if (currentModel) currentModel.traverse(c => { if (c.isMesh) updateMatArray(c, m => m.wireframe = wireMode); });
   toast(wireMode ? 'Wireframe açık' : 'Wireframe kapalı');
 }
-if(_el('btn-wf')) _el('btn-wf').addEventListener('click', toggleWireframe);
-
-if(_el('btn-grid')) _el('btn-grid').addEventListener('click', () => {
-  gridVis = !gridVis;
-  gridHelper.visible = gridVis;
-  shadowPlane.visible = gridVis;
-  _el('btn-grid').classList.toggle('active', gridVis);
-});
-
-if(_el('btn-stats')) _el('btn-stats').addEventListener('click', () => {
-  statsVisible = !statsVisible;
-  if(_el('stats-hud')) _el('stats-hud').classList.toggle('hidden', !statsVisible);
-  _el('btn-stats').classList.toggle('active', statsVisible);
-});
 
 function toggleTheme() {
   const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -1500,12 +1417,7 @@ function toggleTheme() {
   if(_el('in-bg')) _el('in-bg').value = bg;
   if(_el('bg-hex')) _el('bg-hex').value = bg;
 }
-if(_el('btn-theme')) _el('btn-theme').addEventListener('click', toggleTheme);
 
-if(_el('btn-keys')) _el('btn-keys').addEventListener('click', () => _el('modal-keys').classList.add('show'));
-if(_el('modal-keys')) _el('modal-keys').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('show'); });
-
-[_el('btn-save'), _el('btn-save2')].forEach(b => b?.addEventListener('click', savePreset));
 function savePreset() {
   const p = {
     exp:  _el('in-exp')?.value,  amb:  _el('in-amb')?.value,
@@ -1516,6 +1428,7 @@ function savePreset() {
   localStorage.setItem('par_preset', JSON.stringify(p));
   toast('Ayarlar kaydedildi ✓', 'ok');
 }
+
 function loadPreset() {
   try {
     const p = JSON.parse(localStorage.getItem('par_preset') || '{}');
@@ -1528,22 +1441,12 @@ function loadPreset() {
   } catch(e){}
 }
 
-// ── TABS ──
-document.querySelectorAll('.stab').forEach(t => {
-  t.addEventListener('click', () => switchTab(t.dataset.tab, t.dataset.side));
-});
 function switchTab(tabId, side) {
   const sel = `.sidebar-${side}`;
   document.querySelectorAll(`${sel} .stab`).forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
   document.querySelectorAll(`${sel} .stab-pane`).forEach(p => p.classList.toggle('active', p.id === `tab-${tabId}`));
 }
 
-// ── SECTION ACCORDION ──
-document.querySelectorAll('.section-head').forEach(h => {
-  h.addEventListener('click', () => h.parentElement.classList.toggle('closed'));
-});
-
-// ── KEYBOARD ──
 document.addEventListener('keydown', e => {
   const tag = document.activeElement?.tagName;
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
@@ -1569,7 +1472,6 @@ document.addEventListener('keydown', e => {
   if (e.altKey && e.key === 't') toggleTheme();
 });
 
-// ── STATUS / TOAST ──
 function setStatus(type, text) {
   if(_el('sd')) _el('sd').className  = 'status-dot' + (type === 'ready' ? ' ready' : type === 'err' ? ' err' : '');
   if(_el('st-txt')) _el('st-txt').textContent = text;
@@ -1585,8 +1487,9 @@ function toast(msg, type = '') {
   toastTmr = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
-// ── RESIZE ──
 function onResize() {
+  const container = _el('canvas-container');
+  if(!container) return;
   const w = container.clientWidth, h = container.clientHeight;
   if (!w || !h) return;
   camera.aspect = w / h;
@@ -1594,7 +1497,6 @@ function onResize() {
   renderer.setSize(w, h);
 }
 
-// ── FPS ──
 function updateFPS() {
   fpsFrames++;
   const now = performance.now();
@@ -1604,7 +1506,6 @@ function updateFPS() {
   }
 }
 
-// ── RENDER LOOP ──
 function animate() {
   requestAnimationFrame(animate);
   orbit.update();
@@ -1612,9 +1513,9 @@ function animate() {
   updateFPS();
 }
 
-// ── START ──
+// BAŞLAT!
 init();
-window._par = { scene, camera, renderer };
+
 </script>
 </body>
 </html>
