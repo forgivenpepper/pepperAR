@@ -121,9 +121,26 @@ input[type=color]{position:absolute;opacity:0;pointer-events:none;width:0;height
 .btn-row{display:flex;gap:6px}
 .btn-row .btn{flex:1}
 
-/* BULK TAB STYLES */
-.bulk-slot{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px;transition: border-color 0.2s;}
-.bulk-slot:hover{border-color:var(--border2);}
+/* TEXTURE PREVIEW */
+.tex-preview{width:100%;height:70px;border-radius:var(--radius);border:1px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3);cursor:pointer;transition:all .2s;overflow:hidden;position:relative;background:var(--bg3)}
+.tex-preview:hover{border-color:var(--accent);color:var(--accent)}
+.tex-preview img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.tex-preview-label{position:relative;z-index:1;font-size:10px;font-weight:600;text-align:center;line-height:1.4;padding:4px}
+.tex-preview.loaded .tex-preview-label{background:rgba(0,0,0,.55);border-radius:4px;color:#fff}
+.tex-slot{display:flex;flex-direction:column;gap:5px}
+.tex-slot-name{font-size:11px;font-weight:600;color:var(--text2)}
+.tex-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tex-clear{margin-top:4px}
+
+/* ALPHA MODE PILLS */
+.alpha-pills{display:flex;gap:4px;flex-wrap:wrap}
+.alpha-pill{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);transition:all .15s}
+.alpha-pill:hover{border-color:var(--border2);color:var(--text)}
+.alpha-pill.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+
+/* BULK */
+.bulk-slot{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px;transition:border-color .2s}
+.bulk-slot:hover{border-color:var(--border2)}
 .bulk-slot-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px}
 .bulk-file-name{font-family:var(--mono);font-size:10px;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:8px;display:block}
 
@@ -138,6 +155,8 @@ input[type=color]{position:absolute;opacity:0;pointer-events:none;width:0;height
 .ol-item.selected .ol-name{color:var(--accent)}
 .ol-type{font-size:10px;color:var(--text3);flex-shrink:0;font-family:var(--mono)}
 .ol-indent{padding-left:24px}
+.ol-vis{margin-left:auto;opacity:.4;font-size:11px;flex-shrink:0}
+.ol-item:hover .ol-vis{opacity:1}
 
 .empty-state{padding:20px 16px;text-align:center;color:var(--text3);font-size:12px;line-height:1.7}
 .empty-state .ei{font-size:26px;margin-bottom:8px;opacity:.45}
@@ -202,6 +221,9 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
 
 /* SAVE PANEL */
 .save-panel{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
+
+/* CHECKER PATTERN for transparency preview */
+.checker-bg{background-image:linear-gradient(45deg,#333 25%,transparent 25%),linear-gradient(-45deg,#333 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#333 75%),linear-gradient(-45deg,transparent 75%,#333 75%);background-size:10px 10px;background-position:0 0,0 5px,5px -5px,-5px 0px}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
@@ -234,6 +256,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
 
 <div class="workspace">
 
+<!-- SOL SIDEBAR -->
 <div class="sidebar sidebar-left">
   <div class="stab-bar">
     <div class="stab active" data-tab="outliner" data-side="left">Outliner</div>
@@ -241,12 +264,14 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
     <div class="stab" data-tab="bulk" data-side="left">Toplu AR</div>
   </div>
 
+  <!-- OUTLINER TAB -->
   <div class="stab-pane active" id="tab-outliner">
     <div id="outliner" class="outliner">
       <div class="empty-state"><div class="ei">📦</div>Model yüklenmedi.<br>GLB dosyasını sürükleyin<br>veya yukarıdan açın.</div>
     </div>
   </div>
 
+  <!-- SAHNE TAB -->
   <div class="stab-pane" id="tab-scene">
     <div class="section">
       <div class="section-head"><div class="section-title">💡 Işık</div><span class="section-arrow">▼</span></div>
@@ -301,28 +326,26 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
     </div>
   </div>
 
+  <!-- TOPLU AR TAB -->
   <div class="stab-pane" id="tab-bulk">
     <div class="section">
       <div class="section-head"><div class="section-title">📦 5'li Toplu Düzenleme</div><span class="section-arrow">▼</span></div>
-      <div class="section-body" style="padding-top: 4px">
+      <div class="section-body" style="padding-top:4px">
         <div class="toggle-row" style="margin-bottom:8px">
           <div class="toggle on" id="cb-bulk-center"></div>
-          <span class="toggle-label" title="Dışa aktarım sırasında modeli tam merkeze hizalar">Pivot'u Merkeze Al (Otomatik)</span>
+          <span class="toggle-label" title="Dışa aktarım sırasında modeli tam merkeze hizalar">Pivot'u Merkeze Al</span>
         </div>
-        
-        <div id="bulk-slots">
-          </div>
-
-        <div class="btn-row" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border)">
-          <button class="btn sm accent" id="btn-bulk-glb-export">↓ Tümünü GLB İndir</button>
-          <button class="btn sm accent" id="btn-bulk-usdz-export">↓ Tümünü USDZ İndir</button>
+        <div id="bulk-slots"></div>
+        <div class="btn-row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <button class="btn sm accent" id="btn-bulk-glb-export">↓ Tümünü GLB</button>
+          <button class="btn sm accent" id="btn-bulk-usdz-export">↓ Tümünü USDZ</button>
         </div>
       </div>
     </div>
   </div>
-
 </div>
 
+<!-- VIEWPORT -->
 <div class="viewport" id="vp">
   <div class="vp-toolbar" id="vp-tb" style="display:none">
     <button class="vp-btn active" data-mode="translate">⊕ Taşı</button>
@@ -331,21 +354,18 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
     <div class="vp-sep"></div>
     <button class="vp-btn" id="btn-space" style="font-size:10px;padding:5px 8px">WORLD</button>
   </div>
-
   <div class="view-ctrls">
     <button class="vc-btn" id="vc-fr" title="Ön (1)">FR</button>
     <button class="vc-btn" id="vc-tp" title="Üst (2)">TP</button>
     <button class="vc-btn" id="vc-rt" title="Sağ (3)">RT</button>
     <button class="vc-btn" id="vc-is" title="Iso (4)">IS</button>
   </div>
-
   <div class="stats-hud hidden" id="stats-hud">
     FPS: <span id="fps-v">—</span><br>
     Mesh: <span id="st-m">0</span><br>
     Vertices: <span id="st-v">0</span><br>
     Triangles: <span id="st-t">0</span>
   </div>
-
   <div class="loading-ov" id="loading-ov">
     <div class="loader"></div>
     <div class="load-text" id="load-text">Model yükleniyor...</div>
@@ -355,12 +375,15 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
   <div id="canvas-container"></div>
 </div>
 
+<!-- SAĞ SIDEBAR -->
 <div class="sidebar sidebar-right">
   <div class="stab-bar">
     <div class="stab active" data-tab="props" data-side="right">Nesne</div>
     <div class="stab" data-tab="mat" data-side="right">Malzeme</div>
+    <div class="stab" data-tab="tex" data-side="right">Texture</div>
   </div>
 
+  <!-- NESNE TAB -->
   <div class="stab-pane active" id="tab-props" style="overflow-y:auto">
     <div class="section">
       <div class="section-head"><div class="section-title">⬡ Dönüşüm</div><span class="section-arrow">▼</span></div>
@@ -386,33 +409,33 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
           <input type="range" id="in-sc" min="1" max="1000" step="1" value="100">
         </div>
         <div class="btn-row">
-          <button class="btn sm" id="btn-rpos">Konum</button>
+          <button class="btn sm" id="btn-rpos">Konum ↺</button>
           <button class="btn sm" id="btn-rall">Tümü ↺</button>
         </div>
-        <div class="field" style="margin-top: 8px; border-top: 1px dashed var(--border2); padding-top: 8px;">
-          <span class="label" title="Modelin gerçek dünyadaki boyutunu (Geometri) metre cinsine adapte eder">Birim Çevirici (Metreye)</span>
+        <div class="field" style="margin-top:8px;border-top:1px dashed var(--border2);padding-top:8px">
+          <span class="label">Birim Çevirici (Metreye)</span>
           <div class="btn-row" style="margin-top:4px">
-            <button class="btn sm" id="btn-unit-cm">cm → m (x0.01)</button>
-            <button class="btn sm" id="btn-unit-mm">mm → m (x0.001)</button>
+            <button class="btn sm" id="btn-unit-cm">cm → m</button>
+            <button class="btn sm" id="btn-unit-mm">mm → m</button>
           </div>
         </div>
       </div>
     </div>
-
     <div class="section">
       <div class="section-head"><div class="section-title">✂️ Düzenleme</div><span class="section-arrow">▼</span></div>
       <div class="section-body">
         <button class="btn danger" id="btn-delete-mesh">🗑️ Seçili Parçayı Sil (Del)</button>
-        <div style="font-size:10px; color:var(--text3); line-height:1.4">Seçili parçayı sahneden tamamen çıkarır ve belleği temizler.</div>
+        <button class="btn" id="btn-hide-mesh">👁 Seçiliyi Gizle / Göster</button>
+        <button class="btn" id="btn-isolate-mesh">⬡ Izole Et / Tümünü Göster</button>
       </div>
     </div>
-
     <div class="section closed" id="sec-info">
       <div class="section-head"><div class="section-title">📋 Model Bilgisi</div><span class="section-arrow">▼</span></div>
       <div class="section-body" id="info-body"><div class="empty-state" style="padding:4px 0">Henüz model yüklenmedi.</div></div>
     </div>
   </div>
 
+  <!-- MALZEME TAB -->
   <div class="stab-pane" id="tab-mat" style="overflow-y:auto">
     <div id="mat-empty" class="empty-state" style="margin:16px 0">
       <div class="ei">🎨</div>Viewport'tan bir mesh<br>seçerek başlayın.
@@ -437,14 +460,46 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
               <input type="text" class="hex-input" id="me-hex" value="#000000" maxlength="7">
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- SAYDAMLIK & ALPHA BLEND (YENİ) -->
+      <div class="section">
+        <div class="section-head"><div class="section-title">🔲 Saydamlık & Alpha</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
           <div class="field">
-            <div class="field-row"><span class="label">Saydamlık</span><span class="vbadge" id="vb-op">1.00</span></div>
+            <div class="field-row"><span class="label">Opaklık</span><span class="vbadge" id="vb-op">1.00</span></div>
             <input type="range" id="in-op" min="0" max="1" step="0.01" value="1">
+          </div>
+          <div class="field">
+            <span class="label">Alpha Modu</span>
+            <div class="alpha-pills" id="alpha-pills">
+              <div class="alpha-pill active" data-mode="opaque">Opaque</div>
+              <div class="alpha-pill" data-mode="blend">Blend</div>
+              <div class="alpha-pill" data-mode="mask">Mask</div>
+              <div class="alpha-pill" data-mode="additive">Additive</div>
+              <div class="alpha-pill" data-mode="multiply">Multiply</div>
+              <div class="alpha-pill" data-mode="subtract">Subtract</div>
+            </div>
+          </div>
+          <div class="field" id="alpha-cutoff-wrap" style="display:none">
+            <div class="field-row"><span class="label">Alpha Cutoff (Mask)</span><span class="vbadge" id="vb-ac">0.50</span></div>
+            <input type="range" id="in-ac" min="0" max="1" step="0.01" value="0.5">
+          </div>
+          <div class="toggle-row">
+            <div class="toggle on" id="tgl-dw"></div>
+            <span class="toggle-label">Depth Write</span>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle" id="tgl-ds"></div>
+            <span class="toggle-label">Çift Taraflı (DoubleSide)</span>
           </div>
         </div>
       </div>
+
+      <!-- PBR -->
       <div class="section">
-        <div class="section-head"><div class="section-title">PBR Parametreler</div><span class="section-arrow">▼</span></div>
+        <div class="section-head"><div class="section-title">✦ PBR Parametreler</div><span class="section-arrow">▼</span></div>
         <div class="section-body">
           <div class="field">
             <div class="field-row"><span class="label">Roughness</span><span class="vbadge" id="vb-ro">0.50</span></div>
@@ -462,34 +517,109 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
             <div class="field-row"><span class="label">Normal Ölçeği</span><span class="vbadge" id="vb-ns">1.00</span></div>
             <input type="range" id="in-ns" min="0" max="3" step="0.05" value="1">
           </div>
-        </div>
-      </div>
-      <div class="section">
-        <div class="section-head"><div class="section-title">Gelişmiş</div><span class="section-arrow">▼</span></div>
-        <div class="section-body">
-          <div class="toggle-row"><div class="toggle" id="tgl-wf"></div><span class="toggle-label">Wireframe</span></div>
-          <div class="toggle-row"><div class="toggle" id="tgl-ds"></div><span class="toggle-label">Çift Taraflı</span></div>
-          <div class="toggle-row"><div class="toggle on" id="tgl-dw"></div><span class="toggle-label">Depth Write</span></div>
-          <div class="toggle-row"><div class="toggle" id="tgl-flat"></div><span class="toggle-label">Flat Shading</span></div>
           <div class="field">
-            <span class="label">Blend Modu</span>
-            <select class="styled-select" id="in-blend">
-              <option value="normal">Normal</option>
-              <option value="additive">Additive</option>
-              <option value="multiply">Multiply</option>
-              <option value="subtract">Subtract</option>
-            </select>
+            <div class="field-row"><span class="label">AO Yoğunluğu</span><span class="vbadge" id="vb-ao">1.00</span></div>
+            <input type="range" id="in-ao" min="0" max="2" step="0.05" value="1">
           </div>
         </div>
       </div>
+
+      <!-- GELİŞMİŞ -->
       <div class="section">
-        <div class="section-head"><div class="section-title">Toplu Uygula</div><span class="section-arrow">▼</span></div>
+        <div class="section-head"><div class="section-title">⚙ Gelişmiş</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <div class="toggle-row"><div class="toggle" id="tgl-wf"></div><span class="toggle-label">Wireframe</span></div>
+          <div class="toggle-row"><div class="toggle" id="tgl-flat"></div><span class="toggle-label">Flat Shading</span></div>
+          <div class="toggle-row"><div class="toggle" id="tgl-vcol"></div><span class="toggle-label">Vertex Colors</span></div>
+          <div class="field" style="margin-top:4px">
+            <div class="field-row"><span class="label">Render Sırası</span><span class="vbadge" id="vb-ro2">0</span></div>
+            <input type="range" id="in-ro2" min="-10" max="10" step="1" value="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- TOPLU UYGULA -->
+      <div class="section">
+        <div class="section-head"><div class="section-title">⊹ Toplu Uygula</div><span class="section-arrow">▼</span></div>
         <div class="section-body">
           <div class="btn-row">
             <button class="btn sm" id="btn-ap-col">Rengi Uygula</button>
             <button class="btn sm" id="btn-ap-pbr">PBR Uygula</button>
           </div>
           <button class="btn sm" id="btn-ap-all">Tüm Ayarları Uygula</button>
+          <button class="btn sm" id="btn-ap-alpha">Alpha Modunu Uygula</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEXTURE TAB (YENİ) -->
+  <div class="stab-pane" id="tab-tex" style="overflow-y:auto">
+    <div id="tex-empty" class="empty-state" style="margin:16px 0">
+      <div class="ei">🖼</div>Viewport'tan bir mesh<br>seçerek texture<br>yükleyebilirsiniz.
+    </div>
+    <div id="tex-ed" style="display:none">
+      <div class="section">
+        <div class="section-head"><div class="section-title" id="tex-mesh-name">Mesh Texture'ları</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <!-- Albedo Map -->
+          <div class="tex-slot">
+            <div class="tex-slot-name">🖼 Albedo / Color Map</div>
+            <div class="tex-preview checker-bg" id="tp-albedo" data-slot="albedo">
+              <div class="tex-preview-label">Yüklemek için tıklayın<br>(JPG / PNG)</div>
+            </div>
+            <button class="btn sm danger tex-clear" id="tc-albedo">Kaldır</button>
+          </div>
+          <!-- Roughness Map -->
+          <div class="tex-slot">
+            <div class="tex-slot-name">〰 Roughness Map</div>
+            <div class="tex-preview checker-bg" id="tp-roughness" data-slot="roughness">
+              <div class="tex-preview-label">Yüklemek için tıklayın<br>(JPG / PNG)</div>
+            </div>
+            <button class="btn sm danger tex-clear" id="tc-roughness">Kaldır</button>
+          </div>
+          <!-- Normal Map -->
+          <div class="tex-slot">
+            <div class="tex-slot-name">⊙ Normal Map</div>
+            <div class="tex-preview checker-bg" id="tp-normal" data-slot="normal">
+              <div class="tex-preview-label">Yüklemek için tıklayın<br>(JPG / PNG)</div>
+            </div>
+            <button class="btn sm danger tex-clear" id="tc-normal">Kaldır</button>
+          </div>
+          <!-- Emissive Map -->
+          <div class="tex-slot">
+            <div class="tex-slot-name">✦ Emissive Map</div>
+            <div class="tex-preview checker-bg" id="tp-emissive" data-slot="emissive">
+              <div class="tex-preview-label">Yüklemek için tıklayın<br>(JPG / PNG)</div>
+            </div>
+            <button class="btn sm danger tex-clear" id="tc-emissive">Kaldır</button>
+          </div>
+          <!-- AO Map -->
+          <div class="tex-slot">
+            <div class="tex-slot-name">◑ Ambient Occlusion Map</div>
+            <div class="tex-preview checker-bg" id="tp-ao" data-slot="ao">
+              <div class="tex-preview-label">Yüklemek için tıklayın<br>(JPG / PNG)</div>
+            </div>
+            <button class="btn sm danger tex-clear" id="tc-ao">Kaldır</button>
+          </div>
+          <!-- Alpha Map -->
+          <div class="tex-slot">
+            <div class="tex-slot-name">🔲 Alpha Map</div>
+            <div class="tex-preview checker-bg" id="tp-alpha" data-slot="alpha">
+              <div class="tex-preview-label">Yüklemek için tıklayın<br>(JPG / PNG)</div>
+            </div>
+            <button class="btn sm danger tex-clear" id="tc-alpha">Kaldır</button>
+          </div>
+
+          <div class="field" style="margin-top:4px;border-top:1px solid var(--border);padding-top:10px">
+            <div class="field-row"><span class="label">UV Tekrar (Tile X)</span><span class="vbadge" id="vb-tilex">1.0</span></div>
+            <input type="range" id="in-tilex" min="0.1" max="10" step="0.1" value="1">
+          </div>
+          <div class="field">
+            <div class="field-row"><span class="label">UV Tekrar (Tile Y)</span><span class="vbadge" id="vb-tiley">1.0</span></div>
+            <input type="range" id="in-tiley" min="0.1" max="10" step="0.1" value="1">
+          </div>
+          <button class="btn sm" id="btn-tex-apply-all" style="margin-top:4px">Tüm Meshlere UV Uygula</button>
         </div>
       </div>
     </div>
@@ -502,7 +632,10 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
     </div>
   </div>
 </div>
-</div><div class="statusbar">
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
   <div class="sb-item"><div class="status-dot" id="sd"></div><b id="st-txt">Hazır</b></div>
   <div class="tb-div" style="height:14px"></div>
   <div class="sb-item">Model: <b id="st-mod">—</b></div>
@@ -511,10 +644,11 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
   <div class="sb-item"><kbd>Del</kbd> sil</div>
   <div class="sb-item"><kbd>T</kbd><kbd>R</kbd><kbd>S</kbd> gizmo</div>
   <div class="sb-item"><kbd>F</kbd> odak</div>
-  <div class="sb-item"><kbd>G</kbd><kbd>W</kbd><kbd>P</kbd> grid/wire/ss</div>
+  <div class="sb-item"><kbd>G</kbd><kbd>W</kbd><kbd>P</kbd></div>
   <div class="sb-item"><kbd>?</kbd> kısayollar</div>
 </div>
 
+<!-- SHORTCUTS MODAL -->
 <div class="modal-bg" id="modal-keys">
   <div class="modal">
     <div class="modal-title">⌨️ Klavye Kısayolları</div>
@@ -536,25 +670,33 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
       <div class="sc-item">Üst Görünüm <div class="sc-keys"><kbd>2</kbd></div></div>
       <div class="sc-item">Sağ Görünüm <div class="sc-keys"><kbd>3</kbd></div></div>
       <div class="sc-item">İzometrik <div class="sc-keys"><kbd>4</kbd></div></div>
+      <div class="sc-item">Gizle/Göster <div class="sc-keys"><kbd>H</kbd></div></div>
+      <div class="sc-item">Izole Et <div class="sc-keys"><kbd>Alt</kbd><kbd>H</kbd></div></div>
     </div>
-    <button class="btn" style="margin-top:18px" id="btn-close-keys">Kapat</button>
+    <button class="btn" style="margin-top:18px" onclick="document.getElementById('modal-keys').classList.remove('show')">Kapat</button>
   </div>
 </div>
 
 <script type="module">
 import * as THREE from 'three';
-import { GLTFLoader }      from 'three/addons/loaders/GLTFLoader.js';
-import { DRACOLoader }     from 'three/addons/loaders/DRACOLoader.js';
-import { OrbitControls }   from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader }        from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader }       from 'three/addons/loaders/DRACOLoader.js';
+import { OrbitControls }     from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { GLTFExporter }    from 'three/addons/exporters/GLTFExporter.js';
-import { USDZExporter }    from 'three/addons/exporters/USDZExporter.js';
+import { RoomEnvironment }   from 'three/addons/environments/RoomEnvironment.js';
+import { GLTFExporter }      from 'three/addons/exporters/GLTFExporter.js';
 
-// ── YARDIMCI FONKSİYONLAR ──
+// ── USDZ GEÇİCİ ÇÖZÜM: USDZExporter Three.js 0.160 ile uyumlu import ──
+let USDZExporter = null;
+try {
+  const mod = await import('three/addons/exporters/USDZExporter.js');
+  USDZExporter = mod.USDZExporter;
+} catch(e) { console.warn('USDZExporter yüklenemedi:', e); }
+
+// ── DOM SEÇİCİ ──
 const _el = id => document.getElementById(id);
 
-// ── STATE ──
+// ── GLOBAL STATE ──
 let scene, camera, renderer, orbit, gizmo, dirLight, ambLight, shadowPlane, gridHelper;
 let currentModel = null, selectedMesh = null;
 let origEmissive = new THREE.Color();
@@ -562,67 +704,69 @@ let initT = { pos: new THREE.Vector3(), rot: new THREE.Euler(), sc: new THREE.Ve
 let wireMode = false, gridVis = true, worldSpace = true;
 let fpsFrames = 0, fpsLast = performance.now();
 let statsVisible = false;
+let isIsolated = false;
 
-// ── PAYLAŞILAN (SINGLETON) LOADER MOTORU ──
-// Tarayıcının çökmemesi için sadece bir kere yaratılır
-let sharedLoader = null;
-function getLoader() {
-  if (!sharedLoader) {
-    const drc = new DRACOLoader();
-    drc.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-    sharedLoader = new GLTFLoader();
-    sharedLoader.setDRACOLoader(drc);
-  }
-  return sharedLoader;
+// Texture yönetimi: mesh uuid → {slot: THREE.Texture}
+const meshTextures = new Map();
+// Orijinal malzeme renkleri kaydı
+const origMaterials = new Map();
+
+const container = _el('canvas-container');
+const vp = _el('vp');
+
+// ── LOADER FACTORY (izole, draco destekli) ──
+function makeLoader() {
+  const drc = new DRACOLoader();
+  drc.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+  const loader = new GLTFLoader();
+  loader.setDRACOLoader(drc);
+  return loader;
 }
 
-// ── BELLEK TEMİZLEME MOTORU ──
+// ── BELLEK TEMİZLEME ──
 function disposeHierarchy(node) {
   if (!node) return;
   node.traverse(c => {
-    if (c.isMesh) {
-      if (c.geometry) c.geometry.dispose();
-      if (c.material) {
-        const mats = Array.isArray(c.material) ? c.material : [c.material];
-        mats.forEach(m => {
-          m.dispose();
-          for (const key in m) {
-            if (m[key] && m[key].isTexture) m[key].dispose();
-          }
-        });
-      }
-    }
+    if (!c.isMesh) return;
+    c.geometry?.dispose();
+    const mats = Array.isArray(c.material) ? c.material : [c.material];
+    mats.forEach(m => {
+      if (!m) return;
+      // Tüm texture slotlarını temizle
+      ['map','normalMap','roughnessMap','metalnessMap','emissiveMap',
+       'aoMap','alphaMap','displacementMap','envMap','lightMap'].forEach(k => {
+        if (m[k]) { m[k].dispose(); m[k] = null; }
+      });
+      m.dispose();
+    });
   });
 }
 
-// ── AR İÇİN GÜVENLİ DIŞA AKTARIM (EXPORT) SAHNESİ ──
-function createExportScene(originalModel, centerPivot) {
-  const exportScene = new THREE.Scene();
-  const clone = originalModel.clone();
+// ── AR İÇİN GÜVENLİ EXPORT SAHNESİ ──
+function createExportScene(model, centerPivot) {
+  const s = new THREE.Scene();
+  const clone = model.clone(true);
   if (centerPivot) {
     const box = new THREE.Box3().setFromObject(clone);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    clone.position.sub(center); 
-    clone.position.y += size.y / 2; 
+    const ctr = box.getCenter(new THREE.Vector3());
+    const sz  = box.getSize(new THREE.Vector3());
+    clone.position.sub(ctr);
+    clone.position.y += sz.y / 2;
   }
-  exportScene.add(clone);
-  exportScene.updateMatrixWorld(true);
-  return exportScene;
+  s.add(clone);
+  s.updateMatrixWorld(true);
+  return s;
 }
 
-// ── BAŞLATMA (INIT) ──
+// ── INIT ──
 function init() {
-  const container = _el('canvas-container');
-  if(!container) return;
-
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x111113);
 
   const w = container.clientWidth  || window.innerWidth  - 568;
   const h = container.clientHeight || window.innerHeight - 80;
 
-  camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 20000);
+  camera = new THREE.PerspectiveCamera(45, w / h, 0.001, 20000);
   camera.position.set(3, 2.5, 5);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, logarithmicDepthBuffer: true });
@@ -633,10 +777,13 @@ function init() {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  // Saydamlık için alpha sıralama
+  renderer.sortObjects = true;
   container.appendChild(renderer.domElement);
 
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  pmrem.dispose();
 
   ambLight = new THREE.AmbientLight(0xffffff, 0.4);
   scene.add(ambLight);
@@ -646,19 +793,17 @@ function init() {
   dirLight.castShadow = true;
   dirLight.shadow.mapSize.width  = 2048;
   dirLight.shadow.mapSize.height = 2048;
-  dirLight.shadow.camera.near   = 0.5;
-  dirLight.shadow.camera.far    = 50;
-  dirLight.shadow.camera.left   = -10;
-  dirLight.shadow.camera.right  = 10;
-  dirLight.shadow.camera.top    = 10;
-  dirLight.shadow.camera.bottom = -10;
-  dirLight.shadow.bias          = -0.0005;
+  dirLight.shadow.camera.near = 0.5;
+  dirLight.shadow.camera.far  = 500;
+  dirLight.shadow.camera.left = dirLight.shadow.camera.bottom = -30;
+  dirLight.shadow.camera.right = dirLight.shadow.camera.top  = 30;
+  dirLight.shadow.bias = -0.0005;
+  dirLight.shadow.normalBias = 0.05;
   scene.add(dirLight);
 
   const fill = new THREE.DirectionalLight(0x8899ff, 0.25);
   fill.position.set(-5, 3, -5);
   scene.add(fill);
-
   const rim = new THREE.DirectionalLight(0xffeedd, 0.15);
   rim.position.set(0, -3, -8);
   scene.add(rim);
@@ -669,9 +814,6 @@ function init() {
   );
   shadowPlane.rotation.x = -Math.PI / 2;
   shadowPlane.receiveShadow = true;
-  shadowPlane.renderOrder = -1;
-  shadowPlane.material.polygonOffset = true;
-  shadowPlane.material.polygonOffsetFactor = 1;
   scene.add(shadowPlane);
 
   gridHelper = new THREE.GridHelper(24, 24, 0x333337, 0x222226);
@@ -682,7 +824,8 @@ function init() {
   orbit = new OrbitControls(camera, renderer.domElement);
   orbit.enableDamping = true;
   orbit.dampingFactor = 0.06;
-  orbit.minDistance = 0.05;
+  orbit.screenSpacePanning = true;
+  orbit.minDistance = 0.001;
   orbit.maxDistance = 20000;
 
   gizmo = new TransformControls(camera, renderer.domElement);
@@ -691,831 +834,1095 @@ function init() {
   gizmo.addEventListener('change', syncTUI);
   scene.add(gizmo);
 
-  // Olay Dinleyicileri Kur
-  initEvents();
-  initBulkUI();
-  
-  window.addEventListener('resize', onResize);
-  animate();
-  setStatus('ready', 'Hazır');
-  loadPreset();
-}
-
-function recalculateGround(model) {
-  if (!model) return;
-  const box = new THREE.Box3().setFromObject(model);
-  const size = box.getSize(new THREE.Vector3());
-  const by = model.position.y - size.y / 2 + 0.001;
-  shadowPlane.position.y = by;
-  gridHelper.position.y  = by;
-}
-
-// ── GÜVENLİ DOM OLAY DİNLEYİCİLERİ (EVENTS) ──
-function initEvents() {
-  const container = _el('canvas-container');
-  const vp = _el('vp');
-  
-  // Tıklayarak Seçme
+  // Raycaster — pointerdown/up ile küçük hareketi yakala
   const ray = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
-  let _ptDown = { x: 0, y: 0 };
+  let _ptDown = {x:0,y:0};
   container.addEventListener('pointerdown', e => { _ptDown.x = e.clientX; _ptDown.y = e.clientY; });
   container.addEventListener('pointerup', e => {
-    if (Math.abs(e.clientX - _ptDown.x) > 4 || Math.abs(e.clientY - _ptDown.y) > 4) return;
+    if (Math.abs(e.clientX-_ptDown.x)>4 || Math.abs(e.clientY-_ptDown.y)>4) return;
     if (e.button !== 0 || gizmo.dragging) return;
     const r = container.getBoundingClientRect();
-    mouse.x = ((e.clientX - r.left) / r.width)  * 2 - 1;
-    mouse.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+    mouse.x = ((e.clientX-r.left)/r.width)*2-1;
+    mouse.y = -((e.clientY-r.top)/r.height)*2+1;
     ray.setFromCamera(mouse, camera);
     if (!currentModel) return;
-    const hits = ray.intersectObject(currentModel, true).filter(h => h.object.isMesh);
+    const hits = ray.intersectObject(currentModel, true).filter(h => h.object.isMesh && h.object.visible);
     if (hits.length) selectMesh(hits[0].object);
     else deselectMesh();
   });
 
-  // Kusursuz Sürükle Bırak (Tüm pencere bazlı güvenli yaklaşım)
-  const dropOv = _el('drop-ov');
-  window.addEventListener('dragenter', e => { e.preventDefault(); dropOv?.classList.add('show'); });
-  window.addEventListener('dragover', e => { e.preventDefault(); dropOv?.classList.add('show'); });
-  window.addEventListener('dragleave', e => {
-    if (!e.clientX && !e.clientY) dropOv?.classList.remove('show');
-  });
-  window.addEventListener('drop', e => {
-    e.preventDefault();
-    dropOv?.classList.remove('show');
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  // Drag & Drop
+  vp.addEventListener('dragover', e => { e.preventDefault(); _el('drop-ov').classList.add('show'); });
+  vp.addEventListener('dragleave', () => _el('drop-ov').classList.remove('show'));
+  vp.addEventListener('drop', e => {
+    e.preventDefault(); _el('drop-ov').classList.remove('show');
+    const f = e.dataTransfer.files[0]; if (f) loadFile(f);
   });
 
-  // Dosya Açma Butonu
-  _el('btn-open')?.addEventListener('click', () => {
-    const fi = _el('file-input');
-    if(fi) { fi.value = ''; fi.click(); }
-  });
-  _el('file-input')?.addEventListener('change', e => {
-    if (e.target.files[0]) loadFile(e.target.files[0]);
-  });
-
-  // Üst Bar Kontrolleri
-  _el('btn-frame')?.addEventListener('click', frameModel);
-  _el('btn-ss')?.addEventListener('click', takeScreenshot);
-  _el('btn-ss2')?.addEventListener('click', takeScreenshot);
-  _el('btn-wf')?.addEventListener('click', toggleWireframe);
-  _el('btn-grid')?.addEventListener('click', () => {
-    gridVis = !gridVis;
-    gridHelper.visible = gridVis;
-    shadowPlane.visible = gridVis;
-    _el('btn-grid').classList.toggle('active', gridVis);
-  });
-  _el('btn-stats')?.addEventListener('click', () => {
-    statsVisible = !statsVisible;
-    _el('stats-hud')?.classList.toggle('hidden', !statsVisible);
-    _el('btn-stats')?.classList.toggle('active', statsVisible);
-  });
-  _el('btn-theme')?.addEventListener('click', toggleTheme);
-  _el('btn-keys')?.addEventListener('click', () => _el('modal-keys')?.classList.add('show'));
-  _el('btn-close-keys')?.addEventListener('click', () => _el('modal-keys')?.classList.remove('show'));
-  _el('modal-keys')?.addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('show'); });
-  _el('btn-save')?.addEventListener('click', savePreset);
-  _el('btn-save2')?.addEventListener('click', savePreset);
-
-  // Ana Sahne Dışa Aktarımlar (GLB & USDZ)
-  _el('btn-exp-glb')?.addEventListener('click', () => exportMainScene('glb'));
-  _el('btn-exp-usdz')?.addEventListener('click', () => exportMainScene('usdz'));
-
-  // Silme Butonu
-  _el('btn-delete-mesh')?.addEventListener('click', deleteSelectedMesh);
-
-  // Tablar & Akordiyonlar
-  document.querySelectorAll('.stab').forEach(t => {
-    t.addEventListener('click', () => switchTab(t.dataset.tab, t.dataset.side));
-  });
-  document.querySelectorAll('.section-head').forEach(h => {
-    h.addEventListener('click', () => h.parentElement.classList.toggle('closed'));
-  });
-
-  // Dönüşüm UI
-  ['tx-x','tx-y','tx-z'].forEach((id,i) => {
-    _el(id)?.addEventListener('input', () => {
-      if (currentModel) currentModel.position[['x','y','z'][i]] = parseFloat(_el(id).value) || 0;
-    });
-  });
-  ['rx-x','rx-y','rx-z'].forEach((id,i) => {
-    _el(id)?.addEventListener('input', () => {
-      if (currentModel) currentModel.rotation[['x','y','z'][i]] = (parseFloat(_el(id).value) || 0) * Math.PI / 180;
-    });
-  });
-  _el('in-sc')?.addEventListener('input', e => {
-    if (!currentModel) return;
-    const s = e.target.value / 100;
-    currentModel.scale.set(s,s,s);
-    if(_el('vb-sc')) _el('vb-sc').textContent = e.target.value;
-  });
-  _el('btn-rpos')?.addEventListener('click', () => {
-    if (currentModel) { currentModel.position.copy(initT.pos); syncTUI(); toast('Konum sıfırlandı'); }
-  });
-  _el('btn-rall')?.addEventListener('click', () => {
-    if (currentModel) { currentModel.position.copy(initT.pos); currentModel.rotation.copy(initT.rot); currentModel.scale.copy(initT.sc); syncTUI(); toast('Dönüşüm sıfırlandı'); }
-  });
-  _el('btn-unit-cm')?.addEventListener('click', () => convertToMeters(0.01, 'cm'));
-  _el('btn-unit-mm')?.addEventListener('click', () => convertToMeters(0.001, 'mm'));
-
-  // Araç Çubukları (VP)
-  document.querySelectorAll('.vp-btn[data-mode]').forEach(b => {
-    b.addEventListener('click', () => {
-      gizmo.setMode(b.dataset.mode);
-      document.querySelectorAll('.vp-btn[data-mode]').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === b.dataset.mode));
-    });
-  });
-  _el('btn-space')?.addEventListener('click', function() {
-    worldSpace = !worldSpace;
-    gizmo.setSpace(worldSpace ? 'world' : 'local');
-    this.textContent = worldSpace ? 'WORLD' : 'LOCAL';
-  });
-
-  // Kamera Presets
-  _el('vc-fr')?.addEventListener('click', () => setView(0,0,1,  0,0,0));
-  _el('vc-tp')?.addEventListener('click', () => setView(0,1,.001, 0,0,0));
-  _el('vc-rt')?.addEventListener('click', () => setView(1,0,0,  0,0,0));
-  _el('vc-is')?.addEventListener('click', () => setView(.6,.5,.6,0,0,0));
-
-  // Işık ve Çevre
-  _el('in-exp')?.addEventListener('input', e => { renderer.toneMappingExposure = +e.target.value; if(_el('vb-exp')) _el('vb-exp').textContent = (+e.target.value).toFixed(2); });
-  _el('in-amb')?.addEventListener('input', e => { ambLight.intensity = +e.target.value; if(_el('vb-amb')) _el('vb-amb').textContent = (+e.target.value).toFixed(2); });
-  _el('in-dir')?.addEventListener('input', e => { dirLight.intensity = +e.target.value; if(_el('vb-dir')) _el('vb-dir').textContent = (+e.target.value).toFixed(2); });
-  _el('in-shad')?.addEventListener('input', e => { shadowPlane.material.opacity = +e.target.value; if(_el('vb-shad')) _el('vb-shad').textContent = (+e.target.value).toFixed(2); });
-  _el('in-fog')?.addEventListener('input', e => { const d = +e.target.value; if(_el('vb-fog')) _el('vb-fog').textContent = d.toFixed(3); scene.fog = d > 0 ? new THREE.FogExp2(scene.background, d) : null; });
-  _el('in-fov')?.addEventListener('input', e => { camera.fov = +e.target.value; camera.updateProjectionMatrix(); if(_el('vb-fov')) _el('vb-fov').textContent = e.target.value + '°'; });
-  _el('in-near')?.addEventListener('input', e => { camera.near = +e.target.value; camera.updateProjectionMatrix(); if(_el('vb-near')) _el('vb-near').textContent = (+e.target.value).toFixed(3); });
-
-  colorSetup('bg', hex => { scene.background = new THREE.Color(hex); if (scene.fog) scene.fog.color = scene.background; });
-
-  // Materyal Kontrolleri
-  colorSetup('mc', hex => { if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.color) m.color.set(hex); }); });
-  colorSetup('me', hex => { if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.emissive) { m.emissive.set(hex); origEmissive.set(hex); } }); });
-
-  _el('in-op')?.addEventListener('input', e => { const v = +e.target.value; if(_el('vb-op')) _el('vb-op').textContent = v.toFixed(2); if (selectedMesh) updateMatArray(selectedMesh, m => { m.opacity = v; m.transparent = v < 1; m.depthWrite = v === 1; }); });
-  _el('in-ro')?.addEventListener('input', e => { const v = +e.target.value; if(_el('vb-ro')) _el('vb-ro').textContent = v.toFixed(2); if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.roughness !== undefined) m.roughness = v; }); });
-  _el('in-me2')?.addEventListener('input', e => { const v = +e.target.value; if(_el('vb-me2')) _el('vb-me2').textContent = v.toFixed(2); if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.metalness !== undefined) m.metalness = v; }); });
-  _el('in-ei')?.addEventListener('input', e => { const v = +e.target.value; if(_el('vb-ei')) _el('vb-ei').textContent = v.toFixed(2); if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.emissiveIntensity !== undefined) m.emissiveIntensity = v; }); });
-  _el('in-ns')?.addEventListener('input', e => { const v = +e.target.value; if(_el('vb-ns')) _el('vb-ns').textContent = v.toFixed(2); if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.normalScale) m.normalScale.set(v,v); }); });
-
-  bindTgl('tgl-wf', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.wireframe = v); });
-  bindTgl('tgl-ds', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.side = v ? THREE.DoubleSide : THREE.FrontSide); });
-  bindTgl('tgl-dw', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.depthWrite = v); });
-  bindTgl('tgl-flat', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.flatShading = v); });
-
-  _el('in-blend')?.addEventListener('change', e => {
-    if (!selectedMesh) return;
-    const map = { normal: THREE.NormalBlending, additive: THREE.AdditiveBlending, multiply: THREE.MultiplyBlending, subtract: THREE.SubtractiveBlending };
-    updateMatArray(selectedMesh, m => m.blending = map[e.target.value] ?? THREE.NormalBlending);
-  });
-
-  _el('btn-ap-col')?.addEventListener('click', () => {
-    const mat = getPrimaryMaterial(selectedMesh);
-    if (!currentModel || !mat?.color) return;
-    const c = mat.color.clone();
-    currentModel.traverse(m => { if (m.isMesh) updateMatArray(m, mtr => { if(mtr.color) mtr.color.copy(c); }); });
-    toast('Renk tüm meshlere uygulandı');
-  });
-  _el('btn-ap-pbr')?.addEventListener('click', () => {
-    const mat = getPrimaryMaterial(selectedMesh);
-    if (!currentModel || !mat) return;
-    const ro = mat.roughness, me = mat.metalness;
-    currentModel.traverse(m => {
-      if (m.isMesh) updateMatArray(m, mtr => { if (mtr.roughness !== undefined) mtr.roughness = ro; if (mtr.metalness !== undefined) mtr.metalness = me; });
-    });
-    toast('PBR tüm meshlere uygulandı');
-  });
-  _el('btn-ap-all')?.addEventListener('click', () => {
-    _el('btn-ap-col')?.click(); _el('btn-ap-pbr')?.click(); toast('Tüm ayarlar uygulandı');
-  });
+  window.addEventListener('resize', onResize);
+  initBulkUI();
+  initTextureUI();
+  animate();
+  setStatus('ready','Hazır');
+  loadPreset();
 }
 
-// ── ANA SAHNE İÇİN GÜVENLİ İNDİRİCİLER ──
-function downloadLink(url, filename) {
-  const link = document.createElement('a');
-  link.style.display = 'none';
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link); // Bu satır Firefox vb tarayıcılarda kırılmayı önler
-  link.click();
-  setTimeout(() => { document.body.removeChild(link); }, 100);
-}
-
-async function exportMainScene(format) {
-  if (!currentModel) return toast('Önce bir model yükleyin!', 'err');
-  _el('loading-ov')?.classList.add('show');
-  if(_el('load-text')) _el('load-text').textContent = 'Dışa aktarılıyor...';
-  
-  setTimeout(async () => {
-    try {
-      const exportScene = createExportScene(currentModel, false);
-      const safeName = (_el('st-mod')?.textContent || 'Model').replace(/[^a-z0-9_-]/gi, '_');
-
-      if (format === 'glb') {
-        const exporter = new GLTFExporter();
-        exporter.parse(exportScene, (buffer) => {
-          const blob = new Blob([buffer], { type: 'application/octet-stream' });
-          downloadLink(URL.createObjectURL(blob), `${safeName}_AR.glb`);
-          toast('GLB indirildi ✓', 'ok');
-        }, (err) => { console.error(err); toast('GLB Hatası', 'err'); }, { binary: true });
-      } 
-      else if (format === 'usdz') {
-        const exporter = new USDZExporter();
-        const arraybuffer = await exporter.parse(exportScene);
-        const blob = new Blob([arraybuffer], { type: 'model/vnd.usdz+zip' });
-        downloadLink(URL.createObjectURL(blob), `${safeName}_AR.usdz`);
-        toast('USDZ indirildi ✓', 'ok');
-      }
-    } catch(err) {
-      console.error(err);
-      toast('Dışa aktarım hatası!', 'err');
-    } finally {
-      _el('loading-ov')?.classList.remove('show');
-    }
-  }, 50);
-}
-
-// ── BULK AR LOGIC (TOPLU DÜZENLEME) ──
-const bulkModels = [null, null, null, null, null];
-const bulkNames = ['', '', '', '', ''];
-const bulkUIRefs = []; 
-let currentBulkSlot = -1;
-
-function initBulkUI() {
-  const container = _el('bulk-slots');
-  if(!container) return;
-  container.innerHTML = '';
-
-  const bulkFileInput = document.createElement('input');
-  bulkFileInput.type = 'file';
-  bulkFileInput.accept = '.glb,.gltf';
-  bulkFileInput.style.display = 'none';
-  document.body.appendChild(bulkFileInput);
-
-  bulkFileInput.addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file || currentBulkSlot < 0) return;
-    loadBulkFile(file, currentBulkSlot);
-    e.target.value = '';
-  });
-
-  for(let i=0; i<5; i++) {
-    const slot = document.createElement('div');
-    slot.className = 'bulk-slot';
-    
-    const title = document.createElement('div');
-    title.className = 'bulk-slot-title';
-    title.textContent = `Kayıt Yeri ${i+1}`;
-    
-    const btnRow1 = document.createElement('div');
-    btnRow1.className = 'btn-row';
-    btnRow1.style.marginBottom = '6px';
-    
-    const btnLoad = document.createElement('button');
-    btnLoad.className = 'btn sm';
-    btnLoad.textContent = 'Yükle';
-    
-    const btnClear = document.createElement('button');
-    btnClear.className = 'btn danger sm';
-    btnClear.textContent = 'Kaldır';
-    btnClear.style.display = 'none';
-    
-    btnRow1.appendChild(btnLoad);
-    btnRow1.appendChild(btnClear);
-    
-    const nameLbl = document.createElement('span');
-    nameLbl.className = 'bulk-file-name';
-    nameLbl.textContent = 'Boş';
-    
-    const btnRow2 = document.createElement('div');
-    btnRow2.className = 'btn-row';
-    btnRow2.style.display = 'none';
-    
-    const btnCm = document.createElement('button');
-    btnCm.className = 'btn sm';
-    btnCm.textContent = 'cm→m (x0.01)';
-    
-    const btnMm = document.createElement('button');
-    btnMm.className = 'btn sm';
-    btnMm.textContent = 'mm→m (x0.001)';
-    
-    btnRow2.appendChild(btnCm);
-    btnRow2.appendChild(btnMm);
-    
-    slot.appendChild(title);
-    slot.appendChild(btnRow1);
-    slot.appendChild(nameLbl);
-    slot.appendChild(btnRow2);
-    
-    container.appendChild(slot);
-    
-    btnLoad.addEventListener('click', () => { currentBulkSlot = i; bulkFileInput.click(); });
-    
-    btnClear.addEventListener('click', () => {
-      if (bulkModels[i]) disposeHierarchy(bulkModels[i]);
-      bulkModels[i] = null;
-      bulkNames[i] = '';
-      nameLbl.textContent = 'Boş';
-      btnClear.style.display = 'none';
-      btnLoad.style.display = 'block';
-      btnRow2.style.display = 'none';
-    });
-    
-    btnCm.addEventListener('click', () => scaleBulkModel(i, 0.01, 'cm'));
-    btnMm.addEventListener('click', () => scaleBulkModel(i, 0.001, 'mm'));
-    
-    bulkUIRefs[i] = { btnLoad, btnClear, nameLbl, btnRow2 };
-  }
-
-  _el('btn-bulk-glb-export')?.addEventListener('click', () => exportBulk('glb'));
-  _el('btn-bulk-usdz-export')?.addEventListener('click', () => exportBulk('usdz'));
-  _el('cb-bulk-center')?.addEventListener('click', function() { this.classList.toggle('on'); });
-}
-
-function loadBulkFile(file, index) {
-  _el('loading-ov')?.classList.add('show');
-  if(_el('load-text')) _el('load-text').textContent = `Ürün ${index+1} Yükleniyor...`;
-
-  const url = URL.createObjectURL(file);
-  getLoader().load(url, gltf => {
-    URL.revokeObjectURL(url);
-    if (bulkModels[index]) disposeHierarchy(bulkModels[index]); 
-    bulkModels[index] = gltf.scene;
-    bulkNames[index] = file.name;
-    
-    const refs = bulkUIRefs[index];
-    refs.nameLbl.textContent = file.name.length > 20 ? file.name.substring(0,18)+'…' : file.name;
-    refs.btnLoad.style.display = 'none';
-    refs.btnClear.style.display = 'block';
-    refs.btnRow2.style.display = 'flex';
-    
-    _el('loading-ov')?.classList.remove('show');
-    toast(`Ürün ${index+1} hafızaya eklendi`, 'ok');
-  }, undefined, err => {
-    _el('loading-ov')?.classList.remove('show');
-    toast('Yüklenemedi: ' + err.message, 'err');
-  });
-}
-
-function scaleBulkModel(index, factor, unitName) {
-  const model = bulkModels[index];
+// ── GROUND RECALC ──
+function recalculateGround(model) {
   if (!model) return;
-  const processedGeoms = new Set();
-  model.traverse(c => {
-    if (c.isMesh && c.geometry && !processedGeoms.has(c.geometry)) {
-      c.geometry.scale(factor, factor, factor);
-      c.geometry.computeBoundingBox();
-      c.geometry.computeBoundingSphere();
-      processedGeoms.add(c.geometry);
-    }
-    if (c !== model) {
-      c.position.multiplyScalar(factor);
-      c.updateMatrix();
-    }
-  });
-  toast(`Ürün ${index+1} çevrildi (${unitName} → m)`, 'ok');
+  const box = new THREE.Box3().setFromObject(model);
+  const sz  = box.getSize(new THREE.Vector3());
+  const by  = model.position.y - sz.y/2 + 0.001;
+  shadowPlane.position.y = by;
+  gridHelper.position.y  = by;
 }
 
-async function exportBulk(format) {
-  const hasModels = bulkModels.some(m => m !== null);
-  if(!hasModels) return toast('Toplu işlem için ürün yükleyin', 'err');
-
-  _el('loading-ov')?.classList.add('show');
-  if(_el('load-text')) _el('load-text').textContent = `Toplu ${format.toUpperCase()} İndiriliyor...`;
-
-  const isCenter = _el('cb-bulk-center')?.classList.contains('on');
-  
-  for(let i=0; i<5; i++) {
-    const model = bulkModels[i];
-    if (!model) continue;
-
-    const exportScene = createExportScene(model, isCenter);
-    const safeName = (bulkNames[i] || `Urun_${i+1}`).replace(/\.[^/.]+$/, "").replace(/[^a-z0-9_-]/gi, '_'); 
-    
-    try {
-      if (format === 'glb') {
-        const exporter = new GLTFExporter();
-        await new Promise(resolve => {
-          exporter.parse(exportScene, (buffer) => {
-            const blob = new Blob([buffer], { type: 'application/octet-stream' });
-            downloadLink(URL.createObjectURL(blob), `${safeName}_AR.glb`);
-            resolve();
-          }, (err) => { console.error(err); resolve(); }, { binary: true });
-        });
-      } else if (format === 'usdz') {
-        const exporter = new USDZExporter();
-        const arraybuffer = await exporter.parse(exportScene);
-        const blob = new Blob([arraybuffer], { type: 'model/vnd.usdz+zip' });
-        downloadLink(URL.createObjectURL(blob), `${safeName}_AR.usdz`);
-      }
-    } catch(e) {
-      console.error(e);
-      toast(`Hata Slot ${i+1}`, 'err');
-    }
-    await new Promise(r => setTimeout(r, 600)); // İndirme atlamasın diye
-  }
-
-  _el('loading-ov')?.classList.remove('show');
-  toast(`Toplu dışa aktarma tamamlandı ✓`, 'ok');
-}
-
-// ── YÜKLEME METODU (ANA SAHNE) ──
+// ── LOAD FILE ──
 function loadFile(file) {
-  if (!/\.(glb|gltf)$/i.test(file.name)) { toast('Sadece GLB/GLTF!', 'err'); return; }
-  _el('loading-ov')?.classList.add('show');
-  setStatus('', 'Yükleniyor...');
+  if (!/\.(glb|gltf)$/i.test(file.name)) { toast('Desteklenmeyen dosya türü!','err'); return; }
+  _el('loading-ov').classList.add('show');
+  setStatus('','Yükleniyor...');
   deselectMesh();
-  
-  if (currentModel) { 
-    gizmo.detach(); 
-    scene.remove(currentModel); 
-    disposeHierarchy(currentModel); 
-    currentModel = null; 
+
+  if (currentModel) {
+    gizmo.detach();
+    scene.remove(currentModel);
+    disposeHierarchy(currentModel);
+    currentModel = null;
+    origMaterials.clear();
+    meshTextures.clear();
   }
 
   const url = URL.createObjectURL(file);
-  getLoader().load(url, gltf => {
+  makeLoader().load(url, gltf => {
     URL.revokeObjectURL(url);
     currentModel = gltf.scene;
 
-    let meshCount = 0, verts = 0, tris = 0;
+    let meshCount=0, verts=0, tris=0;
     currentModel.traverse(c => {
       if (!c.isMesh) return;
       c.castShadow = true;
       c.receiveShadow = true;
-      
       const mats = Array.isArray(c.material) ? c.material : [c.material];
       mats.forEach(m => {
+        if (!m) return;
         if (!m.emissive) m.emissive = new THREE.Color(0);
         if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
+        // Orijinal malzeme kaydı
       });
+      // Orijinal malzeme snapshot
+      const pm = mats[0];
+      if (pm) {
+        origMaterials.set(c.uuid, {
+          color: pm.color ? pm.color.clone() : new THREE.Color(1,1,1),
+          opacity: pm.opacity ?? 1,
+          transparent: pm.transparent ?? false,
+          roughness: pm.roughness ?? 0.5,
+          metalness: pm.metalness ?? 0,
+          emissiveIntensity: pm.emissiveIntensity ?? 0,
+          side: pm.side ?? THREE.FrontSide,
+          wireframe: pm.wireframe ?? false,
+          flatShading: pm.flatShading ?? false,
+          depthWrite: pm.depthWrite ?? true,
+          blending: pm.blending ?? THREE.NormalBlending,
+          alphaTest: pm.alphaTest ?? 0,
+        });
+      }
 
-      const pos = c.geometry.attributes.position;
-      if (pos) { verts += pos.count; tris += c.geometry.index ? c.geometry.index.count / 3 : pos.count / 3; }
+      const pos = c.geometry?.attributes?.position;
+      if (pos) { verts += pos.count; tris += c.geometry.index ? c.geometry.index.count/3 : pos.count/3; }
       meshCount++;
     });
 
     scene.add(currentModel);
 
     const box = new THREE.Box3().setFromObject(currentModel);
-    const size = box.getSize(new THREE.Vector3());
-    const ctr  = box.getCenter(new THREE.Vector3());
-    if (size.length() < 0.001) size.set(1,1,1);
+    const sz  = box.getSize(new THREE.Vector3());
+    const ctr = box.getCenter(new THREE.Vector3());
+    if (sz.length() < 0.001) sz.set(1,1,1);
 
     currentModel.position.sub(ctr);
-    currentModel.position.y += size.y / 2;
-
+    currentModel.position.y += sz.y/2;
     initT.pos.copy(currentModel.position);
     initT.rot.copy(currentModel.rotation);
     initT.sc.copy(currentModel.scale);
 
-    const maxD = Math.max(size.x, size.y, size.z);
-    const fov  = camera.fov * Math.PI / 180;
-    const dist = (maxD / 2 / Math.tan(fov / 2)) * 2;
-    camera.position.set(dist * .55, dist * .45, dist);
-    orbit.target.set(0, size.y / 2, 0);
+    const maxD = Math.max(sz.x, sz.y, sz.z);
+    const fov  = camera.fov * Math.PI/180;
+    const dist = (maxD/2/Math.tan(fov/2))*2;
+    camera.position.set(dist*.55, dist*.45, dist);
+    orbit.target.set(0, sz.y/2, 0);
     orbit.update();
 
     recalculateGround(currentModel);
-
     gizmo.attach(currentModel);
-    if(_el('vp-tb')) _el('vp-tb').style.display = 'flex';
+    _el('vp-tb').style.display = 'flex';
 
-    if(_el('st-m')) _el('st-m').textContent = meshCount;
-    if(_el('st-v')) _el('st-v').textContent = verts.toLocaleString();
-    if(_el('st-t')) _el('st-t').textContent = Math.round(tris).toLocaleString();
+    _el('st-m').textContent = meshCount;
+    _el('st-v').textContent = verts.toLocaleString();
+    _el('st-t').textContent = Math.round(tris).toLocaleString();
 
     buildOutliner(currentModel);
-    buildInfo(file.name, meshCount, verts, tris, size);
-    if(_el('st-mod')) _el('st-mod').textContent = file.name.length > 22 ? file.name.substring(0,20)+'…' : file.name;
+    buildInfo(file.name, meshCount, verts, tris, sz);
+    _el('st-mod').textContent = file.name.length>22 ? file.name.substring(0,20)+'…' : file.name;
     syncTUI();
 
-    _el('loading-ov')?.classList.remove('show');
-    toast('Model yüklendi ✓', 'ok');
-    setStatus('ready', 'Hazır');
+    _el('loading-ov').classList.remove('show');
+    toast(`Model yüklendi ✓ (${meshCount} mesh, ${Math.round(tris).toLocaleString()} tri)`,'ok');
+    setStatus('ready','Hazır');
   }, undefined, err => {
     URL.revokeObjectURL(url);
-    _el('loading-ov')?.classList.remove('show');
-    toast('Yüklenemedi!', 'err');
-    setStatus('err', 'Hata');
+    _el('loading-ov').classList.remove('show');
+    toast('Yüklenemedi: '+(err.message||err),'err');
+    setStatus('err','Hata');
     console.error(err);
   });
 }
 
+// ── OUTLINER ──
 function buildOutliner(model) {
   const ol = _el('outliner');
-  if(!ol) return;
+  if (!ol) return;
   ol.innerHTML = '';
   ol._map = [];
-  const root = makeOLItem('🗂️', model.name || 'Sahne', 'Root', false, null);
-  ol.appendChild(root);
+
+  ol.appendChild(makeOLItem('🗂️', model.name||'Sahne', 'Root', false, null));
+
   model.traverse(c => {
     if (!c.isMesh) return;
-    const item = makeOLItem('⬟', c.name || 'Mesh', 'Mesh', true, c);
+    const item = makeOLItem('⬟', c.name||'Mesh', 'Mesh', true, c);
     ol.appendChild(item);
-    ol._map.push({ el: item, mesh: c });
+    ol._map.push({el: item, mesh: c});
   });
 }
 
 function makeOLItem(icon, name, type, indent, mesh) {
   const d = document.createElement('div');
-  d.className = 'ol-item' + (indent ? ' ol-indent' : '');
+  d.className = 'ol-item'+(indent?' ol-indent':'');
   d.innerHTML = `<span class="ol-icon">${icon}</span><span class="ol-name">${name}</span><span class="ol-type">${type}</span>`;
-  if (mesh) d.addEventListener('click', e => { e.stopPropagation(); selectMesh(mesh); });
+  if (mesh) {
+    const vis = document.createElement('span');
+    vis.className = 'ol-vis';
+    vis.title = 'Gizle/Göster';
+    vis.textContent = '👁';
+    vis.addEventListener('click', e => { e.stopPropagation(); toggleMeshVisibility(mesh); });
+    d.appendChild(vis);
+    d.addEventListener('click', e => { e.stopPropagation(); selectMesh(mesh); });
+  }
   return d;
 }
 
 function syncOL(mesh) {
   const ol = _el('outliner');
   if (!ol || !ol._map) return;
-  ol._map.forEach(({ el, mesh: m }) => el.classList.toggle('selected', m === mesh));
+  ol._map.forEach(({el, mesh:m}) => el.classList.toggle('selected', m===mesh));
 }
 
+// ── MODEL BİLGİSİ ──
 function buildInfo(name, mc, v, t, sz) {
   const info = _el('info-body');
-  if(!info) return;
+  if (!info) return;
   info.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
     ${ir('Dosya', name.length>24?name.substring(0,22)+'…':name)}
-    ${ir('Meshler', mc)}
-    ${ir('Vertices', v.toLocaleString())}
-    ${ir('Triangles', Math.round(t).toLocaleString())}
-    ${ir('Boyut W', sz.x.toFixed(3))}
-    ${ir('Boyut H', sz.y.toFixed(3))}
-    ${ir('Boyut D', sz.z.toFixed(3))}
+    ${ir('Mesh',mc)} ${ir('Vertex',v.toLocaleString())}
+    ${ir('Triangle',Math.round(t).toLocaleString())}
+    ${ir('W',sz.x.toFixed(3)+'m')} ${ir('H',sz.y.toFixed(3)+'m')} ${ir('D',sz.z.toFixed(3)+'m')}
   </div>`;
 }
 const ir = (k,v) => `<div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--text2)">${k}</span><span style="font-family:var(--mono);font-size:10px">${v}</span></div>`;
 
-function getPrimaryMaterial(mesh) {
-  if (!mesh || !mesh.material) return null;
+// ── MALZEME ERİŞİM YARDIMCISI ──
+function getPrimaryMat(mesh) {
+  if (!mesh?.material) return null;
   return Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
 }
+function updateMatArray(mesh, fn) {
+  if (!mesh?.material) return;
+  const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+  mats.forEach(m => { if(m) fn(m); });
+  mats.forEach(m => { if(m) m.needsUpdate = true; });
+}
 
+// ── SELECT / DESELECT ──
 function selectMesh(mesh) {
   if (!mesh?.isMesh || !mesh.material) return;
-  
-  const prevMat = getPrimaryMaterial(selectedMesh);
+
+  // Önceki seçimin highlight'ını kaldır
+  const prevMat = getPrimaryMat(selectedMesh);
   if (prevMat?.emissive) prevMat.emissive.copy(origEmissive);
 
   selectedMesh = mesh;
-  const mat = getPrimaryMaterial(mesh);
-  
-  if (mat && mat.emissive) {
+  const mat = getPrimaryMat(mesh);
+  if (mat?.emissive) {
     origEmissive.copy(mat.emissive);
     mat.emissive.setHex(0x221100);
   }
 
   if (mat) {
-    const col = mat.color     ? '#' + mat.color.getHexString()     : '#ffffff';
-    const em  = mat.emissive  ? '#' + mat.emissive.getHexString()  : '#000000';
+    const col = mat.color    ? '#'+mat.color.getHexString()    : '#ffffff';
+    const em  = mat.emissive ? '#'+mat.emissive.getHexString() : '#000000';
     setC('mc', col); setC('me', em);
-    setSL('in-op', 'vb-op', mat.opacity ?? 1,             v => v.toFixed(2));
-    setSL('in-ro', 'vb-ro', mat.roughness ?? 0.5,         v => v.toFixed(2));
-    setSL('in-me2','vb-me2',mat.metalness ?? 0,           v => v.toFixed(2));
-    setSL('in-ei', 'vb-ei', mat.emissiveIntensity ?? 1,   v => v.toFixed(2));
-    setSL('in-ns', 'vb-ns', mat.normalScale?.x ?? 1,      v => v.toFixed(2));
-    setTgl('tgl-wf', mat.wireframe ?? false);
-    setTgl('tgl-ds', mat.side === THREE.DoubleSide);
-    setTgl('tgl-dw', mat.depthWrite ?? true);
-    setTgl('tgl-flat', mat.flatShading ?? false);
+    setSL('in-op','vb-op', mat.opacity??1,              v=>v.toFixed(2));
+    setSL('in-ro','vb-ro', mat.roughness??0.5,          v=>v.toFixed(2));
+    setSL('in-me2','vb-me2', mat.metalness??0,          v=>v.toFixed(2));
+    setSL('in-ei','vb-ei', mat.emissiveIntensity??1,    v=>v.toFixed(2));
+    setSL('in-ns','vb-ns', mat.normalScale?.x??1,       v=>v.toFixed(2));
+    setSL('in-ao','vb-ao', mat.aoMapIntensity??1,       v=>v.toFixed(2));
+    setSL('in-ro2','vb-ro2', mat.renderOrder??0,        v=>v.toFixed(0));
+
+    setTgl('tgl-wf',   mat.wireframe??false);
+    setTgl('tgl-ds',   mat.side===THREE.DoubleSide);
+    setTgl('tgl-dw',   mat.depthWrite??true);
+    setTgl('tgl-flat', mat.flatShading??false);
+    setTgl('tgl-vcol', mat.vertexColors??false);
+
+    // Alpha modu
+    updateAlphaPillUI(mat);
   }
 
-  if(_el('mat-name')) _el('mat-name').textContent = mesh.name || 'Mesh';
-  if(_el('mat-empty')) _el('mat-empty').style.display = 'none';
-  if(_el('mat-ed')) _el('mat-ed').style.display = 'block';
-  if(_el('st-sel')) _el('st-sel').textContent = mesh.name || 'Mesh';
+  if (_el('mat-name'))  _el('mat-name').textContent  = mesh.name||'Mesh';
+  if (_el('tex-mesh-name')) _el('tex-mesh-name').textContent = (mesh.name||'Mesh')+' Texture';
+  if (_el('mat-empty')) _el('mat-empty').style.display = 'none';
+  if (_el('mat-ed'))    _el('mat-ed').style.display   = 'block';
+  if (_el('tex-empty')) _el('tex-empty').style.display = 'none';
+  if (_el('tex-ed'))    _el('tex-ed').style.display   = 'block';
+  if (_el('st-sel'))    _el('st-sel').textContent      = mesh.name||'Mesh';
+
   syncOL(mesh);
-  switchTab('mat', 'right');
+  refreshTextureUI(mesh);
 }
 
 function deselectMesh() {
-  const prevMat = getPrimaryMaterial(selectedMesh);
+  const prevMat = getPrimaryMat(selectedMesh);
   if (prevMat?.emissive) prevMat.emissive.copy(origEmissive);
   selectedMesh = null;
-  if(_el('mat-empty')) _el('mat-empty').style.display = 'block';
-  if(_el('mat-ed')) _el('mat-ed').style.display = 'none';
-  if(_el('st-sel')) _el('st-sel').textContent = '—';
+  if (_el('mat-empty')) _el('mat-empty').style.display = 'block';
+  if (_el('mat-ed'))    _el('mat-ed').style.display    = 'none';
+  if (_el('tex-empty')) _el('tex-empty').style.display = 'block';
+  if (_el('tex-ed'))    _el('tex-ed').style.display    = 'none';
+  if (_el('st-sel'))    _el('st-sel').textContent      = '—';
   const ol = _el('outliner');
-  if (ol && ol._map) ol._map.forEach(({ el }) => el.classList.remove('selected'));
+  if (ol?._map) ol._map.forEach(({el}) => el.classList.remove('selected'));
 }
 
+// ── MESH GİZLE / GÖSTER ──
+function toggleMeshVisibility(mesh) {
+  if (!mesh) return;
+  mesh.visible = !mesh.visible;
+  toast(mesh.visible ? `${mesh.name||'Mesh'} gösterildi` : `${mesh.name||'Mesh'} gizlendi`);
+}
+
+// ── IZOLE ET ──
+function toggleIsolate() {
+  if (!currentModel) return toast('Model yüklenmedi','err');
+  isIsolated = !isIsolated;
+  currentModel.traverse(c => {
+    if (!c.isMesh) return;
+    if (isIsolated) c.visible = (c===selectedMesh);
+    else c.visible = true;
+  });
+  toast(isIsolated ? 'İzole edildi' : 'Tümü gösterildi');
+}
+
+// ── SİL ──
 function deleteSelectedMesh() {
-  if (!selectedMesh) return toast('Silmek için bir parça seçmelisiniz', 'err');
-  const meshName = selectedMesh.name || 'Parça';
+  if (!selectedMesh) return toast('Silmek için bir parça seçin','err');
+  const name = selectedMesh.name||'Parça';
   selectedMesh.removeFromParent();
-  disposeHierarchy(selectedMesh); 
+  disposeHierarchy(selectedMesh);
+  meshTextures.delete(selectedMesh.uuid);
   deselectMesh();
   if (currentModel) buildOutliner(currentModel);
-  toast(`${meshName} başarıyla silindi`, 'ok');
+  toast(`${name} silindi 🗑️`,'ok');
 }
 
+// ── TRANSFORM UI SYNC ──
 function syncTUI() {
   if (!currentModel) return;
-  const p = currentModel.position, r = currentModel.rotation, s = currentModel.scale;
-  if(_el('tx-x')) _el('tx-x').value = (p.x || 0).toFixed(3);
-  if(_el('tx-y')) _el('tx-y').value = (p.y || 0).toFixed(3);
-  if(_el('tx-z')) _el('tx-z').value = (p.z || 0).toFixed(3);
-  if(_el('rx-x')) _el('rx-x').value = ((r.x || 0) * 180/Math.PI).toFixed(1);
-  if(_el('rx-y')) _el('rx-y').value = ((r.y || 0) * 180/Math.PI).toFixed(1);
-  if(_el('rx-z')) _el('rx-z').value = ((r.z || 0) * 180/Math.PI).toFixed(1);
-  const sp = Math.round((s.x || 1) * 100);
-  if(_el('in-sc')) _el('in-sc').value = sp;
-  if(_el('vb-sc')) _el('vb-sc').textContent = sp;
+  const p=currentModel.position, r=currentModel.rotation, s=currentModel.scale;
+  if(_el('tx-x')) _el('tx-x').value=(p.x||0).toFixed(3);
+  if(_el('tx-y')) _el('tx-y').value=(p.y||0).toFixed(3);
+  if(_el('tx-z')) _el('tx-z').value=(p.z||0).toFixed(3);
+  if(_el('rx-x')) _el('rx-x').value=((r.x||0)*180/Math.PI).toFixed(1);
+  if(_el('rx-y')) _el('rx-y').value=((r.y||0)*180/Math.PI).toFixed(1);
+  if(_el('rx-z')) _el('rx-z').value=((r.z||0)*180/Math.PI).toFixed(1);
+  const sp = Math.round((s.x||1)*100);
+  if(_el('in-sc')) _el('in-sc').value=sp;
+  if(_el('vb-sc')) _el('vb-sc').textContent=sp;
 }
 
+// ── UI YARDIMCILARI ──
 function setC(id, hex) {
-  const sw = _el(`${id}-sw`), inp = _el(`in-${id}`), hx = _el(`${id}-hex`);
-  if (sw) sw.style.background = hex;
-  if (inp) inp.value = hex;
-  if (hx) hx.value = hex;
+  const sw=_el(`${id}-sw`), inp=_el(`in-${id}`), hx=_el(`${id}-hex`);
+  if(sw)  sw.style.background=hex;
+  if(inp) inp.value=hex;
+  if(hx)  hx.value=hex;
 }
-
 function setSL(inId, bdId, val, fmt) {
-  if(_el(inId)) _el(inId).value = val;
-  if(_el(bdId)) _el(bdId).textContent = fmt(val);
+  if(_el(inId)) _el(inId).value=val;
+  if(_el(bdId)) _el(bdId).textContent=fmt(val);
 }
-
 function setTgl(id, on) {
-  const el = _el(id); if (el) el.classList.toggle('on', on);
+  const el=_el(id); if(el) el.classList.toggle('on',on);
+}
+function bindTgl(id, cb) {
+  const el=_el(id);
+  if(el) el.addEventListener('click',function(){ this.classList.toggle('on'); cb(this.classList.contains('on')); });
 }
 
 function colorSetup(id, cb) {
-  const sw = _el(`${id}-sw`), inp = _el(`in-${id}`), hx = _el(`${id}-hex`);
-  if (!sw || !inp) return;
-  sw.addEventListener('click', () => inp.click());
-  inp.addEventListener('input', e => {
-    const v = e.target.value;
-    sw.style.background = v;
-    if (hx) hx.value = v;
-    cb(v);
+  const sw=_el(`${id}-sw`), inp=_el(`in-${id}`), hx=_el(`${id}-hex`);
+  if(!sw||!inp) return;
+  sw.addEventListener('click', ()=>inp.click());
+  inp.addEventListener('input', e=>{
+    const v=e.target.value; if(sw) sw.style.background=v; if(hx) hx.value=v; cb(v);
   });
-  if (hx) hx.addEventListener('change', e => {
-    const v = e.target.value;
-    if (/^#[0-9a-f]{6}$/i.test(v)) { inp.value = v; sw.style.background = v; cb(v); }
+  if(hx) hx.addEventListener('change', e=>{
+    const v=e.target.value;
+    if(/^#[0-9a-f]{6}$/i.test(v)){ inp.value=v; if(sw) sw.style.background=v; cb(v); }
   });
 }
 
-function updateMatArray(mesh, updater) {
-  if(!mesh || !mesh.material) return;
-  const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-  mats.forEach(updater);
-  mats.forEach(m => m.needsUpdate = true);
+// ── ALPHA MOD YÖNETİMİ (YENİ - TAM) ──
+const ALPHA_MODES = {
+  opaque:   { transparent:false, blending:THREE.NormalBlending,       depthWrite:true,  alphaTest:0    },
+  blend:    { transparent:true,  blending:THREE.NormalBlending,       depthWrite:false, alphaTest:0    },
+  mask:     { transparent:true,  blending:THREE.NormalBlending,       depthWrite:true,  alphaTest:0.5  },
+  additive: { transparent:true,  blending:THREE.AdditiveBlending,     depthWrite:false, alphaTest:0    },
+  multiply: { transparent:true,  blending:THREE.MultiplyBlending,     depthWrite:false, alphaTest:0    },
+  subtract: { transparent:true,  blending:THREE.SubtractiveBlending,  depthWrite:false, alphaTest:0    },
+};
+
+function applyAlphaMode(modeName, mesh, showCutoff) {
+  const cfg = ALPHA_MODES[modeName];
+  if (!cfg || !mesh) return;
+  updateMatArray(mesh, m => {
+    m.transparent = cfg.transparent;
+    m.blending    = cfg.blending;
+    m.depthWrite  = cfg.depthWrite;
+    m.alphaTest   = cfg.alphaTest;
+    m.needsUpdate = true;
+  });
+  // Cutoff satırı
+  if (_el('alpha-cutoff-wrap')) {
+    _el('alpha-cutoff-wrap').style.display = modeName==='mask' ? 'flex' : 'none';
+  }
+  // depthWrite toggle senkronize
+  setTgl('tgl-dw', cfg.depthWrite);
+  toast(`Alpha modu: ${modeName}`);
 }
 
+function updateAlphaPillUI(mat) {
+  let mode = 'opaque';
+  if (mat.blending === THREE.AdditiveBlending)    mode='additive';
+  else if (mat.blending === THREE.MultiplyBlending)  mode='multiply';
+  else if (mat.blending === THREE.SubtractiveBlending) mode='subtract';
+  else if (mat.transparent && mat.alphaTest > 0)  mode='mask';
+  else if (mat.transparent)                        mode='blend';
+
+  document.querySelectorAll('.alpha-pill').forEach(p =>
+    p.classList.toggle('active', p.dataset.mode===mode)
+  );
+  if (_el('alpha-cutoff-wrap'))
+    _el('alpha-cutoff-wrap').style.display = mode==='mask' ? 'flex' : 'none';
+}
+
+// Alpha pills
+document.querySelectorAll('.alpha-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    if (!selectedMesh) return toast('Önce bir mesh seçin','err');
+    document.querySelectorAll('.alpha-pill').forEach(p=>p.classList.remove('active'));
+    pill.classList.add('active');
+    applyAlphaMode(pill.dataset.mode, selectedMesh, true);
+  });
+});
+
+if(_el('in-ac')) _el('in-ac').addEventListener('input', e => {
+  const v=+e.target.value; if(_el('vb-ac')) _el('vb-ac').textContent=v.toFixed(2);
+  if(selectedMesh) updateMatArray(selectedMesh, m=>m.alphaTest=v);
+});
+
+// ── TEXTURE YÖNETİMİ (YENİ) ──
+const TEX_SLOTS = {
+  albedo:    { matProp: 'map',           colorSpace: THREE.SRGBColorSpace },
+  roughness: { matProp: 'roughnessMap',  colorSpace: THREE.LinearSRGBColorSpace },
+  normal:    { matProp: 'normalMap',     colorSpace: THREE.LinearSRGBColorSpace },
+  emissive:  { matProp: 'emissiveMap',   colorSpace: THREE.SRGBColorSpace },
+  ao:        { matProp: 'aoMap',         colorSpace: THREE.LinearSRGBColorSpace },
+  alpha:     { matProp: 'alphaMap',      colorSpace: THREE.LinearSRGBColorSpace },
+};
+
+// Gizli file input'lar texture slotları için
+const texFileInputs = {};
+function initTextureUI() {
+  Object.keys(TEX_SLOTS).forEach(slot => {
+    const inp = document.createElement('input');
+    inp.type='file'; inp.accept='.jpg,.jpeg,.png,.webp'; inp.style.display='none';
+    document.body.appendChild(inp);
+    texFileInputs[slot] = inp;
+
+    // Preview tıklama
+    const preview = _el(`tp-${slot}`);
+    if (preview) preview.addEventListener('click', () => { if(selectedMesh) inp.click(); else toast('Önce bir mesh seçin','err'); });
+
+    // Dosya seçimi
+    inp.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file || !selectedMesh) return;
+      loadTextureToMesh(file, slot, selectedMesh);
+      e.target.value='';
+    });
+
+    // Clear butonu
+    const clearBtn = _el(`tc-${slot}`);
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+      if (!selectedMesh) return;
+      clearTextureSlot(slot, selectedMesh);
+    });
+  });
+
+  // UV Tile
+  if(_el('in-tilex')) _el('in-tilex').addEventListener('input', e => {
+    const v=+e.target.value; if(_el('vb-tilex')) _el('vb-tilex').textContent=v.toFixed(1);
+    applyUVTile(selectedMesh);
+  });
+  if(_el('in-tiley')) _el('in-tiley').addEventListener('input', e => {
+    const v=+e.target.value; if(_el('vb-tiley')) _el('vb-tiley').textContent=v.toFixed(1);
+    applyUVTile(selectedMesh);
+  });
+
+  if(_el('btn-tex-apply-all')) _el('btn-tex-apply-all').addEventListener('click', () => {
+    if (!currentModel) return toast('Model yüklenmedi','err');
+    const tx = +(_el('in-tilex')?.value||1);
+    const ty = +(_el('in-tiley')?.value||1);
+    currentModel.traverse(c => { if(c.isMesh) applyUVTileToMesh(c, tx, ty); });
+    toast('UV tile tüm meshlere uygulandı');
+  });
+}
+
+function loadTextureToMesh(file, slot, mesh) {
+  const cfg = TEX_SLOTS[slot];
+  const url = URL.createObjectURL(file);
+  const loader = new THREE.TextureLoader();
+  loader.load(url, tex => {
+    URL.revokeObjectURL(url);
+    tex.colorSpace = cfg.colorSpace;
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.flipY = false; // GLTF convention
+
+    // Eskiyi temizle
+    const prevTex = meshTextures.get(mesh.uuid)?.[slot];
+    if (prevTex) prevTex.dispose();
+
+    if (!meshTextures.has(mesh.uuid)) meshTextures.set(mesh.uuid, {});
+    meshTextures.get(mesh.uuid)[slot] = tex;
+
+    updateMatArray(mesh, m => {
+      m[cfg.matProp] = tex;
+      // aoMap ikinci UV kanalı gerektirir — emin ol
+      if (slot==='ao' && !mesh.geometry.attributes.uv2) {
+        const uv = mesh.geometry.attributes.uv;
+        if (uv) mesh.geometry.setAttribute('uv2', uv.clone());
+      }
+      m.needsUpdate = true;
+    });
+
+    // Preview güncelle
+    const reader = new FileReader();
+    reader.onload = ev => setTexPreview(slot, ev.target.result, file.name);
+    reader.readAsDataURL(file);
+
+    toast(`${slot} texture yüklendi ✓`,'ok');
+  }, undefined, err => {
+    URL.revokeObjectURL(url);
+    toast('Texture yüklenemedi','err');
+    console.error(err);
+  });
+}
+
+function clearTextureSlot(slot, mesh) {
+  const cfg = TEX_SLOTS[slot];
+  const stored = meshTextures.get(mesh.uuid);
+  if (stored?.[slot]) { stored[slot].dispose(); delete stored[slot]; }
+  updateMatArray(mesh, m => { m[cfg.matProp]=null; m.needsUpdate=true; });
+  setTexPreview(slot, null, null);
+  toast(`${slot} texture kaldırıldı`);
+}
+
+function setTexPreview(slot, dataUrl, name) {
+  const prev = _el(`tp-${slot}`);
+  if (!prev) return;
+  // Eski img'yi kaldır
+  const oldImg = prev.querySelector('img');
+  if (oldImg) oldImg.remove();
+  const label = prev.querySelector('.tex-preview-label');
+
+  if (dataUrl) {
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    prev.insertBefore(img, label);
+    prev.classList.add('loaded');
+    if(label) label.textContent = name?.length>20 ? name.substring(0,18)+'…' : (name||slot);
+  } else {
+    prev.classList.remove('loaded');
+    if(label) label.innerHTML = 'Yüklemek için tıklayın<br>(JPG / PNG)';
+  }
+}
+
+function refreshTextureUI(mesh) {
+  if (!mesh) return;
+  const mat = getPrimaryMat(mesh);
+  // UV tile değerleri
+  const map = mat?.map;
+  if (map?.repeat) {
+    if(_el('in-tilex')) { _el('in-tilex').value=map.repeat.x; if(_el('vb-tilex')) _el('vb-tilex').textContent=map.repeat.x.toFixed(1); }
+    if(_el('in-tiley')) { _el('in-tiley').value=map.repeat.y; if(_el('vb-tiley')) _el('vb-tiley').textContent=map.repeat.y.toFixed(1); }
+  }
+  // Preview'ları sıfırla (stored texture yoksa)
+  Object.keys(TEX_SLOTS).forEach(slot => {
+    const stored = meshTextures.get(mesh.uuid)?.[slot];
+    if (!stored) setTexPreview(slot, null, null);
+    // Eğer materyalde texture varsa ama stored yoksa (GLB içinde gelen)
+    const cfg = TEX_SLOTS[slot];
+    if (!stored && mat?.[cfg.matProp]) {
+      const prev = _el(`tp-${slot}`);
+      if (prev) {
+        prev.classList.add('loaded');
+        const label = prev.querySelector('.tex-preview-label');
+        if(label) label.textContent='(GLB içinde)';
+      }
+    }
+  });
+}
+
+function applyUVTile(mesh) {
+  if (!mesh) return;
+  const tx = +(_el('in-tilex')?.value||1);
+  const ty = +(_el('in-tiley')?.value||1);
+  applyUVTileToMesh(mesh, tx, ty);
+}
+
+function applyUVTileToMesh(mesh, tx, ty) {
+  updateMatArray(mesh, m => {
+    ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap','alphaMap'].forEach(prop => {
+      if (m[prop]) { m[prop].repeat.set(tx, ty); m[prop].needsUpdate=true; }
+    });
+  });
+}
+
+// ── SAHNE KONTROLLERI ──
+if(_el('in-exp')) _el('in-exp').addEventListener('input', e => {
+  renderer.toneMappingExposure=+e.target.value;
+  if(_el('vb-exp')) _el('vb-exp').textContent=(+e.target.value).toFixed(2);
+});
+if(_el('in-amb')) _el('in-amb').addEventListener('input', e => {
+  ambLight.intensity=+e.target.value;
+  if(_el('vb-amb')) _el('vb-amb').textContent=(+e.target.value).toFixed(2);
+});
+if(_el('in-dir')) _el('in-dir').addEventListener('input', e => {
+  dirLight.intensity=+e.target.value;
+  if(_el('vb-dir')) _el('vb-dir').textContent=(+e.target.value).toFixed(2);
+});
+if(_el('in-shad')) _el('in-shad').addEventListener('input', e => {
+  shadowPlane.material.opacity=+e.target.value;
+  if(_el('vb-shad')) _el('vb-shad').textContent=(+e.target.value).toFixed(2);
+});
+if(_el('in-fog')) _el('in-fog').addEventListener('input', e => {
+  const d=+e.target.value;
+  if(_el('vb-fog')) _el('vb-fog').textContent=d.toFixed(3);
+  scene.fog = d>0 ? new THREE.FogExp2(scene.background.clone(), d) : null;
+});
+if(_el('in-fov')) _el('in-fov').addEventListener('input', e => {
+  camera.fov=+e.target.value; camera.updateProjectionMatrix();
+  if(_el('vb-fov')) _el('vb-fov').textContent=e.target.value+'°';
+});
+if(_el('in-near')) _el('in-near').addEventListener('input', e => {
+  camera.near=+e.target.value; camera.updateProjectionMatrix();
+  if(_el('vb-near')) _el('vb-near').textContent=(+e.target.value).toFixed(3);
+});
+colorSetup('bg', hex => { scene.background=new THREE.Color(hex); });
+
+// ── DÖNÜŞÜM KONTROLLERI ──
+['tx-x','tx-y','tx-z'].forEach((id,i) => {
+  if(_el(id)) _el(id).addEventListener('input',()=>{ if(currentModel) currentModel.position[['x','y','z'][i]]=parseFloat(_el(id).value)||0; });
+});
+['rx-x','rx-y','rx-z'].forEach((id,i) => {
+  if(_el(id)) _el(id).addEventListener('input',()=>{ if(currentModel) currentModel.rotation[['x','y','z'][i]]=(parseFloat(_el(id).value)||0)*Math.PI/180; });
+});
+if(_el('in-sc')) _el('in-sc').addEventListener('input', e => {
+  if(!currentModel) return;
+  const s=e.target.value/100; currentModel.scale.set(s,s,s);
+  if(_el('vb-sc')) _el('vb-sc').textContent=e.target.value;
+});
+if(_el('btn-rpos')) _el('btn-rpos').addEventListener('click',()=>{ if(!currentModel) return; currentModel.position.copy(initT.pos); syncTUI(); toast('Konum sıfırlandı'); });
+if(_el('btn-rall')) _el('btn-rall').addEventListener('click',()=>{ if(!currentModel) return; currentModel.position.copy(initT.pos); currentModel.rotation.copy(initT.rot); currentModel.scale.copy(initT.sc); syncTUI(); toast('Dönüşüm sıfırlandı'); });
+
+function convertToMeters(factor, unitName) {
+  if (!currentModel) return toast('Model yüklenmedi','err');
+  currentModel.position.set(0,0,0);
+  currentModel.updateMatrixWorld(true);
+  const processedGeoms = new Set();
+  currentModel.traverse(c => {
+    if (c.isMesh && c.geometry && !processedGeoms.has(c.geometry)) {
+      c.geometry.scale(factor,factor,factor);
+      c.geometry.computeBoundingBox(); c.geometry.computeBoundingSphere();
+      processedGeoms.add(c.geometry);
+    }
+    if (c!==currentModel) { c.position.multiplyScalar(factor); c.updateMatrix(); }
+  });
+  const box=new THREE.Box3().setFromObject(currentModel);
+  const sz=box.getSize(new THREE.Vector3()), ctr=box.getCenter(new THREE.Vector3());
+  currentModel.position.sub(ctr); currentModel.position.y+=sz.y/2;
+  initT.pos.copy(currentModel.position);
+  recalculateGround(currentModel);
+  syncTUI(); frameModel();
+  toast(`${unitName} → m kalıcı çevrim tamamlandı`,'ok');
+}
+if(_el('btn-unit-cm')) _el('btn-unit-cm').addEventListener('click',()=>convertToMeters(0.01,'cm'));
+if(_el('btn-unit-mm')) _el('btn-unit-mm').addEventListener('click',()=>convertToMeters(0.001,'mm'));
+
+// ── MALZEME KONTROLLERI ──
+colorSetup('mc', hex=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.color) m.color.set(hex); }); });
+colorSetup('me', hex=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.emissive){ m.emissive.set(hex); origEmissive.set(hex); } }); });
+
+if(_el('in-op')) _el('in-op').addEventListener('input', e=>{
+  const v=+e.target.value; if(_el('vb-op')) _el('vb-op').textContent=v.toFixed(2);
+  if(selectedMesh) updateMatArray(selectedMesh, m=>{
+    m.opacity=v;
+    // Opacity değiştiğinde sadece transparent bayrağını güncelle, blending'e dokunma
+    if(m.blending===THREE.NormalBlending && !m.alphaMap && !m.alphaTest) {
+      m.transparent = v<1;
+      m.depthWrite  = v===1;
+    } else {
+      m.transparent = true;
+    }
+  });
+});
+if(_el('in-ro')) _el('in-ro').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ro')) _el('vb-ro').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.roughness!==undefined) m.roughness=v; }); });
+if(_el('in-me2')) _el('in-me2').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-me2')) _el('vb-me2').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.metalness!==undefined) m.metalness=v; }); });
+if(_el('in-ei')) _el('in-ei').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ei')) _el('vb-ei').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.emissiveIntensity!==undefined) m.emissiveIntensity=v; }); });
+if(_el('in-ns')) _el('in-ns').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ns')) _el('vb-ns').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.normalScale) m.normalScale.set(v,v); }); });
+if(_el('in-ao')) _el('in-ao').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ao')) _el('vb-ao').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.aoMapIntensity!==undefined) m.aoMapIntensity=v; }); });
+if(_el('in-ro2')) _el('in-ro2').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ro2')) _el('vb-ro2').textContent=v.toFixed(0); if(selectedMesh){ selectedMesh.renderOrder=v; } });
+
+bindTgl('tgl-wf',   v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>m.wireframe=v); });
+bindTgl('tgl-ds',   v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>m.side=v?THREE.DoubleSide:THREE.FrontSide); });
+bindTgl('tgl-dw',   v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>m.depthWrite=v); });
+bindTgl('tgl-flat', v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ m.flatShading=v; m.needsUpdate=true; }); });
+bindTgl('tgl-vcol', v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ m.vertexColors=v; m.needsUpdate=true; }); });
+
+// ── TOPLU UYGULA ──
+if(_el('btn-ap-col')) _el('btn-ap-col').addEventListener('click',()=>{
+  const mat=getPrimaryMat(selectedMesh); if(!currentModel||!mat?.color) return;
+  const c=mat.color.clone();
+  currentModel.traverse(m=>{ if(m.isMesh) updateMatArray(m,mtr=>{ if(mtr.color) mtr.color.copy(c); }); });
+  toast('Renk tüm meshlere uygulandı');
+});
+if(_el('btn-ap-pbr')) _el('btn-ap-pbr').addEventListener('click',()=>{
+  const mat=getPrimaryMat(selectedMesh); if(!currentModel||!mat) return;
+  const ro=mat.roughness, me=mat.metalness;
+  currentModel.traverse(m=>{ if(m.isMesh) updateMatArray(m,mtr=>{ if(mtr.roughness!==undefined) mtr.roughness=ro; if(mtr.metalness!==undefined) mtr.metalness=me; }); });
+  toast('PBR tüm meshlere uygulandı');
+});
+if(_el('btn-ap-alpha')) _el('btn-ap-alpha').addEventListener('click',()=>{
+  if(!currentModel||!selectedMesh) return;
+  const mat=getPrimaryMat(selectedMesh); if(!mat) return;
+  const mode = document.querySelector('.alpha-pill.active')?.dataset.mode||'opaque';
+  currentModel.traverse(m=>{ if(m.isMesh) applyAlphaMode(mode, m, false); });
+  toast(`Alpha modu "${mode}" tüm meshlere uygulandı`);
+});
+if(_el('btn-ap-all')) _el('btn-ap-all').addEventListener('click',()=>{
+  _el('btn-ap-col')?.click();
+  _el('btn-ap-pbr')?.click();
+  toast('Tüm ayarlar uygulandı');
+});
+
+// ── DÜZENLEME ──
+if(_el('btn-delete-mesh')) _el('btn-delete-mesh').addEventListener('click', deleteSelectedMesh);
+if(_el('btn-hide-mesh')) _el('btn-hide-mesh').addEventListener('click',()=>{ if(selectedMesh) toggleMeshVisibility(selectedMesh); else toast('Önce bir mesh seçin','err'); });
+if(_el('btn-isolate-mesh')) _el('btn-isolate-mesh').addEventListener('click', toggleIsolate);
+
+// ── VP TOOLBAR ──
+document.querySelectorAll('.vp-btn[data-mode]').forEach(b=>{
+  b.addEventListener('click',()=>setGizmo(b.dataset.mode));
+});
+if(_el('btn-space')) _el('btn-space').addEventListener('click',function(){
+  worldSpace=!worldSpace; gizmo.setSpace(worldSpace?'world':'local');
+  this.textContent=worldSpace?'WORLD':'LOCAL';
+});
 function setGizmo(mode) {
   gizmo.setMode(mode);
+  document.querySelectorAll('.vp-btn[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
 }
 
-function setView(px,py,pz,tx,ty,tz) {
-  if (!currentModel) { toast('Model yüklenmedi'); return; }
-  const box = new THREE.Box3().setFromObject(currentModel);
-  const ctr = box.getCenter(new THREE.Vector3());
-  const sz  = box.getSize(new THREE.Vector3());
-  const d   = Math.max(sz.x, sz.y, sz.z) * 1.8;
-  orbit.target.set(ctr.x + tx, ctr.y + ty, ctr.z + tz);
-  camera.position.set(ctr.x + px*d, ctr.y + py*d, ctr.z + pz*d);
-  orbit.update();
-}
-
-function frameModel() {
-  if (!currentModel) return;
-  const box = new THREE.Box3().setFromObject(currentModel);
-  const ctr = box.getCenter(new THREE.Vector3());
-  const sz  = box.getSize(new THREE.Vector3());
-  const d   = Math.max(sz.x, sz.y, sz.z) / 2 / Math.tan(camera.fov * Math.PI / 360) * 1.8;
+// ── GÖRÜNÜM PREAYARLARı ──
+function setView(px,py,pz) {
+  if(!currentModel){ toast('Model yüklenmedi'); return; }
+  const box=new THREE.Box3().setFromObject(currentModel);
+  const ctr=box.getCenter(new THREE.Vector3());
+  const sz=box.getSize(new THREE.Vector3());
+  const d=Math.max(sz.x,sz.y,sz.z)*1.8;
   orbit.target.copy(ctr);
-  camera.position.set(ctr.x + d*.55, ctr.y + d*.4, ctr.z + d);
+  camera.position.set(ctr.x+px*d, ctr.y+py*d, ctr.z+pz*d);
+  orbit.update();
+}
+if(_el('vc-fr')) _el('vc-fr').addEventListener('click',()=>setView(0,0,1));
+if(_el('vc-tp')) _el('vc-tp').addEventListener('click',()=>setView(0,1,0.001));
+if(_el('vc-rt')) _el('vc-rt').addEventListener('click',()=>setView(1,0,0));
+if(_el('vc-is')) _el('vc-is').addEventListener('click',()=>setView(0.6,0.5,0.6));
+
+// ── DOSYA AÇ ──
+if(_el('btn-open')) _el('btn-open').addEventListener('click',()=>_el('file-input').click());
+if(_el('file-input')) _el('file-input').addEventListener('change',e=>{ if(e.target.files[0]){ loadFile(e.target.files[0]); e.target.value=''; } });
+
+// ── ODAKLAN ──
+if(_el('btn-frame')) _el('btn-frame').addEventListener('click', frameModel);
+function frameModel() {
+  if(!currentModel){ toast('Model yüklenmedi'); return; }
+  const box=new THREE.Box3().setFromObject(currentModel);
+  const ctr=box.getCenter(new THREE.Vector3());
+  const sz=box.getSize(new THREE.Vector3());
+  const d=Math.max(sz.x,sz.y,sz.z)/2/Math.tan(camera.fov*Math.PI/360)*1.8;
+  orbit.target.copy(ctr);
+  camera.position.set(ctr.x+d*.55, ctr.y+d*.4, ctr.z+d);
   orbit.update();
 }
 
+// ── SCREENSHOT ──
 function takeScreenshot() {
-  renderer.render(scene, camera);
-  const a = document.createElement('a');
-  a.download = `pepperAR_${Date.now()}.png`;
-  a.href = renderer.domElement.toDataURL('image/png');
-  document.body.appendChild(a);
+  renderer.render(scene,camera);
+  const a=document.createElement('a');
+  a.download=`pepperAR_${Date.now()}.png`;
+  a.href=renderer.domElement.toDataURL('image/png');
   a.click();
-  document.body.removeChild(a);
-  toast('Screenshot kaydedildi', 'ok');
+  toast('Screenshot kaydedildi 📷','ok');
 }
+[_el('btn-ss'),_el('btn-ss2')].forEach(b=>b?.addEventListener('click',takeScreenshot));
 
+// ── GLB EXPORT ──
+if(_el('btn-exp-glb')) _el('btn-exp-glb').addEventListener('click',()=>{
+  if(!currentModel) return toast('Model yüklenmedi','err');
+  const exporter=new GLTFExporter();
+  const s=createExportScene(currentModel,false);
+  exporter.parse(s, buffer=>{
+    const blob=new Blob([buffer],{type:'application/octet-stream'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`model_export_${Date.now()}.glb`;
+    a.click();
+    toast('GLB dışa aktarıldı ✓','ok');
+  }, err=>{ console.error(err); toast('GLB Hatası','err'); },{ binary:true });
+});
+
+// ── USDZ EXPORT (DÜZELTİLDİ) ──
+if(_el('btn-exp-usdz')) _el('btn-exp-usdz').addEventListener('click', async()=>{
+  if(!currentModel) return toast('Model yüklenmedi','err');
+  if(!USDZExporter) return toast('USDZ exporter bu tarayıcıda desteklenmiyor','err');
+  _el('loading-ov').classList.add('show');
+  _el('load-text').textContent='USDZ hazırlanıyor...';
+  try {
+    const s=createExportScene(currentModel,true);
+    s.updateMatrixWorld(true);
+    const exporter=new USDZExporter();
+    // Three.js 0.160 API: parse(scene, options)
+    const arraybuffer=await exporter.parse(s, {});
+    const blob=new Blob([arraybuffer],{type:'model/vnd.usdz+zip'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`model_AR_${Date.now()}.usdz`;
+    a.click();
+    toast('USDZ dışa aktarıldı ✓ (iOS AR hazır)','ok');
+  } catch(e) {
+    console.error(e);
+    toast('USDZ hatası: '+(e.message||e),'err');
+  } finally {
+    _el('loading-ov').classList.remove('show');
+    _el('load-text').textContent='Model yükleniyor...';
+  }
+});
+
+// ── WIREFRAME ──
 function toggleWireframe() {
-  wireMode = !wireMode;
-  if(_el('btn-wf')) _el('btn-wf').classList.toggle('active', wireMode);
-  if (currentModel) currentModel.traverse(c => { if (c.isMesh) updateMatArray(c, m => m.wireframe = wireMode); });
-  toast(wireMode ? 'Wireframe açık' : 'Wireframe kapalı');
+  wireMode=!wireMode;
+  _el('btn-wf')?.classList.toggle('active',wireMode);
+  if(currentModel) currentModel.traverse(c=>{ if(c.isMesh) updateMatArray(c,m=>m.wireframe=wireMode); });
+  toast(wireMode?'Wireframe açık':'Wireframe kapalı');
 }
+if(_el('btn-wf')) _el('btn-wf').addEventListener('click',toggleWireframe);
 
+// ── GRİD ──
+if(_el('btn-grid')) _el('btn-grid').addEventListener('click',()=>{
+  gridVis=!gridVis;
+  gridHelper.visible=gridVis;
+  shadowPlane.visible=gridVis;
+  _el('btn-grid').classList.toggle('active',gridVis);
+});
+
+// ── STATİSTİK ──
+if(_el('btn-stats')) _el('btn-stats').addEventListener('click',()=>{
+  statsVisible=!statsVisible;
+  _el('stats-hud')?.classList.toggle('hidden',!statsVisible);
+  _el('btn-stats')?.classList.toggle('active',statsVisible);
+});
+
+// ── TEMA ──
 function toggleTheme() {
-  const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', t);
-  localStorage.setItem('par_theme', t);
-  const bg = t === 'dark' ? '#111113' : '#e4e4e8';
-  scene.background = new THREE.Color(bg);
-  if(_el('bg-sw')) _el('bg-sw').style.background = bg;
-  if(_el('in-bg')) _el('in-bg').value = bg;
-  if(_el('bg-hex')) _el('bg-hex').value = bg;
+  const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('par_theme',t);
+  const bg=t==='dark'?'#111113':'#e4e4e8';
+  scene.background=new THREE.Color(bg);
+  if(_el('bg-sw')) _el('bg-sw').style.background=bg;
+  if(_el('in-bg')) _el('in-bg').value=bg;
+  if(_el('bg-hex')) _el('bg-hex').value=bg;
 }
+if(_el('btn-theme')) _el('btn-theme').addEventListener('click',toggleTheme);
 
+// ── KISA YOLLAR MODAL ──
+if(_el('btn-keys')) _el('btn-keys').addEventListener('click',()=>_el('modal-keys').classList.add('show'));
+if(_el('modal-keys')) _el('modal-keys').addEventListener('click',e=>{ if(e.target===e.currentTarget) e.currentTarget.classList.remove('show'); });
+
+// ── PRESET KAYDET / YÜKlE ──
+[_el('btn-save'),_el('btn-save2')].forEach(b=>b?.addEventListener('click',savePreset));
 function savePreset() {
-  const p = {
-    exp:  _el('in-exp')?.value,  amb:  _el('in-amb')?.value,
-    dir:  _el('in-dir')?.value,  shad: _el('in-shad')?.value,
-    bg:   _el('bg-hex')?.value,  fog:  _el('in-fog')?.value,
-    fov:  _el('in-fov')?.value,
+  const p={
+    exp:_el('in-exp')?.value, amb:_el('in-amb')?.value,
+    dir:_el('in-dir')?.value, shad:_el('in-shad')?.value,
+    bg:_el('bg-hex')?.value,  fog:_el('in-fog')?.value, fov:_el('in-fov')?.value,
   };
-  localStorage.setItem('par_preset', JSON.stringify(p));
-  toast('Ayarlar kaydedildi ✓', 'ok');
+  localStorage.setItem('par_preset',JSON.stringify(p));
+  toast('Ayarlar kaydedildi ✓','ok');
 }
-
 function loadPreset() {
   try {
-    const p = JSON.parse(localStorage.getItem('par_preset') || '{}');
-    if (p.exp && _el('in-exp'))  { _el('in-exp').value  = p.exp;  renderer.toneMappingExposure = +p.exp; if(_el('vb-exp')) _el('vb-exp').textContent = (+p.exp).toFixed(2); }
-    if (p.amb && _el('in-amb'))  { _el('in-amb').value  = p.amb;  ambLight.intensity = +p.amb; if(_el('vb-amb')) _el('vb-amb').textContent = (+p.amb).toFixed(2); }
-    if (p.dir && _el('in-dir'))  { _el('in-dir').value  = p.dir;  dirLight.intensity = +p.dir; if(_el('vb-dir')) _el('vb-dir').textContent = (+p.dir).toFixed(2); }
-    if (p.shad && _el('in-shad')) { _el('in-shad').value = p.shad; shadowPlane.material.opacity = +p.shad; if(_el('vb-shad')) _el('vb-shad').textContent = (+p.shad).toFixed(2); }
-    if (p.bg && _el('in-bg'))   { scene.background = new THREE.Color(p.bg); if(_el('bg-sw')) _el('bg-sw').style.background = p.bg; _el('in-bg').value = p.bg; if(_el('bg-hex')) _el('bg-hex').value = p.bg; }
-    if (p.fov && _el('in-fov'))  { camera.fov = +p.fov; camera.updateProjectionMatrix(); if(_el('vb-fov')) _el('vb-fov').textContent = p.fov + '°'; _el('in-fov').value = p.fov; }
+    const p=JSON.parse(localStorage.getItem('par_preset')||'{}');
+    if(p.exp&&_el('in-exp')){ _el('in-exp').value=p.exp; renderer.toneMappingExposure=+p.exp; if(_el('vb-exp')) _el('vb-exp').textContent=(+p.exp).toFixed(2); }
+    if(p.amb&&_el('in-amb')){ _el('in-amb').value=p.amb; ambLight.intensity=+p.amb; if(_el('vb-amb')) _el('vb-amb').textContent=(+p.amb).toFixed(2); }
+    if(p.dir&&_el('in-dir')){ _el('in-dir').value=p.dir; dirLight.intensity=+p.dir; if(_el('vb-dir')) _el('vb-dir').textContent=(+p.dir).toFixed(2); }
+    if(p.shad&&_el('in-shad')){ _el('in-shad').value=p.shad; shadowPlane.material.opacity=+p.shad; if(_el('vb-shad')) _el('vb-shad').textContent=(+p.shad).toFixed(2); }
+    if(p.bg&&_el('in-bg')){ scene.background=new THREE.Color(p.bg); if(_el('bg-sw')) _el('bg-sw').style.background=p.bg; _el('in-bg').value=p.bg; if(_el('bg-hex')) _el('bg-hex').value=p.bg; }
+    if(p.fov&&_el('in-fov')){ camera.fov=+p.fov; camera.updateProjectionMatrix(); if(_el('vb-fov')) _el('vb-fov').textContent=p.fov+'°'; _el('in-fov').value=p.fov; }
   } catch(e){}
 }
 
-function switchTab(tabId, side) {
-  const sel = `.sidebar-${side}`;
-  document.querySelectorAll(`${sel} .stab`).forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
-  document.querySelectorAll(`${sel} .stab-pane`).forEach(p => p.classList.toggle('active', p.id === `tab-${tabId}`));
+// ── BULK AR (TOPLU İŞLEM) ──
+const bulkModels = [null,null,null,null,null];
+const bulkNames  = ['','','','',''];
+const bulkUIRefs = [];
+let currentBulkSlot = -1;
+
+function initBulkUI() {
+  const container = _el('bulk-slots');
+  if(!container) return;
+  container.innerHTML='';
+
+  const bulkFileInput=document.createElement('input');
+  bulkFileInput.type='file'; bulkFileInput.accept='.glb,.gltf'; bulkFileInput.style.display='none';
+  document.body.appendChild(bulkFileInput);
+  bulkFileInput.addEventListener('change',e=>{
+    const file=e.target.files[0];
+    if(!file||currentBulkSlot<0) return;
+    loadBulkFile(file,currentBulkSlot);
+    e.target.value='';
+  });
+
+  for(let i=0;i<5;i++){
+    const slot=document.createElement('div'); slot.className='bulk-slot';
+    const title=document.createElement('div'); title.className='bulk-slot-title'; title.textContent=`Kayıt ${i+1}`;
+    const row1=document.createElement('div'); row1.className='btn-row'; row1.style.marginBottom='6px';
+    const btnLoad=document.createElement('button'); btnLoad.className='btn sm'; btnLoad.textContent='Yükle';
+    const btnClear=document.createElement('button'); btnClear.className='btn danger sm'; btnClear.textContent='Kaldır'; btnClear.style.display='none';
+    row1.appendChild(btnLoad); row1.appendChild(btnClear);
+    const nameLbl=document.createElement('span'); nameLbl.className='bulk-file-name'; nameLbl.textContent='Boş';
+    const row2=document.createElement('div'); row2.className='btn-row'; row2.style.display='none';
+    const btnCm=document.createElement('button'); btnCm.className='btn sm'; btnCm.textContent='cm→m';
+    const btnMm=document.createElement('button'); btnMm.className='btn sm'; btnMm.textContent='mm→m';
+    row2.appendChild(btnCm); row2.appendChild(btnMm);
+    slot.appendChild(title); slot.appendChild(row1); slot.appendChild(nameLbl); slot.appendChild(row2);
+    container.appendChild(slot);
+
+    btnLoad.addEventListener('click',()=>{ currentBulkSlot=i; bulkFileInput.click(); });
+    btnClear.addEventListener('click',()=>{
+      if(bulkModels[i]) disposeHierarchy(bulkModels[i]);
+      bulkModels[i]=null; bulkNames[i]='';
+      nameLbl.textContent='Boş'; btnClear.style.display='none';
+      btnLoad.style.display='block'; row2.style.display='none';
+    });
+    btnCm.addEventListener('click',()=>scaleBulkModel(i,0.01,'cm'));
+    btnMm.addEventListener('click',()=>scaleBulkModel(i,0.001,'mm'));
+    bulkUIRefs[i]={btnLoad,btnClear,nameLbl,row2};
+  }
+
+  const cbCenter=_el('cb-bulk-center');
+  if(cbCenter) cbCenter.addEventListener('click',function(){ this.classList.toggle('on'); });
+
+  _el('btn-bulk-glb-export')?.addEventListener('click',()=>exportBulk('glb'));
+  _el('btn-bulk-usdz-export')?.addEventListener('click',()=>exportBulk('usdz'));
 }
 
-document.addEventListener('keydown', e => {
-  const tag = document.activeElement?.tagName;
-  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-  if (e.ctrlKey && e.key === 'o') { e.preventDefault(); if(_el('file-input')) _el('file-input').click(); return; }
-  switch(e.key) {
-    case '?': if(_el('modal-keys')) _el('modal-keys').classList.toggle('show'); break;
-    case 'Escape': deselectMesh(); if(_el('modal-keys')) _el('modal-keys').classList.remove('show'); break;
-    case 'f': case 'F': frameModel(); break;
-    case 'g': case 'G': if(_el('btn-grid')) _el('btn-grid').click(); break;
-    case 'w': case 'W': toggleWireframe(); break;
-    case 'p': case 'P': takeScreenshot(); break;
-    case 'i': case 'I': if(_el('btn-stats')) _el('btn-stats').click(); break;
-    case 't': case 'T': setGizmo('translate'); break;
-    case 'r': case 'R': if (!e.altKey) setGizmo('rotate'); break;
-    case 's': case 'S': setGizmo('scale'); break;
-    case '1': if(_el('vc-fr')) _el('vc-fr').click(); break;
-    case '2': if(_el('vc-tp')) _el('vc-tp').click(); break;
-    case '3': if(_el('vc-rt')) _el('vc-rt').click(); break;
-    case '4': if(_el('vc-is')) _el('vc-is').click(); break;
-    case 'Delete': deleteSelectedMesh(); break; 
+function loadBulkFile(file,index) {
+  _el('loading-ov').classList.add('show');
+  _el('load-text').textContent=`Ürün ${index+1} yükleniyor...`;
+  const url=URL.createObjectURL(file);
+  makeLoader().load(url, gltf=>{
+    URL.revokeObjectURL(url);
+    if(bulkModels[index]) disposeHierarchy(bulkModels[index]);
+    bulkModels[index]=gltf.scene;
+    bulkNames[index]=file.name;
+    const refs=bulkUIRefs[index];
+    refs.nameLbl.textContent=file.name.length>20?file.name.substring(0,18)+'…':file.name;
+    refs.btnLoad.style.display='none'; refs.btnClear.style.display='block'; refs.row2.style.display='flex';
+    _el('loading-ov').classList.remove('show');
+    _el('load-text').textContent='Model yükleniyor...';
+    toast(`Ürün ${index+1} hazır`,'ok');
+  }, undefined, err=>{
+    URL.revokeObjectURL(url);
+    _el('loading-ov').classList.remove('show');
+    _el('load-text').textContent='Model yükleniyor...';
+    toast('Yüklenemedi: '+err.message,'err');
+  });
+}
+
+function scaleBulkModel(index,factor,unitName) {
+  const model=bulkModels[index]; if(!model) return;
+  const processedGeoms=new Set();
+  model.traverse(c=>{
+    if(c.isMesh&&c.geometry&&!processedGeoms.has(c.geometry)){
+      c.geometry.scale(factor,factor,factor);
+      c.geometry.computeBoundingBox(); c.geometry.computeBoundingSphere();
+      processedGeoms.add(c.geometry);
+    }
+    if(c!==model){ c.position.multiplyScalar(factor); c.updateMatrix(); }
+  });
+  toast(`Ürün ${index+1}: ${unitName}→m`,'ok');
+}
+
+async function exportBulk(format) {
+  const hasModels=bulkModels.some(m=>m!==null);
+  if(!hasModels) return toast('En az bir ürün yükleyin','err');
+  if(format==='usdz'&&!USDZExporter) return toast('USDZ exporter desteklenmiyor','err');
+
+  _el('loading-ov').classList.add('show');
+  _el('load-text').textContent=`Toplu ${format.toUpperCase()} hazırlanıyor...`;
+
+  const isCenter=_el('cb-bulk-center')?.classList.contains('on');
+
+  for(let i=0;i<5;i++){
+    const model=bulkModels[i]; if(!model) continue;
+    const s=createExportScene(model,isCenter);
+    const safeName=(bulkNames[i]||`Urun_${i+1}`).replace(/\.[^/.]+$/,'').replace(/[^a-z0-9_-]/gi,'_');
+    try {
+      if(format==='glb'){
+        const exp=new GLTFExporter();
+        await new Promise(resolve=>{
+          exp.parse(s,buffer=>{
+            const blob=new Blob([buffer],{type:'application/octet-stream'});
+            const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+            a.download=`${safeName}_AR.glb`; a.click(); resolve();
+          },err=>{ console.error(err); resolve(); },{binary:true});
+        });
+      } else if(format==='usdz'){
+        s.updateMatrixWorld(true);
+        const exp=new USDZExporter();
+        const buf=await exp.parse(s,{});
+        const blob=new Blob([buf],{type:'model/vnd.usdz+zip'});
+        const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+        a.download=`${safeName}_AR.usdz`; a.click();
+      }
+    } catch(e){ console.error(e); toast(`Slot ${i+1} hatası`,'err'); }
+    await new Promise(r=>setTimeout(r,700));
   }
-  if (e.altKey && e.key === 'r') { if(_el('btn-rall')) _el('btn-rall').click(); }
-  if (e.altKey && e.key === 't') toggleTheme();
+
+  _el('loading-ov').classList.remove('show');
+  _el('load-text').textContent='Model yükleniyor...';
+  toast(`Toplu ${format.toUpperCase()} tamamlandı ✓`,'ok');
+}
+
+// ── TABS ──
+document.querySelectorAll('.stab').forEach(t=>{
+  t.addEventListener('click',()=>switchTab(t.dataset.tab,t.dataset.side));
+});
+function switchTab(tabId,side) {
+  const sel=`.sidebar-${side}`;
+  document.querySelectorAll(`${sel} .stab`).forEach(t=>t.classList.toggle('active',t.dataset.tab===tabId));
+  document.querySelectorAll(`${sel} .stab-pane`).forEach(p=>p.classList.toggle('active',p.id===`tab-${tabId}`));
+}
+
+// ── SECTION ACCORDION ──
+document.querySelectorAll('.section-head').forEach(h=>{
+  h.addEventListener('click',()=>h.parentElement.classList.toggle('closed'));
 });
 
-function setStatus(type, text) {
-  if(_el('sd')) _el('sd').className  = 'status-dot' + (type === 'ready' ? ' ready' : type === 'err' ? ' err' : '');
-  if(_el('st-txt')) _el('st-txt').textContent = text;
-}
+// ── KLAVYE KISA YOLLARI ──
+document.addEventListener('keydown',e=>{
+  const tag=document.activeElement?.tagName;
+  if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
+  if(e.ctrlKey&&e.key==='o'){ e.preventDefault(); _el('file-input')?.click(); return; }
+  switch(e.key){
+    case '?': _el('modal-keys')?.classList.toggle('show'); break;
+    case 'Escape': deselectMesh(); _el('modal-keys')?.classList.remove('show'); isIsolated=false; if(currentModel) currentModel.traverse(c=>{ if(c.isMesh) c.visible=true; }); break;
+    case 'f': case 'F': frameModel(); break;
+    case 'g': case 'G': _el('btn-grid')?.click(); break;
+    case 'w': case 'W': toggleWireframe(); break;
+    case 'p': case 'P': takeScreenshot(); break;
+    case 'i': case 'I': _el('btn-stats')?.click(); break;
+    case 't': case 'T': setGizmo('translate'); break;
+    case 'r': case 'R': if(!e.altKey) setGizmo('rotate'); break;
+    case 's': case 'S': setGizmo('scale'); break;
+    case '1': _el('vc-fr')?.click(); break;
+    case '2': _el('vc-tp')?.click(); break;
+    case '3': _el('vc-rt')?.click(); break;
+    case '4': _el('vc-is')?.click(); break;
+    case 'Delete': deleteSelectedMesh(); break;
+    case 'h': case 'H': if(!e.altKey){ if(selectedMesh) toggleMeshVisibility(selectedMesh); } else toggleIsolate(); break;
+  }
+  if(e.altKey&&e.key==='r') _el('btn-rall')?.click();
+  if(e.altKey&&e.key==='t') toggleTheme();
+});
 
+// ── STATUS / TOAST ──
+function setStatus(type,text){
+  if(_el('sd')) _el('sd').className='status-dot'+(type==='ready'?' ready':type==='err'?' err':'');
+  if(_el('st-txt')) _el('st-txt').textContent=text;
+}
 let toastTmr;
-function toast(msg, type = '') {
-  const el = _el('toast');
-  if(!el) return;
-  el.textContent = msg;
-  el.className = 'toast show' + (type ? ' ' + type : '');
+function toast(msg,type=''){
+  const el=_el('toast'); if(!el) return;
+  el.textContent=msg;
+  el.className='toast show'+(type?' '+type:'');
   clearTimeout(toastTmr);
-  toastTmr = setTimeout(() => el.classList.remove('show'), 2600);
+  toastTmr=setTimeout(()=>el.classList.remove('show'),2800);
 }
 
-function onResize() {
-  const container = _el('canvas-container');
-  if(!container) return;
-  const w = container.clientWidth, h = container.clientHeight;
-  if (!w || !h) return;
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
+// ── RESIZE ──
+function onResize(){
+  const w=container.clientWidth, h=container.clientHeight;
+  if(!w||!h) return;
+  camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h);
 }
 
-function updateFPS() {
+// ── FPS ──
+function updateFPS(){
   fpsFrames++;
-  const now = performance.now();
-  if (now - fpsLast >= 1000) {
-    if(_el('fps-v')) _el('fps-v').textContent = fpsFrames;
-    fpsFrames = 0; fpsLast = now;
+  const now=performance.now();
+  if(now-fpsLast>=1000){
+    if(_el('fps-v')) _el('fps-v').textContent=fpsFrames;
+    fpsFrames=0; fpsLast=now;
   }
 }
 
-function animate() {
+// ── RENDER LOOP ──
+function animate(){
   requestAnimationFrame(animate);
   orbit.update();
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
   updateFPS();
 }
 
-// BAŞLAT!
+// ── BAŞLAT ──
 init();
-
+window._par={scene,camera,renderer};
 </script>
 </body>
 </html>
