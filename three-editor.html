@@ -115,7 +115,7 @@ input[type=color]{position:absolute;opacity:0;pointer-events:none;width:0;height
 .btn:hover{background:var(--bg4);color:var(--text);border-color:var(--border2)}
 .btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
 .btn.accent:hover{background:var(--accent2);border-color:var(--accent2)}
-.btn.danger{color:var(--red);border-color:var(--border2);background:transparent}
+.btn.danger{color:var(--red);border-color:transparent;background:transparent}
 .btn.danger:hover{background:rgba(239,68,68,.1);border-color:var(--red)}
 .btn.sm{padding:5px 8px;font-size:11px}
 .btn-row{display:flex;gap:6px}
@@ -352,21 +352,13 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
           </div>
         </div>
         <div class="field">
-          <div class="field-row"><span class="label">Tüm Model Ölçeği (%)</span><span class="vbadge" id="vb-sc">100</span></div>
-          <input type="range" id="in-sc" min="1" max="1000" step="1" value="100">
+          <div class="field-row"><span class="label">Ölçek (%)</span><span class="vbadge" id="vb-sc">100</span></div>
+          <input type="range" id="in-sc" min="1" max="500" step="1" value="100">
         </div>
         <div class="btn-row">
           <button class="btn sm" id="btn-rpos">Konum</button>
           <button class="btn sm" id="btn-rall">Tümü ↺</button>
         </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-head"><div class="section-title">✂️ Düzenleme</div><span class="section-arrow">▼</span></div>
-      <div class="section-body">
-        <button class="btn danger" id="btn-delete-mesh">🗑️ Seçili Parçayı Sil (Del)</button>
-        <div style="font-size:10px; color:var(--text3); line-height:1.4">Seçili parçayı sahneden tamamen çıkarır ve belleği temizler.</div>
       </div>
     </div>
 
@@ -471,7 +463,6 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
   <div class="sb-item">Model: <b id="st-mod">—</b></div>
   <div class="sb-item">Seçili: <b id="st-sel">—</b></div>
   <div class="sb-spacer"></div>
-  <div class="sb-item"><kbd>Del</kbd> sil</div>
   <div class="sb-item"><kbd>T</kbd><kbd>R</kbd><kbd>S</kbd> gizmo</div>
   <div class="sb-item"><kbd>F</kbd> odak</div>
   <div class="sb-item"><kbd>G</kbd><kbd>W</kbd><kbd>P</kbd> grid/wire/ss</div>
@@ -490,7 +481,6 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
       <div class="sc-item">Grid <div class="sc-keys"><kbd>G</kbd></div></div>
       <div class="sc-item">Wireframe <div class="sc-keys"><kbd>W</kbd></div></div>
       <div class="sc-item">Screenshot <div class="sc-keys"><kbd>P</kbd></div></div>
-      <div class="sc-item">Seçiliyi Sil <div class="sc-keys"><kbd>Del</kbd></div></div>
       <div class="sc-item">Seçimi Kaldır <div class="sc-keys"><kbd>Esc</kbd></div></div>
       <div class="sc-item">Sıfırla <div class="sc-keys"><kbd>Alt</kbd><kbd>R</kbd></div></div>
       <div class="sc-item">İstatistik <div class="sc-keys"><kbd>I</kbd></div></div>
@@ -534,14 +524,15 @@ function init() {
   const w = container.clientWidth  || window.innerWidth  - 568;
   const h = container.clientHeight || window.innerHeight - 80;
 
-  // UZAKLAŞMA (ZOOM OUT) SINIRLARI GENİŞLETİLDİ (far: 20000 yapıldı)
-  camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 20000);
+  // Z-FIGHTING OPTIMIZATION 1: camera.near 0.01'den 0.1'e çıkarıldı.
+  camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 2000);
   camera.position.set(3, 2.5, 5);
 
+  // Z-FIGHTING OPTIMIZATION 2: logarithmicDepthBuffer: true eklendi.
   renderer = new THREE.WebGLRenderer({ 
     antialias: true, 
     preserveDrawingBuffer: true,
-    logarithmicDepthBuffer: true
+    logarithmicDepthBuffer: true 
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(w, h);
@@ -558,6 +549,7 @@ function init() {
   ambLight = new THREE.AmbientLight(0xffffff, 0.4);
   scene.add(ambLight);
 
+  // GÖLGE LEKELENMESİ (SHADOW ACNE) OPTIMIZASYONLARI EKLENDİ
   dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
   dirLight.position.set(5, 10, 7);
   dirLight.castShadow = true;
@@ -581,6 +573,7 @@ function init() {
   rim.position.set(0, -3, -8);
   scene.add(rim);
 
+  // ZEMİN ÇAKIŞMASI KORUMASI EKLENDİ
   shadowPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(200, 200),
     new THREE.ShadowMaterial({ opacity: 0.2, depthWrite: false })
@@ -603,8 +596,7 @@ function init() {
   orbit.dampingFactor = 0.06;
   orbit.screenSpacePanning = true;
   orbit.minDistance = 0.05;
-  // ORBIT CONTROLS UZAKLAŞMA LİMİTİ GENİŞLETİLDİ (800'den 20000'e)
-  orbit.maxDistance = 20000;
+  orbit.maxDistance = 800;
 
   gizmo = new TransformControls(camera, renderer.domElement);
   gizmo.setSpace('world');
@@ -769,7 +761,7 @@ function buildInfo(name, mc, v, t, sz) {
 }
 const ir = (k,v) => `<div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--text2)">${k}</span><span style="font-family:var(--mono);font-size:10px">${v}</span></div>`;
 
-// ── SELECT / DESELECT / DELETE ──
+// ── SELECT / DESELECT ──
 function selectMesh(mesh) {
   if (!mesh?.isMesh || !mesh.material) return;
   if (selectedMesh?.material?.emissive) selectedMesh.material.emissive.copy(origEmissive);
@@ -813,36 +805,6 @@ function deselectMesh() {
   const ol = $('outliner');
   if (ol._map) ol._map.forEach(({ el }) => el.classList.remove('selected'));
 }
-
-// YENİ EKLENEN: SİLME FONKSİYONU
-function deleteSelectedMesh() {
-  if (!selectedMesh) {
-    toast('Silmek için bir parça seçmelisiniz', 'err');
-    return;
-  }
-  
-  // Parçayı sahneden tamamen ayır
-  selectedMesh.removeFromParent();
-  
-  // Bellek temizliği (Memory Leak önlemi)
-  if (selectedMesh.geometry) selectedMesh.geometry.dispose();
-  if (selectedMesh.material) {
-    if (Array.isArray(selectedMesh.material)) {
-      selectedMesh.material.forEach(m => m.dispose());
-    } else {
-      selectedMesh.material.dispose();
-    }
-  }
-  
-  const meshName = selectedMesh.name || 'Parça';
-  deselectMesh();
-  
-  // Outliner'ı (Sol paneldeki ağacı) güncelle
-  if (currentModel) buildOutliner(currentModel);
-  toast(`${meshName} başarıyla silindi 🗑️`, 'ok');
-}
-// Silme Butonuna Bağla
-if($('btn-delete-mesh')) $('btn-delete-mesh').addEventListener('click', deleteSelectedMesh);
 
 // ── TRANSFORM UI ──
 function syncTUI() {
@@ -941,8 +903,6 @@ colorSetup('bg', hex => {
     currentModel.rotation[['x','y','z'][i]] = (parseFloat($(id).value) || 0) * Math.PI / 180;
   });
 });
-
-// UFALTMA/BÜYÜTME LİMİTİ GENİŞLETİLDİ (1'den 1000'e kadar)
 $('in-sc').addEventListener('input', e => {
   if (!currentModel) return;
   const s = e.target.value / 100;
@@ -1178,9 +1138,7 @@ document.addEventListener('keydown', e => {
     case '2': $('vc-tp').click(); break;
     case '3': $('vc-rt').click(); break;
     case '4': $('vc-is').click(); break;
-    
-    // YENİ KLAVYE KISAYOLU: DELETE İLE SİLME
-    case 'Delete': deleteSelectedMesh(); break; 
+    case 'Delete': deselectMesh(); break;
   }
   if (e.altKey && e.key === 'r') $('btn-rall').click();
   if (e.altKey && e.key === 't') toggleTheme();
