@@ -122,7 +122,8 @@ input[type=color]{position:absolute;opacity:0;pointer-events:none;width:0;height
 .btn-row .btn{flex:1}
 
 /* BULK TAB STYLES */
-.bulk-slot{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px}
+.bulk-slot{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px;transition: border-color 0.2s;}
+.bulk-slot:hover{border-color:var(--border2);}
 .bulk-slot-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px}
 .bulk-file-name{font-family:var(--mono);font-size:10px;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:8px;display:block}
 
@@ -564,6 +565,28 @@ const $ = id => document.getElementById(id);
 const container = $('canvas-container');
 const vp        = $('vp');
 
+// ── PROFESYONEL BELLEK YÖNETİMİ (MEMORY LEAK KORUMASI) ──
+function disposeHierarchy(node) {
+  if (!node) return;
+  node.traverse(c => {
+    if (c.isMesh) {
+      if (c.geometry) c.geometry.dispose();
+      if (c.material) {
+        const mats = Array.isArray(c.material) ? c.material : [c.material];
+        mats.forEach(m => {
+          m.dispose();
+          // Texture'ları (kaplamaları) VRAM'den temizle
+          for (const key in m) {
+            if (m[key] && m[key].isTexture) {
+              m[key].dispose();
+            }
+          }
+        });
+      }
+    }
+  });
+}
+
 // ── INIT ──
 function init() {
   scene = new THREE.Scene();
@@ -675,10 +698,20 @@ function init() {
   });
 
   window.addEventListener('resize', onResize);
-  initBulkUI(); // Yeni toplu islem arayüzü başlatılıyor
+  initBulkUI(); 
   animate();
   setStatus('ready', 'Hazır');
   loadPreset();
+}
+
+// ── DINAMIK ZEMIN HESAPLAMA ──
+function recalculateGround(model) {
+  if (!model) return;
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const by = model.position.y - size.y / 2 + 0.001;
+  shadowPlane.position.y = by;
+  gridHelper.position.y  = by;
 }
 
 // ── BULK AR LOGIC (TOPLU DÜZENLEME) ──
@@ -688,7 +721,6 @@ let currentBulkSlot = -1;
 
 function initBulkUI() {
   const container = $('bulk-slots');
-  // 5 Adet Slot Oluştur
   for(let i=0; i<5; i++) {
     const slot = document.createElement('div');
     slot.className = 'bulk-slot';
@@ -707,7 +739,6 @@ function initBulkUI() {
     container.appendChild(slot);
   }
 
-  // Gizli File Input (Toplu işlemler için ayrı input)
   const bulkFileInput = document.createElement('input');
   bulkFileInput.type = 'file';
   bulkFileInput.id = 'bulk-file-input';
@@ -722,10 +753,10 @@ function initBulkUI() {
     e.target.value = '';
   });
 
-  // Slot İçi Buton Eventleri
   for(let i=0; i<5; i++) {
     $(`btn-bs-load-${i}`).addEventListener('click', () => { currentBulkSlot = i; bulkFileInput.click(); });
     $(`btn-bs-clear-${i}`).addEventListener('click', () => {
+      if (bulkModels[i]) disposeHierarchy(bulkModels[i]); // Memory Leak Koruması
       bulkModels[i] = null; bulkNames[i] = '';
       $(`bs-name-${i}`).textContent = 'Boş';
       $(`btn-bs-clear-${i}`).style.display = 'none';
@@ -736,11 +767,8 @@ function initBulkUI() {
     $(`btn-bs-mm-${i}`).addEventListener('click', () => scaleBulkModel(i, 0.001, 'mm'));
   }
 
-  // Toplu İndirme Eventleri
   $('btn-bulk-glb-export').addEventListener('click', () => exportBulk('glb'));
   $('btn-bulk-usdz-export').addEventListener('click', () => exportBulk('usdz'));
-  
-  // Pivot Merkezle Toggle Bağlantısı (Sadece görsel state)
   $('cb-bulk-center').addEventListener('click', function() { this.classList.toggle('on'); });
 }
 
@@ -756,6 +784,7 @@ function loadBulkFile(file, index) {
   const url = URL.createObjectURL(file);
   loader.load(url, gltf => {
     URL.revokeObjectURL(url);
+    if (bulkModels[index]) disposeHierarchy(bulkModels[index]); // Önceki modeli temizle
     bulkModels[index] = gltf.scene;
     bulkNames[index] = file.name;
     
@@ -767,6 +796,10 @@ function loadBulkFile(file, index) {
     $('loading-ov').classList.remove('show');
     $('load-text').textContent = 'Model yükleniyor...';
     toast(`Ürün ${index+1} hafızaya eklendi`, 'ok');
+  }, undefined, err => {
+    $('loading-ov').classList.remove('show');
+    $('load-text').textContent = 'Model yükleniyor...';
+    toast('Yüklenemedi: ' + err.message, 'err');
   });
 }
 
@@ -782,7 +815,6 @@ function scaleBulkModel(index, factor, unitName) {
       c.geometry.computeBoundingSphere();
       processedGeoms.add(c.geometry);
     }
-    // Alt objelerin pozisyonlarını da ölçekle
     if (c !== model) {
       c.position.multiplyScalar(factor);
       c.updateMatrix();
@@ -804,20 +836,23 @@ async function exportBulk(format) {
     const model = bulkModels[i];
     if (!model) continue;
 
-    // Pivot merkezleme (eğer seçiliyse ve daha önce bu model için yapılmamışsa)
+    // Güvenilir Pivot Merkezleme Algoritması
     if (isCenter && !model.userData.isCentered) {
       const box = new THREE.Box3().setFromObject(model);
       const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
       
-      // Tüm alt elemanları merkezden sapma miktarı kadar geriye kaydırıyoruz
       model.children.forEach(child => {
         child.position.sub(center);
+        // Zemin hizasını korumak için (AR'da modelin havada kalmaması için alt noktayı sıfıra çeker)
+        child.position.y += size.y / 2; 
         child.updateMatrixWorld(true);
       });
       model.userData.isCentered = true;
     }
 
-    const fileName = bulkNames[i].replace(/\.[^/.]+$/, ""); // Uzantıyı sil
+    // Dosya ismindeki geçersiz karakterleri güvenli hale getir
+    const safeName = bulkNames[i].replace(/\.[^/.]+$/, "").replace(/[^a-z0-9_-]/gi, '_'); 
     
     if (format === 'glb') {
       const exporter = new GLTFExporter();
@@ -826,7 +861,7 @@ async function exportBulk(format) {
           const blob = new Blob([buffer], { type: 'application/octet-stream' });
           const link = document.createElement('a');
           link.href = URL.createObjectURL(blob);
-          link.download = `${fileName}_AR.glb`;
+          link.download = `${safeName}_AR.glb`;
           link.click();
           resolve();
         }, (err) => { console.error(err); resolve(); }, { binary: true });
@@ -838,12 +873,11 @@ async function exportBulk(format) {
         const blob = new Blob([arraybuffer], { type: 'application/octet-stream' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `${fileName}_AR.usdz`;
+        link.download = `${safeName}_AR.usdz`;
         link.click();
       } catch(e) { console.error(e); }
     }
     
-    // Tarayıcı indirmeleri bloklamasın diye arada ufak bekleme süresi koyuyoruz
     await new Promise(r => setTimeout(r, 600));
   }
 
@@ -858,7 +892,13 @@ function loadFile(file) {
   $('loading-ov').classList.add('show');
   setStatus('', 'Yükleniyor...');
   deselectMesh();
-  if (currentModel) { gizmo.detach(); scene.remove(currentModel); currentModel = null; }
+  
+  if (currentModel) { 
+    gizmo.detach(); 
+    scene.remove(currentModel); 
+    disposeHierarchy(currentModel); // Memory Leak Koruması
+    currentModel = null; 
+  }
 
   const drc = new DRACOLoader();
   drc.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
@@ -875,8 +915,14 @@ function loadFile(file) {
       if (!c.isMesh) return;
       c.castShadow = true;
       c.receiveShadow = true;
-      if (!c.material.emissive) c.material.emissive = new THREE.Color(0);
-      if (c.material.map) c.material.map.colorSpace = THREE.SRGBColorSpace;
+      
+      // Çoklu materyal (array) durumunu tolere et
+      const mats = Array.isArray(c.material) ? c.material : [c.material];
+      mats.forEach(m => {
+        if (!m.emissive) m.emissive = new THREE.Color(0);
+        if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
+      });
+
       const pos = c.geometry.attributes.position;
       if (pos) { verts += pos.count; tris += c.geometry.index ? c.geometry.index.count / 3 : pos.count / 3; }
       meshCount++;
@@ -903,9 +949,7 @@ function loadFile(file) {
     orbit.target.set(0, size.y / 2, 0);
     orbit.update();
 
-    const by = currentModel.position.y - size.y / 2 + 0.001;
-    shadowPlane.position.y = by;
-    gridHelper.position.y  = by;
+    recalculateGround(currentModel);
 
     gizmo.attach(currentModel);
     $('vp-tb').style.display = 'flex';
@@ -978,31 +1022,42 @@ function buildInfo(name, mc, v, t, sz) {
 const ir = (k,v) => `<div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--text2)">${k}</span><span style="font-family:var(--mono);font-size:10px">${v}</span></div>`;
 
 // ── SELECT / DESELECT / DELETE ──
+// Güvenli materyal seçimi için yardımcı fonksiyon
+function getPrimaryMaterial(mesh) {
+  if (!mesh || !mesh.material) return null;
+  return Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+}
+
 function selectMesh(mesh) {
   if (!mesh?.isMesh || !mesh.material) return;
-  if (selectedMesh?.material?.emissive) selectedMesh.material.emissive.copy(origEmissive);
+  
+  const prevMat = getPrimaryMaterial(selectedMesh);
+  if (prevMat?.emissive) prevMat.emissive.copy(origEmissive);
 
   selectedMesh = mesh;
-  if (mesh.material.emissive) {
-    origEmissive.copy(mesh.material.emissive);
-    mesh.material.emissive.setHex(0x221100);
+  const mat = getPrimaryMaterial(mesh);
+  
+  if (mat && mat.emissive) {
+    origEmissive.copy(mat.emissive);
+    mat.emissive.setHex(0x221100);
   }
 
-  const mat = mesh.material;
-  const col = mat.color     ? '#' + mat.color.getHexString()     : '#ffffff';
-  const em  = mat.emissive  ? '#' + mat.emissive.getHexString()  : '#000000';
+  if (mat) {
+    const col = mat.color     ? '#' + mat.color.getHexString()     : '#ffffff';
+    const em  = mat.emissive  ? '#' + mat.emissive.getHexString()  : '#000000';
 
-  setC('mc', col); setC('me', em);
-  setSL('in-op', 'vb-op', mat.opacity ?? 1,             v => v.toFixed(2));
-  setSL('in-ro', 'vb-ro', mat.roughness ?? 0.5,         v => v.toFixed(2));
-  setSL('in-me2','vb-me2',mat.metalness ?? 0,             v => v.toFixed(2));
-  setSL('in-ei', 'vb-ei', mat.emissiveIntensity ?? 1,    v => v.toFixed(2));
-  setSL('in-ns', 'vb-ns', mat.normalScale?.x ?? 1,       v => v.toFixed(2));
+    setC('mc', col); setC('me', em);
+    setSL('in-op', 'vb-op', mat.opacity ?? 1,             v => v.toFixed(2));
+    setSL('in-ro', 'vb-ro', mat.roughness ?? 0.5,         v => v.toFixed(2));
+    setSL('in-me2','vb-me2',mat.metalness ?? 0,           v => v.toFixed(2));
+    setSL('in-ei', 'vb-ei', mat.emissiveIntensity ?? 1,   v => v.toFixed(2));
+    setSL('in-ns', 'vb-ns', mat.normalScale?.x ?? 1,      v => v.toFixed(2));
 
-  setTgl('tgl-wf', mat.wireframe ?? false);
-  setTgl('tgl-ds', mat.side === THREE.DoubleSide);
-  setTgl('tgl-dw', mat.depthWrite ?? true);
-  setTgl('tgl-flat', mat.flatShading ?? false);
+    setTgl('tgl-wf', mat.wireframe ?? false);
+    setTgl('tgl-ds', mat.side === THREE.DoubleSide);
+    setTgl('tgl-dw', mat.depthWrite ?? true);
+    setTgl('tgl-flat', mat.flatShading ?? false);
+  }
 
   $('mat-name').textContent = mesh.name || 'Mesh';
   $('mat-empty').style.display = 'none';
@@ -1013,7 +1068,8 @@ function selectMesh(mesh) {
 }
 
 function deselectMesh() {
-  if (selectedMesh?.material?.emissive) selectedMesh.material.emissive.copy(origEmissive);
+  const prevMat = getPrimaryMaterial(selectedMesh);
+  if (prevMat?.emissive) prevMat.emissive.copy(origEmissive);
   selectedMesh = null;
   $('mat-empty').style.display = 'block';
   $('mat-ed').style.display = 'none';
@@ -1023,23 +1079,11 @@ function deselectMesh() {
 }
 
 function deleteSelectedMesh() {
-  if (!selectedMesh) {
-    toast('Silmek için bir parça seçmelisiniz', 'err');
-    return;
-  }
-  
-  selectedMesh.removeFromParent();
-  
-  if (selectedMesh.geometry) selectedMesh.geometry.dispose();
-  if (selectedMesh.material) {
-    if (Array.isArray(selectedMesh.material)) {
-      selectedMesh.material.forEach(m => m.dispose());
-    } else {
-      selectedMesh.material.dispose();
-    }
-  }
+  if (!selectedMesh) return toast('Silmek için bir parça seçmelisiniz', 'err');
   
   const meshName = selectedMesh.name || 'Parça';
+  selectedMesh.removeFromParent();
+  disposeHierarchy(selectedMesh); // VRAM temizliği
   deselectMesh();
   
   if (currentModel) buildOutliner(currentModel);
@@ -1051,13 +1095,14 @@ if($('btn-delete-mesh')) $('btn-delete-mesh').addEventListener('click', deleteSe
 function syncTUI() {
   if (!currentModel) return;
   const p = currentModel.position, r = currentModel.rotation, s = currentModel.scale;
-  $('tx-x').value = p.x.toFixed(3);
-  $('tx-y').value = p.y.toFixed(3);
-  $('tx-z').value = p.z.toFixed(3);
-  $('rx-x').value = (r.x * 180/Math.PI).toFixed(1);
-  $('rx-y').value = (r.y * 180/Math.PI).toFixed(1);
-  $('rx-z').value = (r.z * 180/Math.PI).toFixed(1);
-  const sp = Math.round(s.x * 100);
+  // NaN veya tanımsız değerleri önlemek için güvenli yazdırma
+  $('tx-x').value = (p.x || 0).toFixed(3);
+  $('tx-y').value = (p.y || 0).toFixed(3);
+  $('tx-z').value = (p.z || 0).toFixed(3);
+  $('rx-x').value = ((r.x || 0) * 180/Math.PI).toFixed(1);
+  $('rx-y').value = ((r.y || 0) * 180/Math.PI).toFixed(1);
+  $('rx-z').value = ((r.z || 0) * 180/Math.PI).toFixed(1);
+  const sp = Math.round((s.x || 1) * 100);
   $('in-sc').value = sp;
   $('vb-sc').textContent = sp;
 }
@@ -1190,8 +1235,10 @@ function convertToMeters(factor, unitName) {
   
   currentModel.position.sub(ctr);
   currentModel.position.y += size.y / 2;
-  
   initT.pos.copy(currentModel.position);
+  
+  // Gölge ve Zemini güncel yüksekliğe adapte et
+  recalculateGround(currentModel);
   
   const m = parseInt($('st-m').textContent) || 0;
   const v = parseInt($('st-v').textContent.replace(/[\D]/g, '')) || 0;
@@ -1206,62 +1253,70 @@ $('btn-unit-cm').addEventListener('click', () => convertToMeters(0.01, 'cm'));
 $('btn-unit-mm').addEventListener('click', () => convertToMeters(0.001, 'mm'));
 
 // ── BIND MATERIAL CONTROLS ──
-colorSetup('mc', hex => { if (selectedMesh?.material?.color) selectedMesh.material.color.set(hex); });
-colorSetup('me', hex => { if (selectedMesh?.material?.emissive) { selectedMesh.material.emissive.set(hex); origEmissive.set(hex); } });
+function updateMatArray(mesh, updater) {
+  if(!mesh || !mesh.material) return;
+  const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+  mats.forEach(updater);
+  mats.forEach(m => m.needsUpdate = true);
+}
+
+colorSetup('mc', hex => { if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.color) m.color.set(hex); }); });
+colorSetup('me', hex => { if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.emissive) { m.emissive.set(hex); origEmissive.set(hex); } }); });
 
 $('in-op').addEventListener('input', e => {
   const v = +e.target.value; $('vb-op').textContent = v.toFixed(2);
-  if (!selectedMesh) return;
-  selectedMesh.material.opacity = v;
-  selectedMesh.material.transparent = v < 1;
-  selectedMesh.material.depthWrite = v === 1;
-  selectedMesh.material.needsUpdate = true;
+  if (selectedMesh) updateMatArray(selectedMesh, m => {
+    m.opacity = v;
+    m.transparent = v < 1;
+    m.depthWrite = v === 1;
+  });
 });
 $('in-ro').addEventListener('input', e => {
   const v = +e.target.value; $('vb-ro').textContent = v.toFixed(2);
-  if (selectedMesh?.material?.roughness !== undefined) selectedMesh.material.roughness = v;
+  if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.roughness !== undefined) m.roughness = v; });
 });
 $('in-me2').addEventListener('input', e => {
   const v = +e.target.value; $('vb-me2').textContent = v.toFixed(2);
-  if (selectedMesh?.material?.metalness !== undefined) selectedMesh.material.metalness = v;
+  if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.metalness !== undefined) m.metalness = v; });
 });
 $('in-ei').addEventListener('input', e => {
   const v = +e.target.value; $('vb-ei').textContent = v.toFixed(2);
-  if (selectedMesh?.material?.emissiveIntensity !== undefined) selectedMesh.material.emissiveIntensity = v;
+  if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.emissiveIntensity !== undefined) m.emissiveIntensity = v; });
 });
 $('in-ns').addEventListener('input', e => {
   const v = +e.target.value; $('vb-ns').textContent = v.toFixed(2);
-  if (selectedMesh?.material?.normalScale) selectedMesh.material.normalScale.set(v,v);
+  if (selectedMesh) updateMatArray(selectedMesh, m => { if(m.normalScale) m.normalScale.set(v,v); });
 });
 
-function bindTgl(id, cb) {
-  $(id).addEventListener('click', function() { this.classList.toggle('on'); cb(this.classList.contains('on')); });
-}
-bindTgl('tgl-wf', v => { if (selectedMesh) selectedMesh.material.wireframe = v; });
-bindTgl('tgl-ds', v => { if (selectedMesh) { selectedMesh.material.side = v ? THREE.DoubleSide : THREE.FrontSide; selectedMesh.material.needsUpdate = true; } });
-bindTgl('tgl-dw', v => { if (selectedMesh) selectedMesh.material.depthWrite = v; });
-bindTgl('tgl-flat', v => { if (selectedMesh) { selectedMesh.material.flatShading = v; selectedMesh.material.needsUpdate = true; } });
+bindTgl('tgl-wf', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.wireframe = v); });
+bindTgl('tgl-ds', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.side = v ? THREE.DoubleSide : THREE.FrontSide); });
+bindTgl('tgl-dw', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.depthWrite = v); });
+bindTgl('tgl-flat', v => { if (selectedMesh) updateMatArray(selectedMesh, m => m.flatShading = v); });
 
 $('in-blend').addEventListener('change', e => {
   if (!selectedMesh) return;
   const map = { normal: THREE.NormalBlending, additive: THREE.AdditiveBlending, multiply: THREE.MultiplyBlending, subtract: THREE.SubtractiveBlending };
-  selectedMesh.material.blending = map[e.target.value] ?? THREE.NormalBlending;
-  selectedMesh.material.needsUpdate = true;
+  updateMatArray(selectedMesh, m => m.blending = map[e.target.value] ?? THREE.NormalBlending);
 });
 
 $('btn-ap-col').addEventListener('click', () => {
-  if (!currentModel || !selectedMesh?.material?.color) return;
-  const c = selectedMesh.material.color.clone();
-  currentModel.traverse(m => { if (m.isMesh && m.material?.color) m.material.color.copy(c); });
+  const mat = getPrimaryMaterial(selectedMesh);
+  if (!currentModel || !mat?.color) return;
+  const c = mat.color.clone();
+  currentModel.traverse(m => {
+    if (m.isMesh) updateMatArray(m, mtr => { if(mtr.color) mtr.color.copy(c); });
+  });
   toast('Renk tüm meshlere uygulandı');
 });
 $('btn-ap-pbr').addEventListener('click', () => {
-  if (!currentModel || !selectedMesh) return;
-  const ro = selectedMesh.material.roughness, me = selectedMesh.material.metalness;
+  const mat = getPrimaryMaterial(selectedMesh);
+  if (!currentModel || !mat) return;
+  const ro = mat.roughness, me = mat.metalness;
   currentModel.traverse(m => {
-    if (!m.isMesh) return;
-    if (m.material.roughness !== undefined) m.material.roughness = ro;
-    if (m.material.metalness !== undefined) m.material.metalness = me;
+    if (m.isMesh) updateMatArray(m, mtr => {
+      if (mtr.roughness !== undefined) mtr.roughness = ro;
+      if (mtr.metalness !== undefined) mtr.metalness = me;
+    });
   });
   toast('PBR tüm meshlere uygulandı');
 });
@@ -1370,7 +1425,7 @@ $('btn-exp-usdz').addEventListener('click', () => {
 function toggleWireframe() {
   wireMode = !wireMode;
   $('btn-wf').classList.toggle('active', wireMode);
-  if (currentModel) currentModel.traverse(c => { if (c.isMesh) c.material.wireframe = wireMode; });
+  if (currentModel) currentModel.traverse(c => { if (c.isMesh) updateMatArray(c, m => m.wireframe = wireMode); });
   toast(wireMode ? 'Wireframe açık' : 'Wireframe kapalı');
 }
 $('btn-wf').addEventListener('click', toggleWireframe);
