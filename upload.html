@@ -234,7 +234,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
 <body>
 
 <div class="topbar">
-  <div class="logo"><div class="logo-dot"></div>pepper<em>AR</em> Studio</div>
+  <a href="dashboard.html" class="logo" style="text-decoration:none;"><div class="logo-dot"></div>pepper<em>AR</em> Studio</a>
   <div class="tb-div"></div>
   <input type="file" id="file-input" accept=".glb,.gltf" style="display:none">
   <button class="tb-btn" id="btn-open">
@@ -934,14 +934,15 @@ function undoTransform() {
 // ── DÜZENLEME MODU (BULUTTAN ÇEKME) ──
 async function checkEditMode() {
   const urlParams = new URLSearchParams(window.location.search);
-  const editModelName = urlParams.get('edit');
+  let editModelName = urlParams.get('edit'); // let yapıldı
   
   if (editModelName) {
+    editModelName = decodeURIComponent(editModelName); // shadowing düzeltildi
+    
     _el('loading-ov').classList.add('show');
     _el('load-text').textContent = 'Buluttan model ve ayarlar indiriliyor...';
     
     try {
-      // 1. Veritabanından renk/ışık ayarlarını çek (Burası zaten çalışıyor)
       const { data: dbData, error: dbErr } = await _supabase
         .from('models')
         .select('*')
@@ -951,7 +952,6 @@ async function checkEditMode() {
         
       if (dbErr && dbErr.code !== 'PGRST116') throw dbErr;
 
-      // 2. İNDİRMEK YERİNE DİREKT PUBLIC URL'Yİ ALIYORUZ (Güvenlik engeline takılmaz)
       const { data: fileData } = _supabase.storage
         .from('models')
         .getPublicUrl(`${editModelName}-3d.glb`);
@@ -960,7 +960,6 @@ async function checkEditMode() {
 
       currentFileName = `${editModelName}.glb`;
       
-      // 3. Modeli direkt bu URL'den sahneye çekiyoruz
       loadFromURL(fileData.publicUrl, editModelName, dbData);
 
     } catch (err) {
@@ -1215,7 +1214,7 @@ function toggleIsolate() {
 
 function deleteSelectedMesh() {
   if (!selectedMesh) return toast('Silmek için bir parça seçin','err');
-  saveHistoryState(); // Silme işlemi öncesi durumu kaydet (Geometri silinmesi tam geri alınamaz ama model konumu alınır)
+  saveHistoryState();
   const name = selectedMesh.name||'Parça';
   selectedMesh.removeFromParent();
   disposeHierarchy(selectedMesh);
@@ -1510,7 +1509,6 @@ if(_el('in-near')) _el('in-near').addEventListener('input', e => {
 });
 colorSetup('bg', hex => { scene.background=new THREE.Color(hex); });
 
-// Modelleri Input Aracılığıyla Düzenlerken History'yi Kaydet
 ['tx-x','tx-y','tx-z'].forEach((id,i) => {
   const el = _el(id);
   if(el) {
@@ -1801,68 +1799,84 @@ async function showPreviewModal() {
   if(b) b.addEventListener('click', showPreviewModal);
 });
 
+// YENİ GÜNCELLENEN KAYDETME (CONFIRM) KODU
 _el('btn-confirm-save').addEventListener('click', async () => {
   let modelName = _el('preview-name').value.trim();
   if (!modelName) return toast('Lütfen bir model ismi girin!', 'err');
-  
-  modelName = modelName.replace(/[^a-zA-Z0-9_ğüşıöçĞÜŞİÖÇ-]/g, '_');
-  
+
+  modelName = modelName.toLowerCase()
+    .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
+    .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c')
+    .replace(/\s+/g,'-').replace(/[^a-z0-9-_]/g,'');
+
+  if (!modelName) return toast('Geçerli bir isim girin!', 'err');
+
   _el('modal-preview').classList.remove('show');
   _el('loading-ov').classList.add('show');
-  _el('load-text').textContent = 'Buluta yükleniyor... (GLB, USDZ ve Render)';
+  _el('load-text').textContent = 'GLB hazırlanıyor...';
 
   try {
-    savePreset(); 
-
-    const settings = {
-      exposure: _el('in-exp')?.value || 1,
-      shadow_intensity: _el('in-shad')?.value || 0.2,
-      bg_color: _el('bg-hex')?.value || '#111113',
-      scale: (_el('in-sc')?.value / 100) || 1,
-      rotate_y: _el('rx-y')?.value || 0
-    };
+    savePreset();
 
     const exporter = new GLTFExporter();
     const exportScene = createExportScene(currentModel, true);
-    
     const glbBuffer = await new Promise((resolve, reject) => {
       exporter.parse(exportScene, resolve, reject, { binary: true });
     });
 
     let usdzBuffer = null;
     if (USDZExporter) {
-      exportScene.updateMatrixWorld(true);
-      const usdzExp = new USDZExporter();
-      usdzBuffer = await usdzExp.parse(exportScene, {});
+      _el('load-text').textContent = 'USDZ hazırlanıyor...';
+      try {
+        const exportScene2 = createExportScene(currentModel, true);
+        exportScene2.updateMatrixWorld(true);
+        const usdzExp = new USDZExporter();
+        usdzBuffer = await usdzExp.parse(exportScene2, {});
+      } catch(e) { console.warn('USDZ hatası:', e); }
     }
 
     const thumbDataUrl = _el('preview-img').src;
     const thumbBlob = await (await fetch(thumbDataUrl)).blob();
 
-    await _supabase.storage.from('models').upload(`${modelName}-3d.glb`, new Blob([glbBuffer]), { upsert: true });
+    _el('load-text').textContent = 'Dosyalar yükleniyor...';
+
+    const { error: glbErr } = await _supabase.storage.from('models')
+      .upload(`${modelName}-3d.glb`, new Blob([glbBuffer], {type:'model/gltf-binary'}), 
+        { upsert: true, contentType: 'model/gltf-binary' });
+    if (glbErr) throw new Error('GLB hatası: ' + glbErr.message);
+
     if (usdzBuffer) {
-      await _supabase.storage.from('models').upload(`${modelName}-3d.usdz`, new Blob([usdzBuffer]), { upsert: true });
+      await _supabase.storage.from('models')
+        .upload(`${modelName}-3d.usdz`, new Blob([usdzBuffer], {type:'model/vnd.usdz+zip'}), 
+          { upsert: true, contentType: 'model/vnd.usdz+zip' });
     }
-    await _supabase.storage.from('models').upload(`${modelName}-thumb.webp`, thumbBlob, { upsert: true });
+
+    await _supabase.storage.from('models')
+      .upload(`${modelName}-thumb.webp`, thumbBlob, 
+        { upsert: true, contentType: 'image/webp' });
+
+    _el('load-text').textContent = 'Veritabanına kaydediliyor...';
 
     const { error: dbError } = await _supabase.from('models').upsert([{
-      user_id: currentUser.id,
-      name: modelName,
-      exposure: parseFloat(settings.exposure),
-      shadow_intensity: parseFloat(settings.shadow_intensity),
-      bg_color: settings.bg_color,
-      scale: parseFloat(settings.scale),
-      rotate_y: parseFloat(settings.rotate_y)
+      user_id:          currentUser.id,
+      name:             modelName,
+      exposure:         parseFloat(_el('in-exp')?.value || 1),
+      shadow_intensity: parseFloat(_el('in-shad')?.value || 0.2),
+      bg_color:         _el('bg-hex')?.value || '#111113',
+      scale:            parseFloat(_el('in-sc')?.value || 100) / 100,
+      rotate_y:         parseFloat(_el('rx-y')?.value || 0),
+      environment:      'neutral',
+      materials:        []
     }], { onConflict: 'name' });
 
-    if (dbError) throw dbError;
+    if (dbError) throw new Error('DB hatası: ' + dbError.message);
 
-    toast('Başarıyla yüklendi! Dashboard\'a yönlendiriliyorsunuz...', 'ok');
+    toast(`"${modelName}" yüklendi! ✓`, 'ok');
     setTimeout(() => { window.location.href = '/dashboard.html'; }, 1500);
 
   } catch (err) {
-    console.error("Yükleme Hatası:", err);
-    toast('Yükleme sırasında hata oluştu!', 'err');
+    console.error('Yükleme hatası:', err);
+    toast('Hata: ' + err.message, 'err');
   } finally {
     _el('loading-ov').classList.remove('show');
     _el('load-text').textContent = 'Model yükleniyor...';
