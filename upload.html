@@ -222,6 +222,10 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
 
 /* CHECKER PATTERN for transparency preview */
 .checker-bg{background-image:linear-gradient(45deg,#333 25%,transparent 25%),linear-gradient(-45deg,#333 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#333 75%),linear-gradient(-45deg,transparent 75%,#333 75%);background-size:10px 10px;background-position:0 0,0 5px,5px -5px,-5px 0px}
+
+/* PREVIEW INPUT */
+.preview-input { width: 100%; background: var(--bg0); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: var(--radius); font-family: var(--sans); font-size: 13px; outline: none; margin-top: 5px; }
+.preview-input:focus { border-color: var(--accent); }
 </style>
 <script type="importmap">
 {"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
@@ -651,6 +655,23 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
       <div class="sc-item">Izole Et <div class="sc-keys"><kbd>Alt</kbd><kbd>H</kbd></div></div>
     </div>
     <button class="btn" style="margin-top:18px" onclick="document.getElementById('modal-keys').classList.remove('show')">Kapat</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-preview">
+  <div class="modal" style="width: 380px;">
+    <div class="modal-title">☁️ Buluta Kaydet</div>
+    <div style="width:100%; height:220px; border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; margin-bottom:16px; background:var(--bg3); display:flex; align-items:center; justify-content:center;">
+      <img id="preview-img" src="" style="max-width:100%; max-height:100%; object-fit:contain;">
+    </div>
+    <div class="field" style="margin-bottom:20px;">
+      <span class="label">Model İsmi</span>
+      <input type="text" id="preview-name" class="preview-input" placeholder="Model ismini girin...">
+    </div>
+    <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <button class="btn" style="flex:none; padding:8px 16px;" onclick="document.getElementById('modal-preview').classList.remove('show')">Vazgeç</button>
+      <button class="btn accent" style="flex:none; padding:8px 16px;" id="btn-confirm-save">🚀 Onayla ve Yükle</button>
+    </div>
   </div>
 </div>
 
@@ -1679,25 +1700,43 @@ function loadPreset() {
   } catch(e){}
 }
 
-// ── BULUTA KAYDET (SUPABASE ENTEGRASYONU) ──
-[_el('btn-save'), _el('btn-save2')].forEach(b => {
-  if(b) {
-    b.addEventListener('click', publishToCloud);
-  }
-});
+// ── BULUTA KAYDET (ÖNİZLEME VE SUPABASE ENTEGRASYONU) ──
 
-async function publishToCloud() {
+// 1. Adım: Önizleme Modalını Aç
+async function showPreviewModal() {
   if (!currentModel) return toast('Önce bir model yükleyin!', 'err');
   if (!currentUser) return toast('Oturum hatası. Lütfen tekrar giriş yapın.', 'err');
 
-  // Regex ile dosya ismini uygun hale getirme
-  let defaultName = currentFileName.replace(/\.[^/.]+$/, "");
-  let modelName = prompt("Model için bir isim girin:", defaultName);
+  // Sahnenin anlık görüntüsünü (Thumbnail) al
+  renderer.render(scene, camera);
+  const thumbDataUrl = renderer.domElement.toDataURL('image/webp', 0.8);
   
-  if (!modelName) return; // İptal edildi
-  modelName = modelName.trim().replace(/[^a-zA-Z0-9_ğüşıöçĞÜŞİÖÇ-]/g, '_');
+  // Önizleme görselini ve ismini modal içine yerleştir
+  _el('preview-img').src = thumbDataUrl;
+  _el('preview-name').value = currentFileName.replace(/\.[^/.]+$/, "");
+  
+  _el('modal-preview').classList.add('show');
+}
 
-  _el('loading-ov').classList.add('show');
+[_el('btn-save'), _el('btn-save2')].forEach(b => {
+  if(b) {
+    b.addEventListener('click', showPreviewModal);
+  }
+});
+
+// 2. Adım: Modaldan Onay Alıp Gerçek Yüklemeyi Başlat
+_el('btn-confirm-save').addEventListener('click', async () => {
+  let modelName = _el('preview-name').value.trim();
+  if (!modelName) {
+    toast('Lütfen bir model ismi girin!', 'err');
+    return;
+  }
+  
+  // Güvenli dosya ismi (Türkçe karakterleri dahil etmiştik)
+  modelName = modelName.replace(/[^a-zA-Z0-9_ğüşıöçĞÜŞİÖÇ-]/g, '_');
+  
+  _el('modal-preview').classList.remove('show'); // Modalı kapat
+  _el('loading-ov').classList.add('show');       // Yükleme ekranını aç
   _el('load-text').textContent = 'Buluta yükleniyor... (GLB, USDZ ve Render)';
 
   try {
@@ -1725,8 +1764,8 @@ async function publishToCloud() {
       usdzBuffer = await usdzExp.parse(exportScene, {});
     }
 
-    renderer.render(scene, camera);
-    const thumbDataUrl = renderer.domElement.toDataURL('image/webp', 0.8);
+    // Modalda gösterdiğimiz Base64 veriyi Blob'a çevir
+    const thumbDataUrl = _el('preview-img').src;
     const thumbBlob = await (await fetch(thumbDataUrl)).blob();
 
     await _supabase.storage.from('models').upload(`${modelName}-3d.glb`, new Blob([glbBuffer]), { upsert: true });
@@ -1762,7 +1801,8 @@ async function publishToCloud() {
     _el('loading-ov').classList.remove('show');
     _el('load-text').textContent = 'Model yükleniyor...';
   }
-}
+});
+
 
 // ── BULK AR (TOPLU İŞLEM) ──
 const bulkModels = [null,null,null,null,null];
