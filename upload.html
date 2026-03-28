@@ -1,923 +1,2027 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>pepperAR — Model Editor</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
-  
-  <script>
-    const savedTheme = localStorage.getItem('pepper_theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pepperAR Studio — Pro 3D Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+  (function(){
+    const t = localStorage.getItem('par_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
+<style>
+:root {
+  --bg0:#0d0d0f;--bg1:#111113;--bg2:#161618;--bg3:#1c1c1f;--bg4:#242428;
+  --border:#2a2a2e;--border2:#3a3a3f;
+  --accent:#f97316;--accent2:#fb923c;--accent-bg:rgba(249,115,22,.12);--accent-glow:rgba(249,115,22,.35);
+  --text:#f0f0f2;--text2:#8b8b96;--text3:#55555f;
+  --green:#22c55e;--blue:#3b82f6;--red:#ef4444;--yellow:#eab308;
+  --radius:6px;--mono:'Space Mono',monospace;--sans:'Outfit',sans-serif;
+  --sidebar-w:284px;--topbar-h:52px;--statusbar-h:28px;
+}
+[data-theme="light"] {
+  --bg0:#e4e4e8;--bg1:#eeeeF2;--bg2:#f5f5f8;--bg3:#fafafc;--bg4:#ffffff;
+  --border:#d0d0d6;--border2:#bdbdc7;
+  --accent:#ea6c0a;--accent2:#f97316;--accent-bg:rgba(234,108,10,.10);--accent-glow:rgba(234,108,10,.25);
+  --text:#111115;--text2:#5c5c68;--text3:#aaaaB5;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);background:var(--bg0);color:var(--text);display:flex;flex-direction:column;font-size:13px;user-select:none}
 
-  <style>
-    :root {
-      /* LIGHT MODE - Dashboard ile Milimetrik Aynı */
-      --bg:          #fafafa;
-      --bg2:         #ffffff;
-      --bg3:         #f4f4f5;
-      --border:      #e4e4e7;
-      --border2:     #d4d4d8;
-      
-      --accent:      #d97706; /* Dashboard Sarısı (Hardal) */
-      --accent-hov:  #b45309;
-      --accent-bg:   rgba(217, 119, 6, 0.08);
-      
-      --green:       #10b981; 
-      --green-bg:    rgba(16, 185, 129, 0.1);
-      
-      --text:        #18181b;
-      --text2:       #52525b;
-      --text3:       #a1a1aa;
-      
-      --red:         #ef4444;
-      --red-bg:      rgba(239, 68, 68, 0.08);
-      
-      --radius:      8px;
-      --radius-lg:   12px;
-      --border-w:    1px;
-    }
+/* TOPBAR */
+.topbar{height:var(--topbar-h);background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:8px;z-index:100;flex-shrink:0}
+.logo{font-size:14px;font-weight:800;letter-spacing:-.5px;color:var(--text);display:flex;align-items:center;gap:7px;flex-shrink:0}
+.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;box-shadow:0 0 8px var(--accent-glow)}
+.logo em{color:var(--accent);font-style:normal}
+.tb-div{width:1px;height:22px;background:var(--border);flex-shrink:0}
+.tb-spacer{flex:1}
+.tb-btn{height:30px;padding:0 11px;background:transparent;border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.tb-btn:hover{border-color:var(--border2);color:var(--text);background:var(--bg3)}
+.tb-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.tb-btn.primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.tb-btn.icon{width:30px;padding:0;justify-content:center;font-size:13px}
+.tb-btn.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
 
-    [data-theme="dark"] {
-      /* DARK MODE - Dashboard ile Milimetrik Aynı */
-      --bg:          #0a0a0a;
-      --bg2:         #121212;
-      --bg3:         #1a1a1a;
-      --border:      #27272a;
-      --border2:     #3f3f46;
-      
-      --accent:      #facc15; /* Dashboard Sarısı (Parlak) */
-      --accent-hov:  #eab308;
-      --accent-bg:   rgba(250, 204, 21, 0.1);
-      
-      --green:       #34d399; 
-      --green-bg:    rgba(52, 211, 153, 0.1);
-      
-      --text:        #f4f4f5;
-      --text2:       #a1a1aa;
-      --text3:       #71717a;
-    }
+/* LAYOUT */
+.workspace{flex:1;display:flex;overflow:hidden}
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body {
-      background: var(--bg);
-      font-family: 'DM Sans', sans-serif;
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
-    
-    body::before {
-      content: ''; position: fixed; inset: 0; z-index: 0;
-      background-image: linear-gradient(var(--border) 1px, transparent 1px),
-                        linear-gradient(90deg, var(--border) 1px, transparent 1px);
-      background-size: 40px 40px; pointer-events: none; opacity: 0.4;
-      transition: opacity 0.3s ease;
-    }
+/* SIDEBARS */
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg1);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-left{border-right:1px solid var(--border)}
+.sidebar-right{border-left:1px solid var(--border)}
 
-    .app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
-    
-    /* ─── TOPBAR ─── */
-    .topbar {
-      height: 60px; border-bottom: var(--border-w) solid var(--border);
-      display: flex; align-items: center; padding: 0 32px; gap: 16px;
-      background: var(--bg2); opacity: 0.95; backdrop-filter: blur(8px);
-      position: sticky; top: 0; z-index: 100;
-      transition: background-color 0.3s, border-color 0.3s;
-    }
-    .logo { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); letter-spacing: -0.5px;}
-    .logo span { color: var(--accent); }
-    .logo-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent-bg); animation: pulse 2s ease-in-out infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.7); } }
-    
-    .topbar-sep { flex: 1; }
-    .topbar-nav { display: flex; align-items: center; gap: 12px; }
-    
-    .btn-dash {
-      display: flex; align-items: center; gap: 6px; padding: 8px 18px;
-      border: var(--border-w) solid var(--border2); border-radius: var(--radius);
-      color: var(--text2); font-size: 13.5px; font-weight: 600;
-      text-decoration: none; transition: all 0.2s; background: transparent;
-    }
-    .btn-dash:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-    
-    .steps { display: flex; align-items: center; gap: 8px; margin-left: 16px; }
-    .stp { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 20px; border: var(--border-w) solid var(--border); color: var(--text3); transition: all 0.3s; background: var(--bg); }
-    .stp.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-    .stp.done { border-color: rgba(16, 185, 129, 0.3); color: var(--green); background: var(--green-bg); }
-    .stp-arr { color: var(--text3); font-size: 11px; }
-    
-    .user-badge { display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; background: var(--bg); border: var(--border-w) solid var(--border); border-radius: 20px; }
-    .user-avatar { width: 24px; height: 24px; background: var(--accent-bg); border: var(--border-w) solid rgba(217, 119, 6, 0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--accent); }
-    .user-name { font-size: 13px; color: var(--text2); font-weight: 500;}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 
-    .main { flex: 1; display: flex; }
+/* TABS */
+.stab-bar{display:flex;border-bottom:1px solid var(--border);padding:0 8px;gap:2px;padding-top:6px;flex-shrink:0}
+.stab{padding:6px 10px;border-radius:4px 4px 0 0;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);cursor:pointer;transition:all .15s;border:1px solid transparent;border-bottom:none;position:relative;bottom:-1px}
+.stab:hover{color:var(--text2)}
+.stab.active{color:var(--text);background:var(--bg2);border-color:var(--border);border-bottom-color:var(--bg2)}
+.stab-pane{display:none;flex:1;overflow-y:auto;flex-direction:column}
+.stab-pane.active{display:flex}
 
-    /* ─── STEP 1: UPLOAD ─── */
-    #step1 { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
-    .upload-wrap { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 24px; }
-    .upload-wrap h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: var(--text); }
-    .upload-wrap h2 span { color: var(--accent); }
-    .upload-wrap p { font-size: 14px; color: var(--text2); line-height: 1.6; margin-top: 4px;}
-    
-    .card { background: var(--bg2); border: var(--border-w) solid var(--border); border-radius: var(--radius-lg); padding: 32px; display: flex; flex-direction: column; gap: 20px; transition: border-color 0.2s, box-shadow 0.2s; }
-    .card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-    [data-theme="dark"] .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-    
-    .card-lbl { font-size: 11.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); }
-    .field { display: flex; flex-direction: column; gap: 8px; }
-    .field label { font-size: 13px; font-weight: 600; color: var(--text2); }
-    
-    .field input[type=text] {
-      background: var(--bg); border: var(--border-w) solid var(--border2);
-      border-radius: var(--radius); padding: 12px 16px; font-family: inherit;
-      font-size: 14px; color: var(--text); outline: none; transition: all 0.2s;
-    }
-    .field input[type=text]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); background: var(--bg2); }
-    .field input::placeholder { color: var(--text3); }
-    .field-hint { font-size: 12px; color: var(--text3); }
-    
-    .files-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .drop-zone {
-      border: 1.5px dashed var(--border2); border-radius: var(--radius);
-      padding: 24px 12px; display: flex; flex-direction: column; align-items: center;
-      gap: 8px; cursor: pointer; transition: all 0.2s; position: relative; text-align: center; background: var(--bg);
-    }
-    .drop-zone:hover, .drop-zone.drag { border-color: var(--accent); background: var(--accent-bg); }
-    .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-    .drop-icon { font-size: 24px; opacity: 0.8; }
-    .drop-lbl { font-size: 13px; font-weight: 500; color: var(--text2); }
-    .drop-lbl strong { color: var(--accent); }
-    .drop-ext { font-size: 11px; color: var(--text3); background: var(--bg2); border: var(--border-w) solid var(--border); border-radius: 6px; padding: 2px 8px; font-family: 'DM Mono', monospace; }
-    .drop-zone.has-file { border-color: rgba(16, 185, 129, 0.4); background: var(--green-bg); border-style: solid; }
-    .file-name { font-size: 12px; color: var(--green); display: none; word-break: break-all; font-weight: 500;}
-    .drop-zone.has-file .file-name { display: block; }
-    .drop-zone.has-file .drop-lbl, .drop-zone.has-file .drop-ext { display: none; }
-    
-    .prog-wrap { display: none; flex-direction: column; gap: 8px; }
-    .prog-wrap.ac { display: flex; }
-    .prog-info { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); font-weight: 500;}
-    .prog-bg { height: 4px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
-    .prog-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
-    
-    .err-box { display: none; padding: 12px 14px; background: var(--red-bg); border: var(--border-w) solid rgba(239, 68, 68, 0.2); border-radius: var(--radius); font-size: 13px; color: var(--red); font-weight: 500;}
-    .err-box.ac { display: block; }
-    
-    .btn-primary {
-      background: var(--accent); color: #fff; border: none; border-radius: var(--radius);
-      padding: 14px; width: 100%; font-family: inherit; font-weight: 600; font-size: 14px;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .btn-primary:hover { background: var(--accent-hov); transform: translateY(-1px); }
-    [data-theme="dark"] .btn-primary { color: #000; }
-    .btn-primary:active { transform: scale(0.98); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+/* SECTION */
+.section{border-bottom:1px solid var(--border);flex-shrink:0}
+.section-head{padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:background .15s}
+.section-head:hover{background:var(--bg3)}
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);flex:1}
+.section-arrow{font-size:9px;color:var(--text3);transition:transform .2s}
+.section.closed .section-arrow{transform:rotate(-90deg)}
+.section.closed .section-body{display:none}
+.section-body{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 
-    /* ─── STEP 2: EDITOR (SOL MENÜ & AKORDEON) ─── */
-    #step2 { flex: 1; display: none; }
-    #step2.ac { display: flex; }
-    
-    .ed-left {
-      width: 320px; min-width: 320px; background: var(--bg2);
-      border-right: var(--border-w) solid var(--border); display: flex; flex-direction: column;
-      overflow-y: auto; height: calc(100vh - 60px); position: sticky; top: 60px;
-    }
-    
-    /* AKORDEON STİLLERİ */
-    .ed-sec { padding: 24px; border-bottom: var(--border-w) solid var(--border); display: flex; flex-direction: column; }
-    
-    .sec-title { 
-      font-size: 12px; font-weight: 700; letter-spacing: 0.06em; 
-      text-transform: uppercase; color: var(--text2); 
-      display: flex; justify-content: space-between; align-items: center;
-      cursor: pointer; user-select: none; transition: color 0.2s;
-    }
-    .sec-title:hover { color: var(--accent); }
-    .sec-title::after { content: '▼'; font-size: 10px; transition: transform 0.3s ease; color: var(--text3); }
-    
-    /* Kapalı (Collapsed) Durum */
-    .ed-sec.collapsed .sec-title::after { transform: rotate(-90deg); }
-    .ed-sec.collapsed .sec-content { display: none; }
-    
-    .sec-content { display: flex; flex-direction: column; gap: 16px; margin-top: 20px; }
-    
-    /* Özel İçerikler */
-    .sl-row { display: flex; flex-direction: column; gap: 8px; }
-    .sl-hdr { display: flex; justify-content: space-between; align-items: center; }
-    .sl-lbl { font-size: 13px; color: var(--text2); font-weight: 500;}
-    .sl-val { font-size: 13px; font-weight: 600; color: var(--accent); min-width: 36px; text-align: right; font-family: 'DM Mono', monospace;}
-    
-    input[type=range] { width: 100%; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 4px; background: var(--border2); cursor: pointer; outline: none; }
-    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg2); box-shadow: 0 0 0 1px var(--border); }
-    
-    .env-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .env-btn {
-      background: var(--bg); border: var(--border-w) solid var(--border); border-radius: 6px;
-      padding: 8px 4px; font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer;
-      text-align: center; transition: all 0.2s; font-family: inherit;
-    }
-    .env-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-    .env-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-    
-    .color-row { display: flex; align-items: center; gap: 12px; }
-    .color-prev { width: 40px; height: 40px; border-radius: 8px; border: var(--border-w) solid var(--border2); cursor: pointer; flex-shrink: 0; transition: transform 0.2s; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);}
-    .color-prev:hover { transform: scale(1.05); border-color: var(--accent); }
-    input[type=color] { position: absolute; opacity: 0; width: 0; height: 0; }
-    .color-lbl { font-size: 13px; color: var(--text2); font-weight: 500;}
-    .color-hex { font-size: 12px; color: var(--accent); font-weight: 500; font-family: 'DM Mono', monospace; margin-top: 2px;}
-    
-    .btn-row { display: flex; gap: 8px; }
-    .btn-sec {
-      flex: 1; padding: 10px; border: var(--border-w) solid var(--border); border-radius: var(--radius);
-      background: var(--bg); color: var(--text2); font-family: inherit; font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: all 0.2s; text-align: center;
-    }
-    .btn-sec:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-    
-    .mat-hint { font-size: 12px; color: var(--text3); line-height: 1.5; margin-bottom: -10px; }
-    .mat-list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; padding-right: 4px;}
-    .mat-item {
-      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
-      border-radius: var(--radius); border: var(--border-w) solid var(--border);
-      cursor: pointer; transition: all 0.2s; background: var(--bg);
-    }
-    .mat-item:hover { border-color: rgba(217, 119, 6, 0.25); }
-    .mat-item.selected { border-color: var(--accent); background: var(--accent-bg); }
-    .mat-item.hidden-mat { opacity: 0.5; background: var(--bg3); }
-    
-    .mat-dot { width: 16px; height: 16px; border-radius: 4px; border: var(--border-w) solid var(--border2); flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);}
-    .mat-label { font-size: 13px; color: var(--text2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;}
-    .mat-item.selected .mat-label { color: var(--text); }
-    [data-theme="dark"] .mat-item.selected .mat-label { color: var(--accent); }
-    
-    .mat-hide-btn { font-size: 13px; padding: 4px; background: none; border: none; cursor: pointer; color: var(--text3); transition: color 0.2s; flex-shrink: 0; }
-    .mat-hide-btn:hover { color: var(--red); }
-    .mat-item.hidden-mat .mat-hide-btn { color: var(--green); }
-    
-    .mat-editor { display: none; flex-direction: column; gap: 14px; padding: 16px; background: var(--bg); border-radius: var(--radius); border: var(--border-w) solid rgba(217, 119, 6, 0.25); margin-top: 8px; }
-    .mat-editor.ac { display: flex; }
-    .mat-ed-title { font-size: 13px; font-weight: 600; color: var(--accent); font-family: 'DM Mono', monospace; }
-    .big-color { width: 44px; height: 44px; border-radius: 8px; border: var(--border-w) solid var(--border2); cursor: pointer; flex-shrink: 0; transition: transform 0.2s; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);}
-    .big-color:hover { transform: scale(1.05); border-color: var(--accent); }
-    
-    .save-area { padding: 24px; margin-top: auto; border-top: var(--border-w) solid var(--border); background: var(--bg2); z-index: 10; }
-    .btn-save {
-      width: 100%; padding: 14px; background: var(--accent); color: #fff;
-      border: none; border-radius: var(--radius); font-family: inherit;
-      font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s;
-    }
-    .btn-save:hover { background: var(--accent-hov); transform: translateY(-1px); }
-    [data-theme="dark"] .btn-save { color: #000; }
-    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .save-hint { font-size: 12px; color: var(--text3); text-align: center; margin-top: 10px; font-weight: 500;}
+/* CONTROLS */
+.field{display:flex;flex-direction:column;gap:5px}
+.field-row{display:flex;align-items:center;justify-content:space-between}
+.label{font-size:11px;font-weight:600;color:var(--text2)}
+.vbadge{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-bg);padding:1px 5px;border-radius:3px}
 
-    .ed-right { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
-    .ed-topbar { padding: 12px 24px; border-bottom: var(--border-w) solid var(--border); display: flex; align-items: center; gap: 16px; background: var(--bg2); }
-    .model-badge { background: var(--bg); border: var(--border-w) solid var(--border2); border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 500; color: var(--text); font-family: 'DM Mono', monospace; }
-    .ed-info { font-size: 13px; color: var(--text3); font-weight: 500;}
-    
-    .viewer-wrap { flex: 1; position: relative; }
-    model-viewer#editorMV { width: 100%; height: 100%; min-height: 500px; --poster-color: transparent; cursor: crosshair; }
-    .viewer-hint { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--bg2); opacity: 0.9; border: var(--border-w) solid var(--border); border-radius: 20px; padding: 8px 16px; font-size: 12px; color: var(--text2); pointer-events: none; white-space: nowrap; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.05);}
+input[type=range]{width:100%;height:4px;-webkit-appearance:none;background:var(--bg4);border-radius:4px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg1);box-shadow:0 0 0 2px var(--accent-glow);transition:box-shadow .15s}
+input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 0 4px var(--accent-glow)}
 
-    /* ─── STEP 3: RESULT ─── */
-    #step3 { flex: 1; display: none; align-items: center; justify-content: center; padding: 40px 20px; }
-    #step3.ac { display: flex; }
-    .result-wrap { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 16px; }
-    .result-card { background: var(--bg2); border: var(--border-w) solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-lg); padding: 40px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 40px var(--green-bg); animation: fadeUp 0.4s ease; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    
-    .result-icon { font-size: 48px; text-align: center; }
-    .result-title { font-size: 24px; font-weight: 700; text-align: center; letter-spacing: -0.5px; }
-    .result-sub { font-size: 14px; color: var(--text2); text-align: center; line-height: 1.6; }
-    
-    .link-box { background: var(--bg); border: var(--border-w) solid var(--border); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
-    .link-text { font-size: 13px; color: var(--accent); font-weight: 500; word-break: break-all; flex: 1; font-family: 'DM Mono', monospace; }
-    .btn-copy { background: var(--accent-bg); border: var(--border-w) solid rgba(217, 119, 6, 0.25); border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--accent); cursor: pointer; white-space: nowrap; transition: all 0.2s; font-family: inherit;}
-    .btn-copy:hover { background: var(--accent); color: #fff; }
-    [data-theme="dark"] .btn-copy:hover { color: #000; }
-    .btn-copy.copied { color: var(--green); border-color: rgba(16, 185, 129, 0.4); background: var(--green-bg); }
-    
-    .result-btns { display: flex; gap: 12px; margin-top: 8px;}
-    .btn-preview { flex: 1; padding: 14px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;}
-    .btn-preview:hover { background: var(--accent-hov); transform: translateY(-1px); }
-    [data-theme="dark"] .btn-preview { color: #000; }
-    
-    .btn-new { flex: 1; padding: 14px; background: var(--bg); border: var(--border-w) solid var(--border); border-radius: var(--radius); color: var(--text2); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; font-family: inherit;}
-    .btn-new:hover { border-color: var(--accent); color: var(--text); background: var(--bg2);}
-    
-    .btn-dashboard { width: 100%; padding: 14px; background: transparent; border: var(--border-w) solid var(--green); border-radius: var(--radius); color: var(--green); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; margin-top: 8px;}
-    .btn-dashboard:hover { background: var(--green-bg); }
+.xyz-row{display:flex;gap:4px}
+.xyz-field{flex:1;display:flex;flex-direction:column;gap:3px}
+.xyz-label{font-size:10px;font-weight:700;text-align:center}
+.xl{color:var(--red)}.yl{color:var(--green)}.zl{color:var(--blue)}
+.xyz-field input{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:10px;padding:4px 5px;border-radius:var(--radius);width:100%;text-align:center;outline:none;transition:border-color .15s}
+.xyz-field input:focus{border-color:var(--accent)}
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 6px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
-  </style>
+.color-row{display:flex;align-items:center;gap:8px;margin-top:4px}
+.swatch{width:28px;height:28px;border-radius:5px;border:1px solid var(--border2);cursor:pointer;transition:border-color .15s;flex-shrink:0}
+.swatch:hover{border-color:var(--accent)}
+input[type=color]{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+.hex-input{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:var(--radius);flex:1;outline:none;transition:border-color .15s}
+.hex-input:focus{border-color:var(--accent);color:var(--text)}
+
+.toggle{width:32px;height:18px;background:var(--bg4);border:1px solid var(--border2);border-radius:9px;cursor:pointer;position:relative;transition:all .2s;flex-shrink:0}
+.toggle::after{content:'';position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--text3);transition:all .2s}
+.toggle.on{background:var(--accent-bg);border-color:var(--accent)}
+.toggle.on::after{background:var(--accent);transform:translateX(14px)}
+.toggle-row{display:flex;align-items:center;gap:8px}
+.toggle-label{font-size:12px;color:var(--text2)}
+
+.styled-select{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:12px;padding:5px 8px;border-radius:var(--radius);width:100%;outline:none;cursor:pointer;transition:border-color .15s;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2388888f'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}
+.styled-select:focus{border-color:var(--accent)}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 12px;border-radius:var(--radius);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:var(--bg3);color:var(--text2);width:100%}
+.btn:hover{background:var(--bg4);color:var(--text);border-color:var(--border2)}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.accent:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn.danger{color:var(--red);border-color:var(--border2);background:transparent}
+.btn.danger:hover{background:rgba(239,68,68,.1);border-color:var(--red)}
+.btn.sm{padding:5px 8px;font-size:11px}
+.btn-row{display:flex;gap:6px}
+.btn-row .btn{flex:1}
+
+/* TEXTURE PREVIEW */
+.tex-preview{width:100%;height:70px;border-radius:var(--radius);border:1px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3);cursor:pointer;transition:all .2s;overflow:hidden;position:relative;background:var(--bg3)}
+.tex-preview:hover{border-color:var(--accent);color:var(--accent)}
+.tex-preview img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.tex-preview-label{position:relative;z-index:1;font-size:10px;font-weight:600;text-align:center;line-height:1.4;padding:4px}
+.tex-preview.loaded .tex-preview-label{background:rgba(0,0,0,.55);border-radius:4px;color:#fff}
+.tex-slot{display:flex;flex-direction:column;gap:5px}
+.tex-slot-name{font-size:11px;font-weight:600;color:var(--text2)}
+.tex-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tex-clear{margin-top:4px}
+
+/* ALPHA MODE PILLS */
+.alpha-pills{display:flex;gap:4px;flex-wrap:wrap}
+.alpha-pill{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);transition:all .15s}
+.alpha-pill:hover{border-color:var(--border2);color:var(--text)}
+.alpha-pill.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+
+/* BULK */
+.bulk-slot{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:8px;transition:border-color .2s}
+.bulk-slot:hover{border-color:var(--border2)}
+.bulk-slot-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.bulk-file-name{font-family:var(--mono);font-size:10px;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:8px;display:block}
+
+/* OUTLINER */
+.outliner{padding:4px 0}
+.ol-item{display:flex;align-items:center;gap:6px;padding:5px 12px;cursor:pointer;transition:background .1s;position:relative}
+.ol-item:hover{background:var(--bg3)}
+.ol-item.selected{background:var(--accent-bg)}
+.ol-item.selected::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent)}
+.ol-icon{font-size:12px;flex-shrink:0}
+.ol-name{font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ol-item.selected .ol-name{color:var(--accent)}
+.ol-type{font-size:10px;color:var(--text3);flex-shrink:0;font-family:var(--mono)}
+.ol-indent{padding-left:24px}
+.ol-vis{margin-left:auto;opacity:.4;font-size:11px;flex-shrink:0}
+.ol-item:hover .ol-vis{opacity:1}
+
+.empty-state{padding:20px 16px;text-align:center;color:var(--text3);font-size:12px;line-height:1.7}
+.empty-state .ei{font-size:26px;margin-bottom:8px;opacity:.45}
+
+/* VIEWPORT */
+.viewport{flex:1;position:relative;background:var(--bg0);overflow:hidden}
+#canvas-container{position:absolute;inset:0}
+
+/* VP TOOLBAR */
+.vp-toolbar{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:3px;display:flex;gap:2px;z-index:10;box-shadow:0 4px 20px rgba(0,0,0,.5);backdrop-filter:blur(10px)}
+.vp-btn{background:transparent;border:none;padding:5px 10px;border-radius:5px;font-family:var(--sans);font-size:11px;font-weight:700;color:var(--text2);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.vp-btn:hover{background:var(--bg4);color:var(--text)}
+.vp-btn.active{background:var(--accent-bg);color:var(--accent)}
+.vp-sep{width:1px;background:var(--border);margin:4px 2px}
+
+/* VIEW CONTROLS */
+.view-ctrls{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:4px;z-index:10}
+.vc-btn{width:30px;height:30px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;backdrop-filter:blur(8px);font-weight:700;font-family:var(--mono)}
+.vc-btn:hover{border-color:var(--border2);color:var(--text);background:var(--bg3)}
+
+/* STATS HUD */
+.stats-hud{position:absolute;bottom:12px;left:12px;background:rgba(10,10,12,.85);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.9;backdrop-filter:blur(8px);z-index:10}
+.stats-hud.hidden{display:none}
+.stats-hud span{color:var(--accent)}
+
+/* TOAST */
+.toast{position:absolute;bottom:12px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--bg2);border:1px solid var(--border);padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transition:opacity .25s,transform .25s;z-index:30;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:var(--green);color:var(--green)}
+.toast.err{border-color:var(--red);color:var(--red)}
+
+/* LOADING */
+.loading-ov{position:absolute;inset:0;background:rgba(10,10,12,.88);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;z-index:50;flex-direction:column;gap:14px}
+.loading-ov.show{display:flex}
+.loader{width:38px;height:38px;border-radius:50%;border:3px solid var(--border2);border-top-color:var(--accent);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-text{font-size:12px;font-weight:600;color:var(--text2)}
+
+/* DROP OVERLAY */
+.drop-ov{position:absolute;inset:8px;border:2px dashed var(--accent);border-radius:10px;background:var(--accent-bg);display:none;align-items:center;justify-content:center;z-index:40;pointer-events:none}
+.drop-ov.show{display:flex}
+.drop-text{font-size:18px;font-weight:800;color:var(--accent);letter-spacing:-.5px}
+
+/* STATUS BAR */
+.statusbar{height:var(--statusbar-h);background:var(--bg1);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:14px;font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;z-index:100}
+.sb-item{display:flex;align-items:center;gap:5px}
+.sb-item b{color:var(--text2);font-weight:700}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--text3)}
+.status-dot.ready{background:var(--green);box-shadow:0 0 6px var(--green)}
+.status-dot.err{background:var(--red)}
+.sb-spacer{flex:1}
+kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);border-radius:3px;padding:1px 4px;font-family:var(--mono);font-size:9px;color:var(--text2);line-height:1.4}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:24px;width:460px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.7)}
+.modal-title{font-size:15px;font-weight:800;margin-bottom:18px}
+.sc-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.sc-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg3);border-radius:var(--radius);font-size:11px;color:var(--text2)}
+.sc-keys{display:flex;gap:3px}
+
+/* SAVE PANEL */
+.save-panel{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
+
+/* CHECKER PATTERN for transparency preview */
+.checker-bg{background-image:linear-gradient(45deg,#333 25%,transparent 25%),linear-gradient(-45deg,#333 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#333 75%),linear-gradient(-45deg,transparent 75%,#333 75%);background-size:10px 10px;background-position:0 0,0 5px,5px -5px,-5px 0px}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
-<div class="app">
 
-  <div class="topbar">
-    <a href="dashboard.html" class="logo"><div class="logo-dot"></div>pepper<span>AR</span></a>
-    <div class="topbar-sep"></div>
-    <div class="topbar-nav">
-      <div class="user-badge">
-        <div class="user-avatar" id="userAvatar">?</div>
-        <span class="user-name" id="userName">Yükleniyor…</span>
-      </div>
-      <a href="dashboard.html" class="btn-dash">← Dashboard</a>
-    </div>
-    <div class="steps" style="margin-left:16px;">
-      <div class="stp active" id="stp1">1 · Yükle</div>
-      <div class="stp-arr">›</div>
-      <div class="stp" id="stp2">2 · Düzenle</div>
-      <div class="stp-arr">›</div>
-      <div class="stp" id="stp3">3 · Yayınla</div>
+<div class="topbar">
+  <div class="logo"><div class="logo-dot"></div>pepper<em>AR</em> Studio</div>
+  <div class="tb-div"></div>
+  <input type="file" id="file-input" accept=".glb,.gltf" style="display:none">
+  <button class="tb-btn" id="btn-open">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.22.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.5a.25.25 0 0 1-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1Z"/></svg>
+    Aç
+  </button>
+  <div class="tb-div"></div>
+  <button class="tb-btn icon" id="btn-frame" title="Odaklan (F)">⊙</button>
+  <button class="tb-btn icon" id="btn-ss" title="Screenshot (P)">📷</button>
+  <button class="tb-btn icon" id="btn-wf" title="Wireframe (W)">⬡</button>
+  <button class="tb-btn icon" id="btn-grid" title="Grid (G)">⊞</button>
+  <button class="tb-btn icon" id="btn-stats" title="İstatistik (I)">📊</button>
+  <div class="tb-div"></div>
+  <button class="tb-btn icon" id="btn-theme" title="Tema">◑</button>
+  <button class="tb-btn icon" id="btn-keys" title="Kısayollar (?)" style="font-weight:800">?</button>
+  <div class="tb-spacer"></div>
+  <button class="tb-btn" id="btn-exp-glb">↓ GLB</button>
+  <button class="tb-btn" id="btn-exp-usdz">↓ USDZ</button>
+  <button class="tb-btn primary" id="btn-save">💾 Kaydet</button>
+</div>
+
+<div class="workspace">
+
+<!-- SOL SIDEBAR -->
+<div class="sidebar sidebar-left">
+  <div class="stab-bar">
+    <div class="stab active" data-tab="outliner" data-side="left">Outliner</div>
+    <div class="stab" data-tab="scene" data-side="left">Sahne</div>
+    <div class="stab" data-tab="bulk" data-side="left">Toplu AR</div>
+  </div>
+
+  <!-- OUTLINER TAB -->
+  <div class="stab-pane active" id="tab-outliner">
+    <div id="outliner" class="outliner">
+      <div class="empty-state"><div class="ei">📦</div>Model yüklenmedi.<br>GLB dosyasını sürükleyin<br>veya yukarıdan açın.</div>
     </div>
   </div>
 
-  <div class="main">
-
-    <div id="step1">
-      <div class="upload-wrap">
-        <div>
-          <h2>Modeli <span>Yükle</span></h2>
-          <p style="margin-top:6px">GLB ve USDZ dosyalarını yükle, editörde ayarla ve yayınla.</p>
+  <!-- SAHNE TAB -->
+  <div class="stab-pane" id="tab-scene">
+    <div class="section">
+      <div class="section-head"><div class="section-title">💡 Işık</div><span class="section-arrow">▼</span></div>
+      <div class="section-body">
+        <div class="field">
+          <div class="field-row"><span class="label">Exposure</span><span class="vbadge" id="vb-exp">1.00</span></div>
+          <input type="range" id="in-exp" min="0.1" max="3" step="0.05" value="1">
         </div>
-        <div class="card">
-          <div class="card-lbl">Ürün Bilgisi</div>
-          <div class="field">
-            <label>Ürün Adı (link adresi)</label>
-            <input type="text" id="productName" placeholder="örn: modern-koltuk" autocomplete="off" spellcheck="false">
-            <div class="field-hint">Sadece harf, rakam ve tire. Boşluk kullanmayın.</div>
-          </div>
-          <div class="card-lbl" style="margin-top:4px">Model Dosyaları</div>
-          <div class="files-row">
-            <div class="field">
-              <label>Android / Web <span style="color:var(--accent)">GLB</span></label>
-              <div class="drop-zone" id="dropGlb">
-                <input type="file" id="fileGlb" accept=".glb">
-                <div class="drop-icon">📦</div>
-                <div class="drop-lbl"><strong>Seç</strong> veya sürükle</div>
-                <div class="drop-ext">.glb</div>
-                <div class="file-name" id="nameGlb"></div>
-              </div>
-            </div>
-            <div class="field">
-              <label>iOS <span style="color:var(--accent)">USDZ</span></label>
-              <div class="drop-zone" id="dropUsdz">
-                <input type="file" id="fileUsdz" accept=".usdz">
-                <div class="drop-icon">🍎</div>
-                <div class="drop-lbl"><strong>Seç</strong> veya sürükle</div>
-                <div class="drop-ext">.usdz</div>
-                <div class="file-name" id="nameUsdz"></div>
-              </div>
-            </div>
-          </div>
-          <div class="prog-wrap" id="progWrap">
-            <div class="prog-info"><span id="progTxt">Yükleniyor…</span><span id="progPct">0%</span></div>
-            <div class="prog-bg"><div class="prog-fill" id="progFill"></div></div>
-          </div>
-          <div class="err-box" id="errBox"></div>
-          <button class="btn-primary" id="btnUpload" disabled>Yükle ve Editöre Geç →</button>
+        <div class="field">
+          <div class="field-row"><span class="label">Ambient</span><span class="vbadge" id="vb-amb">0.40</span></div>
+          <input type="range" id="in-amb" min="0" max="2" step="0.05" value="0.4">
+        </div>
+        <div class="field">
+          <div class="field-row"><span class="label">Directional</span><span class="vbadge" id="vb-dir">1.00</span></div>
+          <input type="range" id="in-dir" min="0" max="3" step="0.05" value="1">
+        </div>
+        <div class="field">
+          <div class="field-row"><span class="label">Gölge Opaklığı</span><span class="vbadge" id="vb-shad">0.20</span></div>
+          <input type="range" id="in-shad" min="0" max="1" step="0.01" value="0.2">
         </div>
       </div>
     </div>
-
-    <div id="step2">
-      <div class="ed-left">
-        
-        <div class="ed-sec">
-          <div class="sec-title">💡 Işık &amp; Ortam</div>
-          <div class="sl-row">
-              <div class="sl-hdr"><span class="sl-lbl">Parlaklık</span><span class="sl-val" id="vExp">0.95</span></div>
-              <input type="range" id="slExp" min="0.1" max="3" step="0.05" value="0.95">
-            </div>
-            <div class="sl-row">
-              <div class="sl-hdr"><span class="sl-lbl">Gölge</span><span class="sl-val" id="vShd">1.5</span></div>
-              <input type="range" id="slShd" min="0" max="3" step="0.1" value="1.5">
-            </div>
-            <div class="sec-title" style="margin-top:2px; cursor:default; color:var(--text3);">Ortam</div>
-            <div class="env-grid">
-              <button class="env-btn active" data-env="neutral">Nötr</button>
-              <button class="env-btn" data-env="legacy">Legacy</button>
-              <button class="env-btn" data-env="commerce">Ticari</button>
-              <button class="env-btn" data-env="forest">Orman</button>
-              <button class="env-btn" data-env="apartment">İç Mekan</button>
-              <button class="env-btn" data-env="city">Şehir</button>
-            </div>
+    <div class="section">
+      <div class="section-head"><div class="section-title">🎨 Arka Plan</div><span class="section-arrow">▼</span></div>
+      <div class="section-body">
+        <div class="field">
+          <span class="label">Renk</span>
+          <div class="color-row">
+            <div class="swatch" id="bg-sw" style="background:#111113"></div>
+            <input type="color" id="in-bg" value="#111113">
+            <input type="text" class="hex-input" id="bg-hex" value="#111113" maxlength="7">
+          </div>
         </div>
-
-        <div class="ed-sec">
-          <div class="sec-title">🎨 Arka Plan</div>
-            <div class="color-row">
-              <div class="color-prev" id="bgPrev" style="background:#f7f5f2" onclick="document.getElementById('bgPick').click()"></div>
-              <input type="color" id="bgPick" value="#f7f5f2">
-              <div><div class="color-lbl">Arka plan rengi</div><div class="color-hex" id="bgHex">#f7f5f2</div></div>
-            </div>
-        </div>
-
-        <div class="ed-sec">
-          <div class="sec-title">📐 Boyut &amp; Döndür</div>
-            <div class="sl-row">
-              <div class="sl-hdr"><span class="sl-lbl">Boyut</span><span class="sl-val" id="vScale">100%</span></div>
-              <input type="range" id="slScale" min="10" max="300" step="1" value="100">
-            </div>
-            <div class="sl-row">
-              <div class="sl-hdr"><span class="sl-lbl">Y Döndür</span><span class="sl-val" id="vRot">0°</span></div>
-              <input type="range" id="slRot" min="0" max="360" step="1" value="0">
-            </div>
-            <div class="btn-row">
-              <button class="btn-sec" id="btnReset">↺ Sıfırla</button>
-              <button class="btn-sec" id="btnCenter">⊙ Ortala</button>
-            </div>
-        </div>
-
-        <div class="ed-sec" style="flex:1;min-height:0; border-bottom:none;">
-          <div class="sec-title">🎭 Materyaller</div>
-            <div class="mat-hint">Listeden veya modele tıklayarak parça seç</div>
-            <div class="mat-list" id="matList">
-              <div style="font-size:11px;color:var(--text-muted);padding:8px 0">Model yüklenince görünür.</div>
-            </div>
-            <div class="mat-editor" id="matEditor">
-              <div class="mat-ed-title" id="matEdTitle">—</div>
-              <div class="color-row">
-                <div class="big-color" id="matColorPrev" style="background:#fff" onclick="document.getElementById('matColorPick').click()"></div>
-                <input type="color" id="matColorPick" value="#ffffff">
-                <div><div class="color-lbl">Renk</div><div class="color-hex" id="matColorHex">#ffffff</div></div>
-              </div>
-              <div class="sl-row">
-                <div class="sl-hdr"><span class="sl-lbl">Pürüzlülük</span><span class="sl-val" id="vRough">0.50</span></div>
-                <input type="range" id="slRough" min="0" max="1" step="0.01" value="0.5">
-              </div>
-              <div class="sl-row">
-                <div class="sl-hdr"><span class="sl-lbl">Metalik</span><span class="sl-val" id="vMetal">0.00</span></div>
-                <input type="range" id="slMetal" min="0" max="1" step="0.01" value="0.0">
-              </div>
-            </div>
-        </div>
-
-        <div class="save-area">
-          <button class="btn-save" id="btnSave">💾 Kaydet ve Link Oluştur</button>
-          <div class="save-hint">Ayarlar Supabase'e kaydedilir, viewer'da uygulanır.</div>
-        </div>
-      </div>
-      
-      <div class="ed-right">
-        <div class="ed-topbar">
-          <div class="model-badge" id="edModelName">—</div>
-          <div class="ed-info">Modele tıkla: parça seç &nbsp;·&nbsp; Sürükle: döndür &nbsp;·&nbsp; Scroll: zoom</div>
-        </div>
-        <div class="viewer-wrap">
-          <model-viewer id="editorMV" camera-controls shadow-intensity="1.5"
-            environment-image="neutral" exposure="0.95" interaction-prompt="none"
-            style="width:100%;height:100%;min-height:500px;background:#f7f5f2;cursor:crosshair;">
-          </model-viewer>
-          <div class="viewer-hint">Modele tıklayarak parça seçebilirsin</div>
+        <div class="field">
+          <div class="field-row"><span class="label">Fog Yoğunluğu</span><span class="vbadge" id="vb-fog">0.000</span></div>
+          <input type="range" id="in-fog" min="0" max="0.05" step="0.001" value="0">
         </div>
       </div>
     </div>
-
-    <div id="step3">
-      <div class="result-wrap">
-        <div class="result-card">
-          <div class="result-icon">🎉</div>
-          <div class="result-title">Yayına Hazır!</div>
-          <div class="result-sub" id="resultSub">Model kaydedildi, AR linki oluşturuldu.</div>
-          <div class="link-box">
-            <div class="link-text" id="resultLink"></div>
-            <button class="btn-copy" id="btnCopy">Kopyala</button>
-          </div>
-          <div class="result-btns">
-            <a class="btn-preview" id="btnPreview" href="#" target="_blank">🔍 Önizle</a>
-            <button class="btn-new" id="btnNew">↑ Yeni Model</button>
-          </div>
-          <button class="btn-dashboard" onclick="window.location.href='dashboard.html'">
-            📊 Dashboard'a Git
-          </button>
+    <div class="section closed">
+      <div class="section-head"><div class="section-title">📷 Kamera</div><span class="section-arrow">▼</span></div>
+      <div class="section-body">
+        <div class="field">
+          <div class="field-row"><span class="label">FOV</span><span class="vbadge" id="vb-fov">45°</span></div>
+          <input type="range" id="in-fov" min="20" max="100" step="1" value="45">
+        </div>
+        <div class="field">
+          <div class="field-row"><span class="label">Near Clip</span><span class="vbadge" id="vb-near">0.01</span></div>
+          <input type="range" id="in-near" min="0.001" max="1" step="0.001" value="0.01">
         </div>
       </div>
     </div>
+  </div>
 
+  <!-- TOPLU AR TAB -->
+  <div class="stab-pane" id="tab-bulk">
+    <div class="section">
+      <div class="section-head"><div class="section-title">📦 5'li Toplu Düzenleme</div><span class="section-arrow">▼</span></div>
+      <div class="section-body" style="padding-top:4px">
+        <div class="toggle-row" style="margin-bottom:8px">
+          <div class="toggle on" id="cb-bulk-center"></div>
+          <span class="toggle-label" title="Dışa aktarım sırasında modeli tam merkeze hizalar">Pivot'u Merkeze Al</span>
+        </div>
+        <div id="bulk-slots"></div>
+        <div class="btn-row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <button class="btn sm accent" id="btn-bulk-glb-export">↓ Tümünü GLB</button>
+          <button class="btn sm accent" id="btn-bulk-usdz-export">↓ Tümünü USDZ</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script>
-  // ─── SOL MENÜ AKORDEON YAPISI ───
-  document.addEventListener("DOMContentLoaded", function() {
-    const sections = document.querySelectorAll('.ed-sec');
-    sections.forEach((sec, index) => {
-      const title = sec.querySelector('.sec-title');
-      if (!title) return;
-      
-      // Eğer HTML'de sec-content yoksa otomatik oluştur ve içine al
-      let content = sec.querySelector('.sec-content');
-      if (!content) {
-        content = document.createElement('div');
-        content.className = 'sec-content';
-        while (title.nextSibling) {
-          content.appendChild(title.nextSibling);
-        }
-        sec.appendChild(content);
-        
-        // Başlığa tıklayınca aç/kapat
-        title.style.cursor = 'pointer';
-        title.addEventListener('click', () => {
-          sec.classList.toggle('collapsed');
-        });
-      }
+<!-- VIEWPORT -->
+<div class="viewport" id="vp">
+  <div class="vp-toolbar" id="vp-tb" style="display:none">
+    <button class="vp-btn active" data-mode="translate">⊕ Taşı</button>
+    <button class="vp-btn" data-mode="rotate">↻ Döndür</button>
+    <button class="vp-btn" data-mode="scale">⤢ Ölçekle</button>
+    <div class="vp-sep"></div>
+    <button class="vp-btn" id="btn-space" style="font-size:10px;padding:5px 8px">WORLD</button>
+  </div>
+  <div class="view-ctrls">
+    <button class="vc-btn" id="vc-fr" title="Ön (1)">FR</button>
+    <button class="vc-btn" id="vc-tp" title="Üst (2)">TP</button>
+    <button class="vc-btn" id="vc-rt" title="Sağ (3)">RT</button>
+    <button class="vc-btn" id="vc-is" title="Iso (4)">IS</button>
+  </div>
+  <div class="stats-hud hidden" id="stats-hud">
+    FPS: <span id="fps-v">—</span><br>
+    Mesh: <span id="st-m">0</span><br>
+    Vertices: <span id="st-v">0</span><br>
+    Triangles: <span id="st-t">0</span>
+  </div>
+  <div class="loading-ov" id="loading-ov">
+    <div class="loader"></div>
+    <div class="load-text" id="load-text">Model yükleniyor...</div>
+  </div>
+  <div class="drop-ov" id="drop-ov"><div class="drop-text">GLB / GLTF Bırak</div></div>
+  <div class="toast" id="toast"></div>
+  <div id="canvas-container"></div>
+</div>
 
-      // Materyaller sekmesi (4. indeks olan, classında flex:1 olan hariç) diğerlerini kapalı başlat
-      if (index !== 3) {
-        sec.classList.add('collapsed');
-      }
-    });
-  });
+<!-- SAĞ SIDEBAR -->
+<div class="sidebar sidebar-right">
+  <div class="stab-bar">
+    <div class="stab active" data-tab="props" data-side="right">Nesne</div>
+    <div class="stab" data-tab="mat" data-side="right">Malzeme</div>
+    <div class="stab" data-tab="tex" data-side="right">Texture</div>
+  </div>
 
-  // ─── MEVCUT JS MANTIĞI ───
-  (function(){
+  <!-- NESNE TAB -->
+  <div class="stab-pane active" id="tab-props" style="overflow-y:auto">
+    <div class="section">
+      <div class="section-head"><div class="section-title">⬡ Dönüşüm</div><span class="section-arrow">▼</span></div>
+      <div class="section-body">
+        <div class="field">
+          <span class="label">Konum</span>
+          <div class="xyz-row" style="margin-top:4px">
+            <div class="xyz-field"><div class="xyz-label xl">X</div><input type="number" id="tx-x" value="0" step="0.001"></div>
+            <div class="xyz-field"><div class="xyz-label yl">Y</div><input type="number" id="tx-y" value="0" step="0.001"></div>
+            <div class="xyz-field"><div class="xyz-label zl">Z</div><input type="number" id="tx-z" value="0" step="0.001"></div>
+          </div>
+        </div>
+        <div class="field">
+          <span class="label">Rotasyon (°)</span>
+          <div class="xyz-row" style="margin-top:4px">
+            <div class="xyz-field"><div class="xyz-label xl">X</div><input type="number" id="rx-x" value="0" step="0.1"></div>
+            <div class="xyz-field"><div class="xyz-label yl">Y</div><input type="number" id="rx-y" value="0" step="0.1"></div>
+            <div class="xyz-field"><div class="xyz-label zl">Z</div><input type="number" id="rx-z" value="0" step="0.1"></div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-row"><span class="label">Tüm Model Ölçeği (%)</span><span class="vbadge" id="vb-sc">100</span></div>
+          <input type="range" id="in-sc" min="1" max="1000" step="1" value="100">
+        </div>
+        <div class="btn-row">
+          <button class="btn sm" id="btn-rpos">Konum ↺</button>
+          <button class="btn sm" id="btn-rall">Tümü ↺</button>
+        </div>
+        <div class="field" style="margin-top:8px;border-top:1px dashed var(--border2);padding-top:8px">
+          <span class="label">Birim Çevirici (Metreye)</span>
+          <div class="btn-row" style="margin-top:4px">
+            <button class="btn sm" id="btn-unit-cm">cm → m</button>
+            <button class="btn sm" id="btn-unit-mm">mm → m</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-head"><div class="section-title">✂️ Düzenleme</div><span class="section-arrow">▼</span></div>
+      <div class="section-body">
+        <button class="btn danger" id="btn-delete-mesh">🗑️ Seçili Parçayı Sil (Del)</button>
+        <button class="btn" id="btn-hide-mesh">👁 Seçiliyi Gizle / Göster</button>
+        <button class="btn" id="btn-isolate-mesh">⬡ Izole Et / Tümünü Göster</button>
+      </div>
+    </div>
+    <div class="section closed" id="sec-info">
+      <div class="section-head"><div class="section-title">📋 Model Bilgisi</div><span class="section-arrow">▼</span></div>
+      <div class="section-body" id="info-body"><div class="empty-state" style="padding:4px 0">Henüz model yüklenmedi.</div></div>
+    </div>
+  </div>
 
-  /* ══ AYARLAR ══ */
-  var SUPABASE_URL  = 'https://vdqumssdodfihuovytbs.supabase.co';
-  var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkcXVtc3Nkb2RmaWh1b3Z5dGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzI1NDgsImV4cCI6MjA4OTc0ODU0OH0.SpKRUbrPmKQtcEDUCwthD-74heZMxTl2R9m9LXN0WQI';
-  var VIEWER_BASE   = window.location.origin + '/viewer.html';
-  var _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-  var currentUser   = null;
+  <!-- MALZEME TAB -->
+  <div class="stab-pane" id="tab-mat" style="overflow-y:auto">
+    <div id="mat-empty" class="empty-state" style="margin:16px 0">
+      <div class="ei">🎨</div>Viewport'tan bir mesh<br>seçerek başlayın.
+    </div>
+    <div id="mat-ed" style="display:none">
+      <div class="section">
+        <div class="section-head"><div class="section-title" id="mat-name">Malzeme</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <div class="field">
+            <span class="label">Albedo Rengi</span>
+            <div class="color-row">
+              <div class="swatch" id="mc-sw" style="background:#ffffff"></div>
+              <input type="color" id="in-mc" value="#ffffff">
+              <input type="text" class="hex-input" id="mc-hex" value="#ffffff" maxlength="7">
+            </div>
+          </div>
+          <div class="field">
+            <span class="label">Emissive Rengi</span>
+            <div class="color-row">
+              <div class="swatch" id="me-sw" style="background:#000000"></div>
+              <input type="color" id="in-me" value="#000000">
+              <input type="text" class="hex-input" id="me-hex" value="#000000" maxlength="7">
+            </div>
+          </div>
+        </div>
+      </div>
 
-  /* ══ AUTH ══ */
-  async function initAuth() {
-    var { data: { session } } = await _sb.auth.getSession();
-    if (!session) { window.location.href = '/login.html?redirect=upload'; return; }
+      <!-- SAYDAMLIK & ALPHA BLEND (YENİ) -->
+      <div class="section">
+        <div class="section-head"><div class="section-title">🔲 Saydamlık & Alpha</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <div class="field">
+            <div class="field-row"><span class="label">Opaklık</span><span class="vbadge" id="vb-op">1.00</span></div>
+            <input type="range" id="in-op" min="0" max="1" step="0.01" value="1">
+          </div>
+          <div class="field">
+            <span class="label">Alpha Modu</span>
+            <div class="alpha-pills" id="alpha-pills">
+              <div class="alpha-pill active" data-mode="opaque">Opaque</div>
+              <div class="alpha-pill" data-mode="blend">Blend</div>
+              <div class="alpha-pill" data-mode="mask">Mask</div>
+              <div class="alpha-pill" data-mode="additive">Additive</div>
+              <div class="alpha-pill" data-mode="multiply">Multiply</div>
+              <div class="alpha-pill" data-mode="subtract">Subtract</div>
+            </div>
+          </div>
+          <div class="field" id="alpha-cutoff-wrap" style="display:none">
+            <div class="field-row"><span class="label">Alpha Cutoff (Mask)</span><span class="vbadge" id="vb-ac">0.50</span></div>
+            <input type="range" id="in-ac" min="0" max="1" step="0.01" value="0.5">
+          </div>
+          <div class="toggle-row">
+            <div class="toggle on" id="tgl-dw"></div>
+            <span class="toggle-label">Depth Write</span>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle" id="tgl-ds"></div>
+            <span class="toggle-label">Çift Taraflı (DoubleSide)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PBR -->
+      <div class="section">
+        <div class="section-head"><div class="section-title">✦ PBR Parametreler</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <div class="field">
+            <div class="field-row"><span class="label">Roughness</span><span class="vbadge" id="vb-ro">0.50</span></div>
+            <input type="range" id="in-ro" min="0" max="1" step="0.01" value="0.5">
+          </div>
+          <div class="field">
+            <div class="field-row"><span class="label">Metalness</span><span class="vbadge" id="vb-me2">0.00</span></div>
+            <input type="range" id="in-me2" min="0" max="1" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <div class="field-row"><span class="label">Emissive Yoğunluk</span><span class="vbadge" id="vb-ei">1.00</span></div>
+            <input type="range" id="in-ei" min="0" max="5" step="0.1" value="1">
+          </div>
+          <div class="field">
+            <div class="field-row"><span class="label">Normal Ölçeği</span><span class="vbadge" id="vb-ns">1.00</span></div>
+            <input type="range" id="in-ns" min="0" max="3" step="0.05" value="1">
+          </div>
+          <div class="field">
+            <div class="field-row"><span class="label">AO Yoğunluğu</span><span class="vbadge" id="vb-ao">1.00</span></div>
+            <input type="range" id="in-ao" min="0" max="2" step="0.05" value="1">
+          </div>
+        </div>
+      </div>
+
+      <!-- GELİŞMİŞ -->
+      <div class="section">
+        <div class="section-head"><div class="section-title">⚙ Gelişmiş</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <div class="toggle-row"><div class="toggle" id="tgl-wf"></div><span class="toggle-label">Wireframe</span></div>
+          <div class="toggle-row"><div class="toggle" id="tgl-flat"></div><span class="toggle-label">Flat Shading</span></div>
+          <div class="toggle-row"><div class="toggle" id="tgl-vcol"></div><span class="toggle-label">Vertex Colors</span></div>
+          <div class="field" style="margin-top:4px">
+            <div class="field-row"><span class="label">Render Sırası</span><span class="vbadge" id="vb-ro2">0</span></div>
+            <input type="range" id="in-ro2" min="-10" max="10" step="1" value="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- TOPLU UYGULA -->
+      <div class="section">
+        <div class="section-head"><div class="section-title">⊹ Toplu Uygula</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <div class="btn-row">
+            <button class="btn sm" id="btn-ap-col">Rengi Uygula</button>
+            <button class="btn sm" id="btn-ap-pbr">PBR Uygula</button>
+          </div>
+          <button class="btn sm" id="btn-ap-all">Tüm Ayarları Uygula</button>
+          <button class="btn sm" id="btn-ap-alpha">Alpha Modunu Uygula</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEXTURE TAB (YENİ) -->
+  <div class="stab-pane" id="tab-tex" style="overflow-y:auto">
+    <div id="tex-empty" class="empty-state" style="margin:16px 0">
+      <div class="ei">🖼</div>Viewport'tan bir mesh<br>seçerek texture<br>yükleyebilirsiniz.
+    </div>
+    <div id="tex-ed" style="display:none">
+      <div class="section">
+        <div class="section-head"><div class="section-title" id="tex-mesh-name">Mesh Texture'ları</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <!-- Albedo Map -->
+          <div class="tex-slot">
+            <div class="tex-slot-name">🖼 Albedo / Color Map</div>
+            <div class="tex-preview checker-bg" id="tp-albedo" data-slot="albedo">
+              <div class="tex-preview-label">Yüklemek için tıklayın<br>(JPG / PNG)</div>
+            </div>
+            <button class="btn sm danger tex-clear" id="tc-albedo">Kaldır</button>
+          </div>
+          <!-- Roughness Map -->
+          <div class="tex-slot">
+            <div class="tex-slot-name">〰 Roughness Map</div>
+            <div class="tex-preview checker-bg" id="tp-roughness" data-slot="roughness">
+              <div class="tex-preview-label">Yüklemek için tıklayın<br>(JPG / PNG)</div>
+            </div>
+            <button class="btn sm danger tex-clear" id="tc-roughness">Kaldır</button>
+          </div>
+          <!-- Normal Map -->
+          <div class="tex-slot">
+            <div class="tex-slot-name">⊙ Normal Map</div>
+            <div class="tex-preview checker-bg" id="tp-normal" data-slot="normal">
+              <div class="tex-preview-label">Yüklemek için tıklayın<br>(JPG / PNG)</div>
+            </div>
+            <button class="btn sm danger tex-clear" id="tc-normal">Kaldır</button>
+          </div>
+          <!-- Emissive Map -->
+          <div class="tex-slot">
+            <div class="tex-slot-name">✦ Emissive Map</div>
+            <div class="tex-preview checker-bg" id="tp-emissive" data-slot="emissive">
+              <div class="tex-preview-label">Yüklemek için tıklayın<br>(JPG / PNG)</div>
+            </div>
+            <button class="btn sm danger tex-clear" id="tc-emissive">Kaldır</button>
+          </div>
+          <!-- AO Map -->
+          <div class="tex-slot">
+            <div class="tex-slot-name">◑ Ambient Occlusion Map</div>
+            <div class="tex-preview checker-bg" id="tp-ao" data-slot="ao">
+              <div class="tex-preview-label">Yüklemek için tıklayın<br>(JPG / PNG)</div>
+            </div>
+            <button class="btn sm danger tex-clear" id="tc-ao">Kaldır</button>
+          </div>
+          <!-- Alpha Map -->
+          <div class="tex-slot">
+            <div class="tex-slot-name">🔲 Alpha Map</div>
+            <div class="tex-preview checker-bg" id="tp-alpha" data-slot="alpha">
+              <div class="tex-preview-label">Yüklemek için tıklayın<br>(JPG / PNG)</div>
+            </div>
+            <button class="btn sm danger tex-clear" id="tc-alpha">Kaldır</button>
+          </div>
+
+          <div class="field" style="margin-top:4px;border-top:1px solid var(--border);padding-top:10px">
+            <div class="field-row"><span class="label">UV Tekrar (Tile X)</span><span class="vbadge" id="vb-tilex">1.0</span></div>
+            <input type="range" id="in-tilex" min="0.1" max="10" step="0.1" value="1">
+          </div>
+          <div class="field">
+            <div class="field-row"><span class="label">UV Tekrar (Tile Y)</span><span class="vbadge" id="vb-tiley">1.0</span></div>
+            <input type="range" id="in-tiley" min="0.1" max="10" step="0.1" value="1">
+          </div>
+          <button class="btn sm" id="btn-tex-apply-all" style="margin-top:4px">Tüm Meshlere UV Uygula</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-panel">
+    <div class="btn-row">
+      <button class="btn sm" id="btn-ss2" style="flex:0 0 34px;padding:0;font-size:13px">📷</button>
+      <button class="btn accent sm" id="btn-save2">💾 Ayarları Kaydet</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <div class="sb-item"><div class="status-dot" id="sd"></div><b id="st-txt">Hazır</b></div>
+  <div class="tb-div" style="height:14px"></div>
+  <div class="sb-item">Model: <b id="st-mod">—</b></div>
+  <div class="sb-item">Seçili: <b id="st-sel">—</b></div>
+  <div class="sb-spacer"></div>
+  <div class="sb-item"><kbd>Del</kbd> sil</div>
+  <div class="sb-item"><kbd>T</kbd><kbd>R</kbd><kbd>S</kbd> gizmo</div>
+  <div class="sb-item"><kbd>F</kbd> odak</div>
+  <div class="sb-item"><kbd>G</kbd><kbd>W</kbd><kbd>P</kbd></div>
+  <div class="sb-item"><kbd>?</kbd> kısayollar</div>
+</div>
+
+<!-- SHORTCUTS MODAL -->
+<div class="modal-bg" id="modal-keys">
+  <div class="modal">
+    <div class="modal-title">⌨️ Klavye Kısayolları</div>
+    <div class="sc-grid">
+      <div class="sc-item">Dosya Aç <div class="sc-keys"><kbd>Ctrl</kbd><kbd>O</kbd></div></div>
+      <div class="sc-item">Odaklan <div class="sc-keys"><kbd>F</kbd></div></div>
+      <div class="sc-item">Taşı <div class="sc-keys"><kbd>T</kbd></div></div>
+      <div class="sc-item">Döndür <div class="sc-keys"><kbd>R</kbd></div></div>
+      <div class="sc-item">Ölçekle <div class="sc-keys"><kbd>S</kbd></div></div>
+      <div class="sc-item">Grid <div class="sc-keys"><kbd>G</kbd></div></div>
+      <div class="sc-item">Wireframe <div class="sc-keys"><kbd>W</kbd></div></div>
+      <div class="sc-item">Screenshot <div class="sc-keys"><kbd>P</kbd></div></div>
+      <div class="sc-item">Seçiliyi Sil <div class="sc-keys"><kbd>Del</kbd></div></div>
+      <div class="sc-item">Seçimi Kaldır <div class="sc-keys"><kbd>Esc</kbd></div></div>
+      <div class="sc-item">Sıfırla <div class="sc-keys"><kbd>Alt</kbd><kbd>R</kbd></div></div>
+      <div class="sc-item">İstatistik <div class="sc-keys"><kbd>I</kbd></div></div>
+      <div class="sc-item">Tema <div class="sc-keys"><kbd>Alt</kbd><kbd>T</kbd></div></div>
+      <div class="sc-item">Ön Görünüm <div class="sc-keys"><kbd>1</kbd></div></div>
+      <div class="sc-item">Üst Görünüm <div class="sc-keys"><kbd>2</kbd></div></div>
+      <div class="sc-item">Sağ Görünüm <div class="sc-keys"><kbd>3</kbd></div></div>
+      <div class="sc-item">İzometrik <div class="sc-keys"><kbd>4</kbd></div></div>
+      <div class="sc-item">Gizle/Göster <div class="sc-keys"><kbd>H</kbd></div></div>
+      <div class="sc-item">Izole Et <div class="sc-keys"><kbd>Alt</kbd><kbd>H</kbd></div></div>
+    </div>
+    <button class="btn" style="margin-top:18px" onclick="document.getElementById('modal-keys').classList.remove('show')">Kapat</button>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader }        from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader }       from 'three/addons/loaders/DRACOLoader.js';
+import { OrbitControls }     from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import { RoomEnvironment }   from 'three/addons/environments/RoomEnvironment.js';
+import { GLTFExporter }      from 'three/addons/exporters/GLTFExporter.js';
+// ── SUPABASE AYARLARI VE OTURUM KONTROLÜ ──
+const _supabase = supabase.createClient(
+  'https://vdqumssdodfihuovytbs.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkcXVtc3Nkb2RmaWh1b3Z5dGJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzI1NDgsImV4cCI6MjA4OTc0ODU0OH0.SpKRUbrPmKQtcEDUCwthD-74heZMxTl2R9m9LXN0WQI'
+);
+
+let currentUser = null;
+let currentFileName = "Yeni_Model"; // Dosya yüklendiğinde ismini tutacağız
+
+async function checkAuth() {
+  const { data: { session } } = await _supabase.auth.getSession();
+  if (!session) {
+    window.location.href = '/login.html';
+  } else {
     currentUser = session.user;
-    var { data: profile } = await _sb.from('profiles').select('full_name,username,plan').eq('id', currentUser.id).single();
-    var dn = (profile && (profile.full_name || profile.username)) || currentUser.email.split('@')[0];
-    document.getElementById('userName').textContent = dn;
-    document.getElementById('userAvatar').textContent = dn.charAt(0).toUpperCase();
-    var { count } = await _sb.from('models').select('*', { count:'exact', head:true }).eq('user_id', currentUser.id);
-    var limit = (profile && profile.plan === 'pro') ? 999 : 3;
-    if (count >= limit) {
-      errBox.textContent = '⚠ Maksimum ' + limit + ' model limitine ulaştınız. Dashboard\'dan planınızı yükseltin.';
-      errBox.classList.add('ac');
-      btnUpload.disabled = true;
-    }
   }
+}
+checkAuth();
 
-  /* ══ ELEMENTLER ══ */
-  var mv            = document.getElementById('editorMV');
-  var productName   = document.getElementById('productName');
-  var fileGlb       = document.getElementById('fileGlb');
-  var fileUsdz      = document.getElementById('fileUsdz');
-  var dropGlb       = document.getElementById('dropGlb');
-  var dropUsdz      = document.getElementById('dropUsdz');
-  var btnUpload     = document.getElementById('btnUpload');
-  var progWrap      = document.getElementById('progWrap');
-  var progFill      = document.getElementById('progFill');
-  var progTxt       = document.getElementById('progTxt');
-  var progPct       = document.getElementById('progPct');
-  var errBox        = document.getElementById('errBox');
-  var slExp         = document.getElementById('slExp');
-  var slShd         = document.getElementById('slShd');
-  var slScale       = document.getElementById('slScale');
-  var slRot         = document.getElementById('slRot');
-  var slRough       = document.getElementById('slRough');
-  var slMetal       = document.getElementById('slMetal');
-  var bgPick        = document.getElementById('bgPick');
-  var matColorPick  = document.getElementById('matColorPick');
+// ── USDZ GEÇİCİ ÇÖZÜM: USDZExporter Three.js 0.160 ile uyumlu import ──
+let USDZExporter = null;
+try {
+  const mod = await import('three/addons/exporters/USDZExporter.js');
+  USDZExporter = mod.USDZExporter;
+} catch(e) { console.warn('USDZExporter yüklenemedi:', e); }
 
-  var currentModel = '';
-  var selectedIdx  = -1;
-  var matData      = [];
+// ── DOM SEÇİCİ ──
+const _el = id => document.getElementById(id);
 
-  /* ══ EDIT MODU — tüm değişkenler hazır, buraya gelir ══ */
-  async function checkEditMode() {
-    var editName = new URLSearchParams(window.location.search).get('edit');
-    if (!editName) return;
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', SUPABASE_URL + '/rest/v1/models?name=eq.' + encodeURIComponent(editName) + '&limit=1');
-    xhr.setRequestHeader('apikey', SUPABASE_ANON);
-    xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON);
-    xhr.onload = function() {
-      if (xhr.status !== 200) return;
-      var rows = JSON.parse(xhr.responseText);
-      if (!rows || rows.length === 0) return;
-      var s = rows[0];
-      openEditor(editName);
-      mv.addEventListener('load', function applySettings() {
-        mv.removeEventListener('load', applySettings);
-        if (s.exposure)         { slExp.value=s.exposure; document.getElementById('vExp').textContent=(+s.exposure).toFixed(2); mv.setAttribute('exposure',s.exposure); }
-        if (s.shadow_intensity) { slShd.value=s.shadow_intensity; document.getElementById('vShd').textContent=(+s.shadow_intensity).toFixed(1); mv.setAttribute('shadow-intensity',s.shadow_intensity); }
-        if (s.environment) {
-          document.querySelectorAll('.env-btn').forEach(function(b){b.classList.remove('active');});
-          var eb=document.querySelector('.env-btn[data-env="'+s.environment+'"]');
-          if(eb){eb.classList.add('active'); mv.setAttribute('environment-image',s.environment);}
-        }
-        if (s.bg_color) { bgPick.value=s.bg_color; document.getElementById('bgPrev').style.background=s.bg_color; document.getElementById('bgHex').textContent=s.bg_color; mv.style.background=s.bg_color; }
-        if (s.scale)    { var sp=Math.round(s.scale*100); slScale.value=sp; document.getElementById('vScale').textContent=sp+'%'; mv.setAttribute('scale',s.scale+' '+s.scale+' '+s.scale); }
-        if (s.rotate_y) { slRot.value=s.rotate_y; document.getElementById('vRot').textContent=s.rotate_y+'°'; mv.setAttribute('orientation','0deg '+s.rotate_y+'deg 0deg'); }
-        if (s.materials && s.materials.length > 0) {
-          s.materials.forEach(function(edit) {
-            var i=edit.index!==undefined?edit.index:0;
-            if(!matData[i]) return;
-            matData[i].color     = edit.color     || matData[i].color;
-            matData[i].roughness = edit.roughness !== undefined ? edit.roughness : matData[i].roughness;
-            matData[i].metalness = edit.metalness !== undefined ? edit.metalness : matData[i].metalness;
-            matData[i].hidden    = edit.hidden    || false;
-            try {
-              var mat=mv.model.materials[i]; var rgb=hexToRgb(matData[i].color);
-              if(matData[i].hidden){mat.pbrMetallicRoughness.setBaseColorFactor([0,0,0,0]);}
-              else{mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]);}
-              mat.pbrMetallicRoughness.setRoughnessFactor(matData[i].roughness);
-              mat.pbrMetallicRoughness.setMetallicFactor(matData[i].metalness);
-            } catch(e) {}
-          });
-          var list=document.getElementById('matList'); list.innerHTML='';
-          matData.forEach(function(_,j){renderMatItem(j);});
-        }
-      }, {once:true});
-    };
-    xhr.send();
-  }
+// ── GLOBAL STATE ──
+let scene, camera, renderer, orbit, gizmo, dirLight, ambLight, shadowPlane, gridHelper;
+let currentModel = null, selectedMesh = null;
+let origEmissive = new THREE.Color();
+let initT = { pos: new THREE.Vector3(), rot: new THREE.Euler(), sc: new THREE.Vector3(1,1,1) };
+let wireMode = false, gridVis = true, worldSpace = true;
+let fpsFrames = 0, fpsLast = performance.now();
+let statsVisible = false;
+let isIsolated = false;
 
-  /* Auth tamamlanınca edit modunu kontrol et */
-  initAuth().then(function(){ checkEditMode(); });
+// Texture yönetimi: mesh uuid → {slot: THREE.Texture}
+const meshTextures = new Map();
+// Orijinal malzeme renkleri kaydı
+const origMaterials = new Map();
 
-  /* ══ ADIM YÖNETİMİ ══ */
-  function goStep(n){
-    document.getElementById('step1').style.display=n===1?'flex':'none';
-    document.getElementById('step2').classList.toggle('ac',n===2);
-    document.getElementById('step3').classList.toggle('ac',n===3);
-    ['stp1','stp2','stp3'].forEach(function(id,i){
-      var el=document.getElementById(id); el.classList.remove('active','done');
-      if(i+1===n) el.classList.add('active');
-      else if(i+1<n) el.classList.add('done');
-    });
-  }
-  goStep(1);
+const container = _el('canvas-container');
+const vp = _el('vp');
 
-  /* ══ UPLOAD ══ */
-  fileGlb.onchange  = function(){ if(this.files[0]){document.getElementById('nameGlb').textContent=this.files[0].name; dropGlb.classList.add('has-file');} checkReady(); };
-  fileUsdz.onchange = function(){ if(this.files[0]){document.getElementById('nameUsdz').textContent=this.files[0].name; dropUsdz.classList.add('has-file');} checkReady(); };
-  productName.oninput = checkReady;
+// ── LOADER FACTORY (izole, draco destekli) ──
+function makeLoader() {
+  const drc = new DRACOLoader();
+  drc.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+  const loader = new GLTFLoader();
+  loader.setDRACOLoader(drc);
+  return loader;
+}
 
-  [dropGlb,dropUsdz].forEach(function(z){
-    z.addEventListener('dragover',function(e){e.preventDefault();this.classList.add('drag');},{passive:false});
-    z.addEventListener('dragleave',function(){this.classList.remove('drag');});
-    z.addEventListener('drop',function(){this.classList.remove('drag');});
-  });
-
-  function checkReady(){ btnUpload.disabled=!(productName.value.trim()&&fileGlb.files[0]&&fileUsdz.files[0]); }
-  function showErr(m){ errBox.textContent='⚠ '+m; errBox.classList.add('ac'); }
-  function hideErr(){ errBox.classList.remove('ac'); }
-  function setProg(pct,txt){ progFill.style.width=pct+'%'; progTxt.textContent=txt; progPct.textContent=pct+'%'; }
-
-  function uploadFile(fileName,file,mime,cb){
-    var xhr=new XMLHttpRequest();
-    xhr.open('POST',SUPABASE_URL+'/storage/v1/object/models/'+encodeURIComponent(fileName));
-    xhr.setRequestHeader('Authorization','Bearer '+SUPABASE_ANON);
-    xhr.setRequestHeader('Content-Type',mime);
-    xhr.setRequestHeader('x-upsert','true');
-    xhr.onload=function(){(xhr.status===200||xhr.status===201)?cb(null):cb(xhr.status+' '+xhr.statusText);};
-    xhr.onerror=function(){cb('Bağlantı hatası');};
-    xhr.send(file);
-  }
-
-  btnUpload.onclick=function(){
-    if(!currentUser){showErr('Lütfen önce giriş yapın.'); return;}
-    var name=productName.value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-    if(!name){showErr('Geçerli bir ürün adı girin.'); return;}
-    hideErr(); btnUpload.disabled=true; progWrap.classList.add('ac'); setProg(0,'GLB yükleniyor…');
-    uploadFile(name+'-3d.glb',fileGlb.files[0],'model/gltf-binary',function(e){
-      if(e){showErr('GLB yüklenemedi: '+e); btnUpload.disabled=false; return;}
-      setProg(55,'USDZ yükleniyor…');
-      uploadFile(name+'-3d.usdz',fileUsdz.files[0],'model/vnd.usdz+zip',function(e2){
-        if(e2){showErr('USDZ yüklenemedi: '+e2); btnUpload.disabled=false; return;}
-        setProg(100,'Tamamlandı!');
-        setTimeout(function(){openEditor(name);},500);
+// ── BELLEK TEMİZLEME ──
+function disposeHierarchy(node) {
+  if (!node) return;
+  node.traverse(c => {
+    if (!c.isMesh) return;
+    c.geometry?.dispose();
+    const mats = Array.isArray(c.material) ? c.material : [c.material];
+    mats.forEach(m => {
+      if (!m) return;
+      // Tüm texture slotlarını temizle
+      ['map','normalMap','roughnessMap','metalnessMap','emissiveMap',
+       'aoMap','alphaMap','displacementMap','envMap','lightMap'].forEach(k => {
+        if (m[k]) { m[k].dispose(); m[k] = null; }
       });
+      m.dispose();
     });
-  };
+  });
+}
 
-  /* ══ EDITOR ══ */
-  function openEditor(name){
-    currentModel=name; matData=[]; selectedIdx=-1;
-    document.getElementById('edModelName').textContent=name;
-    goStep(2);
-    mv.setAttribute('src',SUPABASE_URL+'/storage/v1/object/public/models/'+name+'-3d.glb');
-    mv.addEventListener('load',onMVLoad,{once:true});
+// ── AR İÇİN GÜVENLİ EXPORT SAHNESİ ──
+function createExportScene(model, centerPivot) {
+  const s = new THREE.Scene();
+  const clone = model.clone(true);
+  if (centerPivot) {
+    const box = new THREE.Box3().setFromObject(clone);
+    const ctr = box.getCenter(new THREE.Vector3());
+    const sz  = box.getSize(new THREE.Vector3());
+    clone.position.sub(ctr);
+    clone.position.y += sz.y / 2;
+  }
+  s.add(clone);
+  s.updateMatrixWorld(true);
+  return s;
+}
+
+// ── INIT ──
+function init() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x111113);
+
+  const w = container.clientWidth  || window.innerWidth  - 568;
+  const h = container.clientHeight || window.innerHeight - 80;
+
+  camera = new THREE.PerspectiveCamera(45, w / h, 0.001, 20000);
+  camera.position.set(3, 2.5, 5);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, logarithmicDepthBuffer: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(w, h);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  // Saydamlık için alpha sıralama
+  renderer.sortObjects = true;
+  container.appendChild(renderer.domElement);
+
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  pmrem.dispose();
+
+  ambLight = new THREE.AmbientLight(0xffffff, 0.4);
+  scene.add(ambLight);
+
+  dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+  dirLight.position.set(5, 10, 7);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.width  = 2048;
+  dirLight.shadow.mapSize.height = 2048;
+  dirLight.shadow.camera.near = 0.5;
+  dirLight.shadow.camera.far  = 500;
+  dirLight.shadow.camera.left = dirLight.shadow.camera.bottom = -30;
+  dirLight.shadow.camera.right = dirLight.shadow.camera.top  = 30;
+  dirLight.shadow.bias = -0.0005;
+  dirLight.shadow.normalBias = 0.05;
+  scene.add(dirLight);
+
+  const fill = new THREE.DirectionalLight(0x8899ff, 0.25);
+  fill.position.set(-5, 3, -5);
+  scene.add(fill);
+  const rim = new THREE.DirectionalLight(0xffeedd, 0.15);
+  rim.position.set(0, -3, -8);
+  scene.add(rim);
+
+  shadowPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 200),
+    new THREE.ShadowMaterial({ opacity: 0.2, depthWrite: false })
+  );
+  shadowPlane.rotation.x = -Math.PI / 2;
+  shadowPlane.receiveShadow = true;
+  scene.add(shadowPlane);
+
+  gridHelper = new THREE.GridHelper(24, 24, 0x333337, 0x222226);
+  gridHelper.material.opacity = 0.55;
+  gridHelper.material.transparent = true;
+  scene.add(gridHelper);
+
+  orbit = new OrbitControls(camera, renderer.domElement);
+  orbit.enableDamping = true;
+  orbit.dampingFactor = 0.06;
+  orbit.screenSpacePanning = true;
+  orbit.minDistance = 0.001;
+  orbit.maxDistance = 20000;
+
+  gizmo = new TransformControls(camera, renderer.domElement);
+  gizmo.setSpace('world');
+  gizmo.addEventListener('dragging-changed', e => { orbit.enabled = !e.value; });
+  gizmo.addEventListener('change', syncTUI);
+  scene.add(gizmo);
+
+  // Raycaster — pointerdown/up ile küçük hareketi yakala
+  const ray = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  let _ptDown = {x:0,y:0};
+  container.addEventListener('pointerdown', e => { _ptDown.x = e.clientX; _ptDown.y = e.clientY; });
+  container.addEventListener('pointerup', e => {
+    if (Math.abs(e.clientX-_ptDown.x)>4 || Math.abs(e.clientY-_ptDown.y)>4) return;
+    if (e.button !== 0 || gizmo.dragging) return;
+    const r = container.getBoundingClientRect();
+    mouse.x = ((e.clientX-r.left)/r.width)*2-1;
+    mouse.y = -((e.clientY-r.top)/r.height)*2+1;
+    ray.setFromCamera(mouse, camera);
+    if (!currentModel) return;
+    const hits = ray.intersectObject(currentModel, true).filter(h => h.object.isMesh && h.object.visible);
+    if (hits.length) selectMesh(hits[0].object);
+    else deselectMesh();
+  });
+
+  // Drag & Drop
+  vp.addEventListener('dragover', e => { e.preventDefault(); _el('drop-ov').classList.add('show'); });
+  vp.addEventListener('dragleave', () => _el('drop-ov').classList.remove('show'));
+  vp.addEventListener('drop', e => {
+    e.preventDefault(); _el('drop-ov').classList.remove('show');
+    const f = e.dataTransfer.files[0]; if (f) loadFile(f);
+  });
+
+  window.addEventListener('resize', onResize);
+  initBulkUI();
+  initTextureUI();
+  animate();
+  setStatus('ready','Hazır');
+  loadPreset();
+}
+
+// ── GROUND RECALC ──
+function recalculateGround(model) {
+  if (!model) return;
+  const box = new THREE.Box3().setFromObject(model);
+  const sz  = box.getSize(new THREE.Vector3());
+  const by  = model.position.y - sz.y/2 + 0.001;
+  shadowPlane.position.y = by;
+  gridHelper.position.y  = by;
+}
+
+// ── LOAD FILE ──
+function loadFile(file) {
+  if (!/\.(glb|gltf)$/i.test(file.name)) { toast('Desteklenmeyen dosya türü!','err'); return; }
+  _el('loading-ov').classList.add('show');
+  setStatus('','Yükleniyor...');
+  deselectMesh();
+
+  if (currentModel) {
+    gizmo.detach();
+    scene.remove(currentModel);
+    disposeHierarchy(currentModel);
+    currentModel = null;
+    origMaterials.clear();
+    meshTextures.clear();
   }
 
-  function onMVLoad(){ scanMaterials(); }
+  const url = URL.createObjectURL(file);
+  makeLoader().load(url, gltf => {
+    URL.revokeObjectURL(url);
+    currentModel = gltf.scene;
 
-  var mvClickHandler=null;
-
-  function scanMaterials(){
-    var list=document.getElementById('matList');
-    list.innerHTML=''; matData=[]; selectedIdx=-1;
-    document.getElementById('matEditor').classList.remove('ac');
-    var model=mv.model;
-    if(!model||!model.materials||model.materials.length===0){
-      list.innerHTML='<div style="font-size:11px;color:var(--text-muted);padding:8px 0">Düzenlenebilir materyal bulunamadı.</div>';
-      return;
-    }
-    model.materials.forEach(function(mat,i){
-      var bc=mat.pbrMetallicRoughness.baseColorFactor||[1,1,1,1];
-      matData.push({
-        name:mat.name||('Materyal '+(i+1)),
-        color:rgbToHex(bc[0],bc[1],bc[2]),
-        roughness:mat.pbrMetallicRoughness.roughnessFactor!=null?mat.pbrMetallicRoughness.roughnessFactor:0.5,
-        metalness:mat.pbrMetallicRoughness.metallicFactor!=null?mat.pbrMetallicRoughness.metallicFactor:0.0,
-        hidden:false
+    let meshCount=0, verts=0, tris=0;
+    currentModel.traverse(c => {
+      if (!c.isMesh) return;
+      c.castShadow = true;
+      c.receiveShadow = true;
+      const mats = Array.isArray(c.material) ? c.material : [c.material];
+      mats.forEach(m => {
+        if (!m) return;
+        if (!m.emissive) m.emissive = new THREE.Color(0);
+        if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
+        // Orijinal malzeme kaydı
       });
-      renderMatItem(i);
-    });
-    if(mvClickHandler) mv.removeEventListener('click',mvClickHandler);
-    var pointerMoved=false;
-    mv.addEventListener('pointerdown',function(){pointerMoved=false;});
-    mv.addEventListener('pointermove',function(){pointerMoved=true;});
-    mvClickHandler=function(e){
-      if(pointerMoved) return;
-      var hit=mv.positionAndNormalFromPoint(e.clientX,e.clientY);
-      if(!hit) return;
-      var mName=hit.materialName;
-      if(mName){
-        var m2=mv.model; if(!m2) return;
-        var found=false;
-        m2.materials.forEach(function(mat2,j){if(mat2.name===mName&&!found){found=true;selectMat(j);}});
-        if(found) return;
-      }
-      for(var k=0;k<matData.length;k++){if(!matData[k].hidden){selectMat(k);break;}}
-    };
-    mv.addEventListener('click',mvClickHandler);
-  }
-
-  function renderMatItem(i){
-    var list=document.getElementById('matList');
-    var d=matData[i];
-    var item=document.createElement('div');
-    item.className='mat-item'+(d.hidden?' hidden-mat':'');
-    item.dataset.idx=i;
-    item.innerHTML='<div class="mat-dot" style="background:'+d.color+'"></div><div class="mat-label">'+d.name+'</div><button class="mat-hide-btn" data-hide="'+i+'">'+(d.hidden?'👁':'🚫')+'</button>';
-    item.addEventListener('click',function(e){if(e.target.dataset.hide!==undefined) return; selectMat(i);});
-    item.querySelector('.mat-hide-btn').addEventListener('click',function(e){e.stopPropagation(); toggleHide(i);});
-    list.appendChild(item);
-  }
-
-  function toggleHide(i){
-    matData[i].hidden=!matData[i].hidden;
-    var model=mv.model;
-    if(model&&model.materials[i]){
-      var pbr=model.materials[i].pbrMetallicRoughness;
-      if(matData[i].hidden){var bc=pbr.baseColorFactor; pbr.setBaseColorFactor([bc[0],bc[1],bc[2],0]);}
-      else{var rgb=hexToRgb(matData[i].color); pbr.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]);}
-    }
-    var list=document.getElementById('matList'); list.innerHTML='';
-    matData.forEach(function(_,j){renderMatItem(j);});
-    if(selectedIdx===i) selectMat(i);
-  }
-
-  function selectMat(i){
-    if(!matData[i]||matData[i].hidden) return;
-    selectedIdx=i;
-    document.querySelectorAll('.mat-item').forEach(function(el){
-      var isThis=+el.dataset.idx===i; el.classList.toggle('selected',isThis);
-      if(isThis) el.scrollIntoView({block:'nearest',behavior:'smooth'});
-    });
-    var d=matData[i];
-    document.getElementById('matEdTitle').textContent=d.name+' (#'+i+')';
-    matColorPick.value=d.color;
-    document.getElementById('matColorPrev').style.background=d.color;
-    document.getElementById('matColorHex').textContent=d.color;
-    slRough.value=d.roughness; document.getElementById('vRough').textContent=d.roughness.toFixed(2);
-    slMetal.value=d.metalness; document.getElementById('vMetal').textContent=d.metalness.toFixed(2);
-    document.getElementById('matEditor').classList.add('ac');
-    try{
-      var mat=mv.model.materials[i]; var bc=mat.pbrMetallicRoughness.baseColorFactor;
-      mat.pbrMetallicRoughness.setBaseColorFactor([bc[0]*0.6+0.18*0.4,bc[1]*0.6+0.72*0.4,bc[2]*0.6+0.83*0.4,bc[3]||1]);
-      setTimeout(function(){if(selectedIdx!==i) return; var rgb=hexToRgb(d.color); mat.pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]);},600);
-    }catch(e){}
-  }
-
-  matColorPick.addEventListener('input',function(){
-    if(selectedIdx<0) return;
-    var hex=this.value; matData[selectedIdx].color=hex;
-    document.getElementById('matColorPrev').style.background=hex;
-    document.getElementById('matColorHex').textContent=hex;
-    try{var rgb=hexToRgb(hex); mv.model.materials[selectedIdx].pbrMetallicRoughness.setBaseColorFactor([rgb.r/255,rgb.g/255,rgb.b/255,1]);}catch(e){}
-    document.querySelectorAll('.mat-item').forEach(function(el){if(+el.dataset.idx===selectedIdx) el.querySelector('.mat-dot').style.background=hex;});
-  });
-
-  slRough.addEventListener('input',function(){var v=+this.value; document.getElementById('vRough').textContent=v.toFixed(2); if(selectedIdx<0) return; matData[selectedIdx].roughness=v; try{mv.model.materials[selectedIdx].pbrMetallicRoughness.setRoughnessFactor(v);}catch(e){}});
-  slMetal.addEventListener('input',function(){var v=+this.value; document.getElementById('vMetal').textContent=v.toFixed(2); if(selectedIdx<0) return; matData[selectedIdx].metalness=v; try{mv.model.materials[selectedIdx].pbrMetallicRoughness.setMetallicFactor(v);}catch(e){}});
-  slExp.addEventListener('input',function(){document.getElementById('vExp').textContent=(+this.value).toFixed(2); mv.setAttribute('exposure',this.value);});
-  slShd.addEventListener('input',function(){document.getElementById('vShd').textContent=(+this.value).toFixed(1); mv.setAttribute('shadow-intensity',this.value);});
-
-  document.querySelectorAll('.env-btn').forEach(function(btn){
-    btn.onclick=function(){
-      document.querySelectorAll('.env-btn').forEach(function(b){b.classList.remove('active');});
-      this.classList.add('active'); mv.setAttribute('environment-image',this.dataset.env);
-    };
-  });
-
-  bgPick.addEventListener('input',function(){
-    var hex=this.value;
-    document.getElementById('bgPrev').style.background=hex;
-    document.getElementById('bgHex').textContent=hex;
-    mv.style.background=hex;
-  });
-
-  slScale.addEventListener('input',function(){var v=+this.value; document.getElementById('vScale').textContent=v+'%'; var s=v/100; mv.setAttribute('scale',s+' '+s+' '+s);});
-  slRot.addEventListener('input',function(){var v=+this.value; document.getElementById('vRot').textContent=v+'°'; mv.setAttribute('orientation','0deg '+v+'deg 0deg');});
-
-  document.getElementById('btnReset').onclick=function(){
-    slScale.value=100; document.getElementById('vScale').textContent='100%'; mv.setAttribute('scale','1 1 1');
-    slRot.value=0; document.getElementById('vRot').textContent='0°'; mv.setAttribute('orientation','0deg 0deg 0deg');
-    slExp.value=0.95; document.getElementById('vExp').textContent='0.95'; mv.setAttribute('exposure','0.95');
-    slShd.value=1.5; document.getElementById('vShd').textContent='1.5'; mv.setAttribute('shadow-intensity','1.5');
-    bgPick.value='#f7f5f2'; document.getElementById('bgPrev').style.background='#f7f5f2'; document.getElementById('bgHex').textContent='#f7f5f2'; mv.style.background='#f7f5f2';
-  };
-  document.getElementById('btnCenter').onclick=function(){mv.cameraOrbit='auto auto auto';};
-
-  /* ══ KAYDET ══ */
-  document.getElementById('btnSave').onclick=async function(){
-    if(!currentUser){showErr('Oturum bulunamadı, lütfen tekrar giriş yapın.'); return;}
-    var btn=this; btn.disabled=true; btn.textContent='Fotoğraf Çekiliyor...';
-
-    // --- 📸 GÜNCELLENMİŞ GARANTİLİ THUMBNAIL ÇEKME KODU ---
-    try {
-      const blob = await mv.toBlob({ idealAspect: true, mimeType: 'image/webp', quality: 0.85 });
-      
-      await new Promise((resolve) => {
-        uploadFile(currentModel + '-thumb.webp', blob, 'image/webp', (err) => {
-          if(err) console.error('Thumbnail yükleme hatası:', err);
-          resolve(); 
+      // Orijinal malzeme snapshot
+      const pm = mats[0];
+      if (pm) {
+        origMaterials.set(c.uuid, {
+          color: pm.color ? pm.color.clone() : new THREE.Color(1,1,1),
+          opacity: pm.opacity ?? 1,
+          transparent: pm.transparent ?? false,
+          roughness: pm.roughness ?? 0.5,
+          metalness: pm.metalness ?? 0,
+          emissiveIntensity: pm.emissiveIntensity ?? 0,
+          side: pm.side ?? THREE.FrontSide,
+          wireframe: pm.wireframe ?? false,
+          flatShading: pm.flatShading ?? false,
+          depthWrite: pm.depthWrite ?? true,
+          blending: pm.blending ?? THREE.NormalBlending,
+          alphaTest: pm.alphaTest ?? 0,
         });
-      });
-    } catch (err) {
-      console.error('Fotoğraf oluşturulamadı:', err);
-    }
-    // ------------------------------------------------------
+      }
 
-    btn.textContent='Veriler Kaydediliyor...';
-    var env=document.querySelector('.env-btn.active');
-    var mats=matData.map(function(d,i){return {index:i,name:d.name,color:d.color,roughness:d.roughness,metalness:d.metalness,hidden:d.hidden};});
-    var payload={
-      name:currentModel, user_id:currentUser.id,
-      exposure:+slExp.value, shadow_intensity:+slShd.value,
-      environment:env?env.dataset.env:'neutral',
-      bg_color:bgPick.value, scale:+slScale.value/100, rotate_y:+slRot.value,
-      materials:mats
-    };
-    
-    try{
-      var {error}=await _sb.from('models').upsert(payload,{onConflict:'name'});
-      if(error) throw error;
-      btn.textContent='✓ Kaydedildi!';
-      setTimeout(function(){showResult(currentModel);},600);
-    }catch(e){
-      showErr('Kayıt hatası: '+(e.message||e));
-      btn.disabled=false; btn.textContent='💾 Kaydet ve Link Oluştur';
-    }
-  };
+      const pos = c.geometry?.attributes?.position;
+      if (pos) { verts += pos.count; tris += c.geometry.index ? c.geometry.index.count/3 : pos.count/3; }
+      meshCount++;
+    });
 
-  function showResult(name){
-    var link=VIEWER_BASE+'?model='+name;
-    document.getElementById('resultLink').textContent=link;
-    document.getElementById('resultSub').textContent='"'+name+'" modeli kaydedildi ve AR linki hazır.';
-    document.getElementById('btnPreview').href=link;
-    document.getElementById('btnCopy').onclick=function(){
-      var b=this;
-      navigator.clipboard.writeText(link).then(function(){
-        b.textContent='✓ Kopyalandı'; b.classList.add('copied');
-        setTimeout(function(){b.textContent='Kopyala'; b.classList.remove('copied');},2000);
-      });
-    };
-    goStep(3);
+    scene.add(currentModel);
+
+    const box = new THREE.Box3().setFromObject(currentModel);
+    const sz  = box.getSize(new THREE.Vector3());
+    const ctr = box.getCenter(new THREE.Vector3());
+    if (sz.length() < 0.001) sz.set(1,1,1);
+
+    currentModel.position.sub(ctr);
+    currentModel.position.y += sz.y/2;
+    initT.pos.copy(currentModel.position);
+    initT.rot.copy(currentModel.rotation);
+    initT.sc.copy(currentModel.scale);
+
+    const maxD = Math.max(sz.x, sz.y, sz.z);
+    const fov  = camera.fov * Math.PI/180;
+    const dist = (maxD/2/Math.tan(fov/2))*2;
+    camera.position.set(dist*.55, dist*.45, dist);
+    orbit.target.set(0, sz.y/2, 0);
+    orbit.update();
+
+    recalculateGround(currentModel);
+    gizmo.attach(currentModel);
+    _el('vp-tb').style.display = 'flex';
+
+    _el('st-m').textContent = meshCount;
+    _el('st-v').textContent = verts.toLocaleString();
+    _el('st-t').textContent = Math.round(tris).toLocaleString();
+
+    buildOutliner(currentModel);
+    buildInfo(file.name, meshCount, verts, tris, sz);
+    _el('st-mod').textContent = file.name.length>22 ? file.name.substring(0,20)+'…' : file.name;
+    syncTUI();
+
+    _el('loading-ov').classList.remove('show');
+    toast(`Model yüklendi ✓ (${meshCount} mesh, ${Math.round(tris).toLocaleString()} tri)`,'ok');
+    setStatus('ready','Hazır');
+  }, undefined, err => {
+    URL.revokeObjectURL(url);
+    _el('loading-ov').classList.remove('show');
+    toast('Yüklenemedi: '+(err.message||err),'err');
+    setStatus('err','Hata');
+    console.error(err);
+  });
+}
+
+// ── OUTLINER ──
+function buildOutliner(model) {
+  const ol = _el('outliner');
+  if (!ol) return;
+  ol.innerHTML = '';
+  ol._map = [];
+
+  ol.appendChild(makeOLItem('🗂️', model.name||'Sahne', 'Root', false, null));
+
+  model.traverse(c => {
+    if (!c.isMesh) return;
+    const item = makeOLItem('⬟', c.name||'Mesh', 'Mesh', true, c);
+    ol.appendChild(item);
+    ol._map.push({el: item, mesh: c});
+  });
+}
+
+function makeOLItem(icon, name, type, indent, mesh) {
+  const d = document.createElement('div');
+  d.className = 'ol-item'+(indent?' ol-indent':'');
+  d.innerHTML = `<span class="ol-icon">${icon}</span><span class="ol-name">${name}</span><span class="ol-type">${type}</span>`;
+  if (mesh) {
+    const vis = document.createElement('span');
+    vis.className = 'ol-vis';
+    vis.title = 'Gizle/Göster';
+    vis.textContent = '👁';
+    vis.addEventListener('click', e => { e.stopPropagation(); toggleMeshVisibility(mesh); });
+    d.appendChild(vis);
+    d.addEventListener('click', e => { e.stopPropagation(); selectMesh(mesh); });
+  }
+  return d;
+}
+
+function syncOL(mesh) {
+  const ol = _el('outliner');
+  if (!ol || !ol._map) return;
+  ol._map.forEach(({el, mesh:m}) => el.classList.toggle('selected', m===mesh));
+}
+
+// ── MODEL BİLGİSİ ──
+function buildInfo(name, mc, v, t, sz) {
+  const info = _el('info-body');
+  if (!info) return;
+  info.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px">
+    ${ir('Dosya', name.length>24?name.substring(0,22)+'…':name)}
+    ${ir('Mesh',mc)} ${ir('Vertex',v.toLocaleString())}
+    ${ir('Triangle',Math.round(t).toLocaleString())}
+    ${ir('W',sz.x.toFixed(3)+'m')} ${ir('H',sz.y.toFixed(3)+'m')} ${ir('D',sz.z.toFixed(3)+'m')}
+  </div>`;
+}
+const ir = (k,v) => `<div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--text2)">${k}</span><span style="font-family:var(--mono);font-size:10px">${v}</span></div>`;
+
+// ── MALZEME ERİŞİM YARDIMCISI ──
+function getPrimaryMat(mesh) {
+  if (!mesh?.material) return null;
+  return Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+}
+function updateMatArray(mesh, fn) {
+  if (!mesh?.material) return;
+  const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+  mats.forEach(m => { if(m) fn(m); });
+  mats.forEach(m => { if(m) m.needsUpdate = true; });
+}
+
+// ── SELECT / DESELECT ──
+function selectMesh(mesh) {
+  if (!mesh?.isMesh || !mesh.material) return;
+
+  // Önceki seçimin highlight'ını kaldır
+  const prevMat = getPrimaryMat(selectedMesh);
+  if (prevMat?.emissive) prevMat.emissive.copy(origEmissive);
+
+  selectedMesh = mesh;
+  const mat = getPrimaryMat(mesh);
+  if (mat?.emissive) {
+    origEmissive.copy(mat.emissive);
+    mat.emissive.setHex(0x221100);
   }
 
-  document.getElementById('btnNew').onclick=function(){
-    currentModel=''; matData=[]; selectedIdx=-1;
-    productName.value=''; fileGlb.value=''; fileUsdz.value='';
-    dropGlb.classList.remove('has-file'); dropUsdz.classList.remove('has-file');
-    document.getElementById('nameGlb').textContent='';
-    document.getElementById('nameUsdz').textContent='';
-    btnUpload.disabled=true; progWrap.classList.remove('ac'); setProg(0,''); hideErr();
-    document.getElementById('matList').innerHTML='<div style="font-size:11px;color:var(--text-muted);padding:8px 0">Model yüklenince görünür.</div>';
-    document.getElementById('matEditor').classList.remove('ac');
-    document.getElementById('btnSave').disabled=false;
-    document.getElementById('btnSave').textContent='💾 Kaydet ve Link Oluştur';
-    goStep(1);
-  };
+  if (mat) {
+    const col = mat.color    ? '#'+mat.color.getHexString()    : '#ffffff';
+    const em  = mat.emissive ? '#'+mat.emissive.getHexString() : '#000000';
+    setC('mc', col); setC('me', em);
+    setSL('in-op','vb-op', mat.opacity??1,              v=>v.toFixed(2));
+    setSL('in-ro','vb-ro', mat.roughness??0.5,          v=>v.toFixed(2));
+    setSL('in-me2','vb-me2', mat.metalness??0,          v=>v.toFixed(2));
+    setSL('in-ei','vb-ei', mat.emissiveIntensity??1,    v=>v.toFixed(2));
+    setSL('in-ns','vb-ns', mat.normalScale?.x??1,       v=>v.toFixed(2));
+    setSL('in-ao','vb-ao', mat.aoMapIntensity??1,       v=>v.toFixed(2));
+    setSL('in-ro2','vb-ro2', mat.renderOrder??0,        v=>v.toFixed(0));
 
-  function rgbToHex(r,g,b){function c(x){var h=Math.round(x*255).toString(16);return h.length===1?'0'+h:h;} return '#'+c(r)+c(g)+c(b);}
-  function hexToRgb(hex){return {r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)};}
+    setTgl('tgl-wf',   mat.wireframe??false);
+    setTgl('tgl-ds',   mat.side===THREE.DoubleSide);
+    setTgl('tgl-dw',   mat.depthWrite??true);
+    setTgl('tgl-flat', mat.flatShading??false);
+    setTgl('tgl-vcol', mat.vertexColors??false);
 
-  })();
+    // Alpha modu
+    updateAlphaPillUI(mat);
+  }
+
+  if (_el('mat-name'))  _el('mat-name').textContent  = mesh.name||'Mesh';
+  if (_el('tex-mesh-name')) _el('tex-mesh-name').textContent = (mesh.name||'Mesh')+' Texture';
+  if (_el('mat-empty')) _el('mat-empty').style.display = 'none';
+  if (_el('mat-ed'))    _el('mat-ed').style.display   = 'block';
+  if (_el('tex-empty')) _el('tex-empty').style.display = 'none';
+  if (_el('tex-ed'))    _el('tex-ed').style.display   = 'block';
+  if (_el('st-sel'))    _el('st-sel').textContent      = mesh.name||'Mesh';
+
+  syncOL(mesh);
+  refreshTextureUI(mesh);
+}
+
+function deselectMesh() {
+  const prevMat = getPrimaryMat(selectedMesh);
+  if (prevMat?.emissive) prevMat.emissive.copy(origEmissive);
+  selectedMesh = null;
+  if (_el('mat-empty')) _el('mat-empty').style.display = 'block';
+  if (_el('mat-ed'))    _el('mat-ed').style.display    = 'none';
+  if (_el('tex-empty')) _el('tex-empty').style.display = 'block';
+  if (_el('tex-ed'))    _el('tex-ed').style.display    = 'none';
+  if (_el('st-sel'))    _el('st-sel').textContent      = '—';
+  const ol = _el('outliner');
+  if (ol?._map) ol._map.forEach(({el}) => el.classList.remove('selected'));
+}
+
+// ── MESH GİZLE / GÖSTER ──
+function toggleMeshVisibility(mesh) {
+  if (!mesh) return;
+  mesh.visible = !mesh.visible;
+  toast(mesh.visible ? `${mesh.name||'Mesh'} gösterildi` : `${mesh.name||'Mesh'} gizlendi`);
+}
+
+// ── IZOLE ET ──
+function toggleIsolate() {
+  if (!currentModel) return toast('Model yüklenmedi','err');
+  isIsolated = !isIsolated;
+  currentModel.traverse(c => {
+    if (!c.isMesh) return;
+    if (isIsolated) c.visible = (c===selectedMesh);
+    else c.visible = true;
+  });
+  toast(isIsolated ? 'İzole edildi' : 'Tümü gösterildi');
+}
+
+// ── SİL ──
+function deleteSelectedMesh() {
+  if (!selectedMesh) return toast('Silmek için bir parça seçin','err');
+  const name = selectedMesh.name||'Parça';
+  selectedMesh.removeFromParent();
+  disposeHierarchy(selectedMesh);
+  meshTextures.delete(selectedMesh.uuid);
+  deselectMesh();
+  if (currentModel) buildOutliner(currentModel);
+  toast(`${name} silindi 🗑️`,'ok');
+}
+
+// ── TRANSFORM UI SYNC ──
+function syncTUI() {
+  if (!currentModel) return;
+  const p=currentModel.position, r=currentModel.rotation, s=currentModel.scale;
+  if(_el('tx-x')) _el('tx-x').value=(p.x||0).toFixed(3);
+  if(_el('tx-y')) _el('tx-y').value=(p.y||0).toFixed(3);
+  if(_el('tx-z')) _el('tx-z').value=(p.z||0).toFixed(3);
+  if(_el('rx-x')) _el('rx-x').value=((r.x||0)*180/Math.PI).toFixed(1);
+  if(_el('rx-y')) _el('rx-y').value=((r.y||0)*180/Math.PI).toFixed(1);
+  if(_el('rx-z')) _el('rx-z').value=((r.z||0)*180/Math.PI).toFixed(1);
+  const sp = Math.round((s.x||1)*100);
+  if(_el('in-sc')) _el('in-sc').value=sp;
+  if(_el('vb-sc')) _el('vb-sc').textContent=sp;
+}
+
+// ── UI YARDIMCILARI ──
+function setC(id, hex) {
+  const sw=_el(`${id}-sw`), inp=_el(`in-${id}`), hx=_el(`${id}-hex`);
+  if(sw)  sw.style.background=hex;
+  if(inp) inp.value=hex;
+  if(hx)  hx.value=hex;
+}
+function setSL(inId, bdId, val, fmt) {
+  if(_el(inId)) _el(inId).value=val;
+  if(_el(bdId)) _el(bdId).textContent=fmt(val);
+}
+function setTgl(id, on) {
+  const el=_el(id); if(el) el.classList.toggle('on',on);
+}
+function bindTgl(id, cb) {
+  const el=_el(id);
+  if(el) el.addEventListener('click',function(){ this.classList.toggle('on'); cb(this.classList.contains('on')); });
+}
+
+function colorSetup(id, cb) {
+  const sw=_el(`${id}-sw`), inp=_el(`in-${id}`), hx=_el(`${id}-hex`);
+  if(!sw||!inp) return;
+  sw.addEventListener('click', ()=>inp.click());
+  inp.addEventListener('input', e=>{
+    const v=e.target.value; if(sw) sw.style.background=v; if(hx) hx.value=v; cb(v);
+  });
+  if(hx) hx.addEventListener('change', e=>{
+    const v=e.target.value;
+    if(/^#[0-9a-f]{6}$/i.test(v)){ inp.value=v; if(sw) sw.style.background=v; cb(v); }
+  });
+}
+
+// ── ALPHA MOD YÖNETİMİ (YENİ - TAM) ──
+const ALPHA_MODES = {
+  opaque:   { transparent:false, blending:THREE.NormalBlending,       depthWrite:true,  alphaTest:0    },
+  blend:    { transparent:true,  blending:THREE.NormalBlending,       depthWrite:false, alphaTest:0    },
+  mask:     { transparent:true,  blending:THREE.NormalBlending,       depthWrite:true,  alphaTest:0.5  },
+  additive: { transparent:true,  blending:THREE.AdditiveBlending,     depthWrite:false, alphaTest:0    },
+  multiply: { transparent:true,  blending:THREE.MultiplyBlending,     depthWrite:false, alphaTest:0    },
+  subtract: { transparent:true,  blending:THREE.SubtractiveBlending,  depthWrite:false, alphaTest:0    },
+};
+
+function applyAlphaMode(modeName, mesh, showCutoff) {
+  const cfg = ALPHA_MODES[modeName];
+  if (!cfg || !mesh) return;
+  updateMatArray(mesh, m => {
+    m.transparent = cfg.transparent;
+    m.blending    = cfg.blending;
+    m.depthWrite  = cfg.depthWrite;
+    m.alphaTest   = cfg.alphaTest;
+    m.needsUpdate = true;
+  });
+  // Cutoff satırı
+  if (_el('alpha-cutoff-wrap')) {
+    _el('alpha-cutoff-wrap').style.display = modeName==='mask' ? 'flex' : 'none';
+  }
+  // depthWrite toggle senkronize
+  setTgl('tgl-dw', cfg.depthWrite);
+  toast(`Alpha modu: ${modeName}`);
+}
+
+function updateAlphaPillUI(mat) {
+  let mode = 'opaque';
+  if (mat.blending === THREE.AdditiveBlending)    mode='additive';
+  else if (mat.blending === THREE.MultiplyBlending)  mode='multiply';
+  else if (mat.blending === THREE.SubtractiveBlending) mode='subtract';
+  else if (mat.transparent && mat.alphaTest > 0)  mode='mask';
+  else if (mat.transparent)                        mode='blend';
+
+  document.querySelectorAll('.alpha-pill').forEach(p =>
+    p.classList.toggle('active', p.dataset.mode===mode)
+  );
+  if (_el('alpha-cutoff-wrap'))
+    _el('alpha-cutoff-wrap').style.display = mode==='mask' ? 'flex' : 'none';
+}
+
+// Alpha pills
+document.querySelectorAll('.alpha-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    if (!selectedMesh) return toast('Önce bir mesh seçin','err');
+    document.querySelectorAll('.alpha-pill').forEach(p=>p.classList.remove('active'));
+    pill.classList.add('active');
+    applyAlphaMode(pill.dataset.mode, selectedMesh, true);
+  });
+});
+
+if(_el('in-ac')) _el('in-ac').addEventListener('input', e => {
+  const v=+e.target.value; if(_el('vb-ac')) _el('vb-ac').textContent=v.toFixed(2);
+  if(selectedMesh) updateMatArray(selectedMesh, m=>m.alphaTest=v);
+});
+
+// ── TEXTURE YÖNETİMİ (YENİ) ──
+const TEX_SLOTS = {
+  albedo:    { matProp: 'map',           colorSpace: THREE.SRGBColorSpace },
+  roughness: { matProp: 'roughnessMap',  colorSpace: THREE.LinearSRGBColorSpace },
+  normal:    { matProp: 'normalMap',     colorSpace: THREE.LinearSRGBColorSpace },
+  emissive:  { matProp: 'emissiveMap',   colorSpace: THREE.SRGBColorSpace },
+  ao:        { matProp: 'aoMap',         colorSpace: THREE.LinearSRGBColorSpace },
+  alpha:     { matProp: 'alphaMap',      colorSpace: THREE.LinearSRGBColorSpace },
+};
+
+// Gizli file input'lar texture slotları için
+const texFileInputs = {};
+function initTextureUI() {
+  Object.keys(TEX_SLOTS).forEach(slot => {
+    const inp = document.createElement('input');
+    inp.type='file'; inp.accept='.jpg,.jpeg,.png,.webp'; inp.style.display='none';
+    document.body.appendChild(inp);
+    texFileInputs[slot] = inp;
+
+    // Preview tıklama
+    const preview = _el(`tp-${slot}`);
+    if (preview) preview.addEventListener('click', () => { if(selectedMesh) inp.click(); else toast('Önce bir mesh seçin','err'); });
+
+    // Dosya seçimi
+    inp.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file || !selectedMesh) return;
+      loadTextureToMesh(file, slot, selectedMesh);
+      e.target.value='';
+    });
+
+    // Clear butonu
+    const clearBtn = _el(`tc-${slot}`);
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+      if (!selectedMesh) return;
+      clearTextureSlot(slot, selectedMesh);
+    });
+  });
+
+  // UV Tile
+  if(_el('in-tilex')) _el('in-tilex').addEventListener('input', e => {
+    const v=+e.target.value; if(_el('vb-tilex')) _el('vb-tilex').textContent=v.toFixed(1);
+    applyUVTile(selectedMesh);
+  });
+  if(_el('in-tiley')) _el('in-tiley').addEventListener('input', e => {
+    const v=+e.target.value; if(_el('vb-tiley')) _el('vb-tiley').textContent=v.toFixed(1);
+    applyUVTile(selectedMesh);
+  });
+
+  if(_el('btn-tex-apply-all')) _el('btn-tex-apply-all').addEventListener('click', () => {
+    if (!currentModel) return toast('Model yüklenmedi','err');
+    const tx = +(_el('in-tilex')?.value||1);
+    const ty = +(_el('in-tiley')?.value||1);
+    currentModel.traverse(c => { if(c.isMesh) applyUVTileToMesh(c, tx, ty); });
+    toast('UV tile tüm meshlere uygulandı');
+  });
+}
+
+function loadTextureToMesh(file, slot, mesh) {
+  const cfg = TEX_SLOTS[slot];
+  const url = URL.createObjectURL(file);
+  const loader = new THREE.TextureLoader();
+  loader.load(url, tex => {
+    URL.revokeObjectURL(url);
+    tex.colorSpace = cfg.colorSpace;
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.flipY = false; // GLTF convention
+
+    // Eskiyi temizle
+    const prevTex = meshTextures.get(mesh.uuid)?.[slot];
+    if (prevTex) prevTex.dispose();
+
+    if (!meshTextures.has(mesh.uuid)) meshTextures.set(mesh.uuid, {});
+    meshTextures.get(mesh.uuid)[slot] = tex;
+
+    updateMatArray(mesh, m => {
+      m[cfg.matProp] = tex;
+      // aoMap ikinci UV kanalı gerektirir — emin ol
+      if (slot==='ao' && !mesh.geometry.attributes.uv2) {
+        const uv = mesh.geometry.attributes.uv;
+        if (uv) mesh.geometry.setAttribute('uv2', uv.clone());
+      }
+      m.needsUpdate = true;
+    });
+
+    // Preview güncelle
+    const reader = new FileReader();
+    reader.onload = ev => setTexPreview(slot, ev.target.result, file.name);
+    reader.readAsDataURL(file);
+
+    toast(`${slot} texture yüklendi ✓`,'ok');
+  }, undefined, err => {
+    URL.revokeObjectURL(url);
+    toast('Texture yüklenemedi','err');
+    console.error(err);
+  });
+}
+
+function clearTextureSlot(slot, mesh) {
+  const cfg = TEX_SLOTS[slot];
+  const stored = meshTextures.get(mesh.uuid);
+  if (stored?.[slot]) { stored[slot].dispose(); delete stored[slot]; }
+  updateMatArray(mesh, m => { m[cfg.matProp]=null; m.needsUpdate=true; });
+  setTexPreview(slot, null, null);
+  toast(`${slot} texture kaldırıldı`);
+}
+
+function setTexPreview(slot, dataUrl, name) {
+  const prev = _el(`tp-${slot}`);
+  if (!prev) return;
+  // Eski img'yi kaldır
+  const oldImg = prev.querySelector('img');
+  if (oldImg) oldImg.remove();
+  const label = prev.querySelector('.tex-preview-label');
+
+  if (dataUrl) {
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    prev.insertBefore(img, label);
+    prev.classList.add('loaded');
+    if(label) label.textContent = name?.length>20 ? name.substring(0,18)+'…' : (name||slot);
+  } else {
+    prev.classList.remove('loaded');
+    if(label) label.innerHTML = 'Yüklemek için tıklayın<br>(JPG / PNG)';
+  }
+}
+
+function refreshTextureUI(mesh) {
+  if (!mesh) return;
+  const mat = getPrimaryMat(mesh);
+  // UV tile değerleri
+  const map = mat?.map;
+  if (map?.repeat) {
+    if(_el('in-tilex')) { _el('in-tilex').value=map.repeat.x; if(_el('vb-tilex')) _el('vb-tilex').textContent=map.repeat.x.toFixed(1); }
+    if(_el('in-tiley')) { _el('in-tiley').value=map.repeat.y; if(_el('vb-tiley')) _el('vb-tiley').textContent=map.repeat.y.toFixed(1); }
+  }
+  // Preview'ları sıfırla (stored texture yoksa)
+  Object.keys(TEX_SLOTS).forEach(slot => {
+    const stored = meshTextures.get(mesh.uuid)?.[slot];
+    if (!stored) setTexPreview(slot, null, null);
+    // Eğer materyalde texture varsa ama stored yoksa (GLB içinde gelen)
+    const cfg = TEX_SLOTS[slot];
+    if (!stored && mat?.[cfg.matProp]) {
+      const prev = _el(`tp-${slot}`);
+      if (prev) {
+        prev.classList.add('loaded');
+        const label = prev.querySelector('.tex-preview-label');
+        if(label) label.textContent='(GLB içinde)';
+      }
+    }
+  });
+}
+
+function applyUVTile(mesh) {
+  if (!mesh) return;
+  const tx = +(_el('in-tilex')?.value||1);
+  const ty = +(_el('in-tiley')?.value||1);
+  applyUVTileToMesh(mesh, tx, ty);
+}
+
+function applyUVTileToMesh(mesh, tx, ty) {
+  updateMatArray(mesh, m => {
+    ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap','alphaMap'].forEach(prop => {
+      if (m[prop]) { m[prop].repeat.set(tx, ty); m[prop].needsUpdate=true; }
+    });
+  });
+}
+
+// ── SAHNE KONTROLLERI ──
+if(_el('in-exp')) _el('in-exp').addEventListener('input', e => {
+  renderer.toneMappingExposure=+e.target.value;
+  if(_el('vb-exp')) _el('vb-exp').textContent=(+e.target.value).toFixed(2);
+});
+if(_el('in-amb')) _el('in-amb').addEventListener('input', e => {
+  ambLight.intensity=+e.target.value;
+  if(_el('vb-amb')) _el('vb-amb').textContent=(+e.target.value).toFixed(2);
+});
+if(_el('in-dir')) _el('in-dir').addEventListener('input', e => {
+  dirLight.intensity=+e.target.value;
+  if(_el('vb-dir')) _el('vb-dir').textContent=(+e.target.value).toFixed(2);
+});
+if(_el('in-shad')) _el('in-shad').addEventListener('input', e => {
+  shadowPlane.material.opacity=+e.target.value;
+  if(_el('vb-shad')) _el('vb-shad').textContent=(+e.target.value).toFixed(2);
+});
+if(_el('in-fog')) _el('in-fog').addEventListener('input', e => {
+  const d=+e.target.value;
+  if(_el('vb-fog')) _el('vb-fog').textContent=d.toFixed(3);
+  scene.fog = d>0 ? new THREE.FogExp2(scene.background.clone(), d) : null;
+});
+if(_el('in-fov')) _el('in-fov').addEventListener('input', e => {
+  camera.fov=+e.target.value; camera.updateProjectionMatrix();
+  if(_el('vb-fov')) _el('vb-fov').textContent=e.target.value+'°';
+});
+if(_el('in-near')) _el('in-near').addEventListener('input', e => {
+  camera.near=+e.target.value; camera.updateProjectionMatrix();
+  if(_el('vb-near')) _el('vb-near').textContent=(+e.target.value).toFixed(3);
+});
+colorSetup('bg', hex => { scene.background=new THREE.Color(hex); });
+
+// ── DÖNÜŞÜM KONTROLLERI ──
+['tx-x','tx-y','tx-z'].forEach((id,i) => {
+  if(_el(id)) _el(id).addEventListener('input',()=>{ if(currentModel) currentModel.position[['x','y','z'][i]]=parseFloat(_el(id).value)||0; });
+});
+['rx-x','rx-y','rx-z'].forEach((id,i) => {
+  if(_el(id)) _el(id).addEventListener('input',()=>{ if(currentModel) currentModel.rotation[['x','y','z'][i]]=(parseFloat(_el(id).value)||0)*Math.PI/180; });
+});
+if(_el('in-sc')) _el('in-sc').addEventListener('input', e => {
+  if(!currentModel) return;
+  const s=e.target.value/100; currentModel.scale.set(s,s,s);
+  if(_el('vb-sc')) _el('vb-sc').textContent=e.target.value;
+});
+if(_el('btn-rpos')) _el('btn-rpos').addEventListener('click',()=>{ if(!currentModel) return; currentModel.position.copy(initT.pos); syncTUI(); toast('Konum sıfırlandı'); });
+if(_el('btn-rall')) _el('btn-rall').addEventListener('click',()=>{ if(!currentModel) return; currentModel.position.copy(initT.pos); currentModel.rotation.copy(initT.rot); currentModel.scale.copy(initT.sc); syncTUI(); toast('Dönüşüm sıfırlandı'); });
+
+function convertToMeters(factor, unitName) {
+  if (!currentModel) return toast('Model yüklenmedi','err');
+  currentModel.position.set(0,0,0);
+  currentModel.updateMatrixWorld(true);
+  const processedGeoms = new Set();
+  currentModel.traverse(c => {
+    if (c.isMesh && c.geometry && !processedGeoms.has(c.geometry)) {
+      c.geometry.scale(factor,factor,factor);
+      c.geometry.computeBoundingBox(); c.geometry.computeBoundingSphere();
+      processedGeoms.add(c.geometry);
+    }
+    if (c!==currentModel) { c.position.multiplyScalar(factor); c.updateMatrix(); }
+  });
+  const box=new THREE.Box3().setFromObject(currentModel);
+  const sz=box.getSize(new THREE.Vector3()), ctr=box.getCenter(new THREE.Vector3());
+  currentModel.position.sub(ctr); currentModel.position.y+=sz.y/2;
+  initT.pos.copy(currentModel.position);
+  recalculateGround(currentModel);
+  syncTUI(); frameModel();
+  toast(`${unitName} → m kalıcı çevrim tamamlandı`,'ok');
+}
+if(_el('btn-unit-cm')) _el('btn-unit-cm').addEventListener('click',()=>convertToMeters(0.01,'cm'));
+if(_el('btn-unit-mm')) _el('btn-unit-mm').addEventListener('click',()=>convertToMeters(0.001,'mm'));
+
+// ── MALZEME KONTROLLERI ──
+colorSetup('mc', hex=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.color) m.color.set(hex); }); });
+colorSetup('me', hex=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.emissive){ m.emissive.set(hex); origEmissive.set(hex); } }); });
+
+if(_el('in-op')) _el('in-op').addEventListener('input', e=>{
+  const v=+e.target.value; if(_el('vb-op')) _el('vb-op').textContent=v.toFixed(2);
+  if(selectedMesh) updateMatArray(selectedMesh, m=>{
+    m.opacity=v;
+    // Opacity değiştiğinde sadece transparent bayrağını güncelle, blending'e dokunma
+    if(m.blending===THREE.NormalBlending && !m.alphaMap && !m.alphaTest) {
+      m.transparent = v<1;
+      m.depthWrite  = v===1;
+    } else {
+      m.transparent = true;
+    }
+  });
+});
+if(_el('in-ro')) _el('in-ro').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ro')) _el('vb-ro').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.roughness!==undefined) m.roughness=v; }); });
+if(_el('in-me2')) _el('in-me2').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-me2')) _el('vb-me2').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.metalness!==undefined) m.metalness=v; }); });
+if(_el('in-ei')) _el('in-ei').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ei')) _el('vb-ei').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.emissiveIntensity!==undefined) m.emissiveIntensity=v; }); });
+if(_el('in-ns')) _el('in-ns').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ns')) _el('vb-ns').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.normalScale) m.normalScale.set(v,v); }); });
+if(_el('in-ao')) _el('in-ao').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ao')) _el('vb-ao').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.aoMapIntensity!==undefined) m.aoMapIntensity=v; }); });
+if(_el('in-ro2')) _el('in-ro2').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ro2')) _el('vb-ro2').textContent=v.toFixed(0); if(selectedMesh){ selectedMesh.renderOrder=v; } });
+
+bindTgl('tgl-wf',   v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>m.wireframe=v); });
+bindTgl('tgl-ds',   v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>m.side=v?THREE.DoubleSide:THREE.FrontSide); });
+bindTgl('tgl-dw',   v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>m.depthWrite=v); });
+bindTgl('tgl-flat', v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ m.flatShading=v; m.needsUpdate=true; }); });
+bindTgl('tgl-vcol', v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ m.vertexColors=v; m.needsUpdate=true; }); });
+
+// ── TOPLU UYGULA ──
+if(_el('btn-ap-col')) _el('btn-ap-col').addEventListener('click',()=>{
+  const mat=getPrimaryMat(selectedMesh); if(!currentModel||!mat?.color) return;
+  const c=mat.color.clone();
+  currentModel.traverse(m=>{ if(m.isMesh) updateMatArray(m,mtr=>{ if(mtr.color) mtr.color.copy(c); }); });
+  toast('Renk tüm meshlere uygulandı');
+});
+if(_el('btn-ap-pbr')) _el('btn-ap-pbr').addEventListener('click',()=>{
+  const mat=getPrimaryMat(selectedMesh); if(!currentModel||!mat) return;
+  const ro=mat.roughness, me=mat.metalness;
+  currentModel.traverse(m=>{ if(m.isMesh) updateMatArray(m,mtr=>{ if(mtr.roughness!==undefined) mtr.roughness=ro; if(mtr.metalness!==undefined) mtr.metalness=me; }); });
+  toast('PBR tüm meshlere uygulandı');
+});
+if(_el('btn-ap-alpha')) _el('btn-ap-alpha').addEventListener('click',()=>{
+  if(!currentModel||!selectedMesh) return;
+  const mat=getPrimaryMat(selectedMesh); if(!mat) return;
+  const mode = document.querySelector('.alpha-pill.active')?.dataset.mode||'opaque';
+  currentModel.traverse(m=>{ if(m.isMesh) applyAlphaMode(mode, m, false); });
+  toast(`Alpha modu "${mode}" tüm meshlere uygulandı`);
+});
+if(_el('btn-ap-all')) _el('btn-ap-all').addEventListener('click',()=>{
+  _el('btn-ap-col')?.click();
+  _el('btn-ap-pbr')?.click();
+  toast('Tüm ayarlar uygulandı');
+});
+
+// ── DÜZENLEME ──
+if(_el('btn-delete-mesh')) _el('btn-delete-mesh').addEventListener('click', deleteSelectedMesh);
+if(_el('btn-hide-mesh')) _el('btn-hide-mesh').addEventListener('click',()=>{ if(selectedMesh) toggleMeshVisibility(selectedMesh); else toast('Önce bir mesh seçin','err'); });
+if(_el('btn-isolate-mesh')) _el('btn-isolate-mesh').addEventListener('click', toggleIsolate);
+
+// ── VP TOOLBAR ──
+document.querySelectorAll('.vp-btn[data-mode]').forEach(b=>{
+  b.addEventListener('click',()=>setGizmo(b.dataset.mode));
+});
+if(_el('btn-space')) _el('btn-space').addEventListener('click',function(){
+  worldSpace=!worldSpace; gizmo.setSpace(worldSpace?'world':'local');
+  this.textContent=worldSpace?'WORLD':'LOCAL';
+});
+function setGizmo(mode) {
+  gizmo.setMode(mode);
+  document.querySelectorAll('.vp-btn[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+}
+
+// ── GÖRÜNÜM PREAYARLARı ──
+function setView(px,py,pz) {
+  if(!currentModel){ toast('Model yüklenmedi'); return; }
+  const box=new THREE.Box3().setFromObject(currentModel);
+  const ctr=box.getCenter(new THREE.Vector3());
+  const sz=box.getSize(new THREE.Vector3());
+  const d=Math.max(sz.x,sz.y,sz.z)*1.8;
+  orbit.target.copy(ctr);
+  camera.position.set(ctr.x+px*d, ctr.y+py*d, ctr.z+pz*d);
+  orbit.update();
+}
+if(_el('vc-fr')) _el('vc-fr').addEventListener('click',()=>setView(0,0,1));
+if(_el('vc-tp')) _el('vc-tp').addEventListener('click',()=>setView(0,1,0.001));
+if(_el('vc-rt')) _el('vc-rt').addEventListener('click',()=>setView(1,0,0));
+if(_el('vc-is')) _el('vc-is').addEventListener('click',()=>setView(0.6,0.5,0.6));
+
+// ── DOSYA AÇ ──
+if(_el('btn-open')) _el('btn-open').addEventListener('click',()=>_el('file-input').click());
+if(_el('file-input')) _el('file-input').addEventListener('change',e=>{ if(e.target.files[0]){ loadFile(e.target.files[0]); e.target.value=''; } });
+
+// ── ODAKLAN ──
+if(_el('btn-frame')) _el('btn-frame').addEventListener('click', frameModel);
+function frameModel() {
+  if(!currentModel){ toast('Model yüklenmedi'); return; }
+  const box=new THREE.Box3().setFromObject(currentModel);
+  const ctr=box.getCenter(new THREE.Vector3());
+  const sz=box.getSize(new THREE.Vector3());
+  const d=Math.max(sz.x,sz.y,sz.z)/2/Math.tan(camera.fov*Math.PI/360)*1.8;
+  orbit.target.copy(ctr);
+  camera.position.set(ctr.x+d*.55, ctr.y+d*.4, ctr.z+d);
+  orbit.update();
+}
+
+// ── SCREENSHOT ──
+function takeScreenshot() {
+  renderer.render(scene,camera);
+  const a=document.createElement('a');
+  a.download=`pepperAR_${Date.now()}.png`;
+  a.href=renderer.domElement.toDataURL('image/png');
+  a.click();
+  toast('Screenshot kaydedildi 📷','ok');
+}
+[_el('btn-ss'),_el('btn-ss2')].forEach(b=>b?.addEventListener('click',takeScreenshot));
+
+// ── GLB EXPORT ──
+if(_el('btn-exp-glb')) _el('btn-exp-glb').addEventListener('click',()=>{
+  if(!currentModel) return toast('Model yüklenmedi','err');
+  const exporter=new GLTFExporter();
+  const s=createExportScene(currentModel,false);
+  exporter.parse(s, buffer=>{
+    const blob=new Blob([buffer],{type:'application/octet-stream'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`model_export_${Date.now()}.glb`;
+    a.click();
+    toast('GLB dışa aktarıldı ✓','ok');
+  }, err=>{ console.error(err); toast('GLB Hatası','err'); },{ binary:true });
+});
+
+// ── USDZ EXPORT (DÜZELTİLDİ) ──
+if(_el('btn-exp-usdz')) _el('btn-exp-usdz').addEventListener('click', async()=>{
+  if(!currentModel) return toast('Model yüklenmedi','err');
+  if(!USDZExporter) return toast('USDZ exporter bu tarayıcıda desteklenmiyor','err');
+  _el('loading-ov').classList.add('show');
+  _el('load-text').textContent='USDZ hazırlanıyor...';
+  try {
+    const s=createExportScene(currentModel,true);
+    s.updateMatrixWorld(true);
+    const exporter=new USDZExporter();
+    // Three.js 0.160 API: parse(scene, options)
+    const arraybuffer=await exporter.parse(s, {});
+    const blob=new Blob([arraybuffer],{type:'model/vnd.usdz+zip'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`model_AR_${Date.now()}.usdz`;
+    a.click();
+    toast('USDZ dışa aktarıldı ✓ (iOS AR hazır)','ok');
+  } catch(e) {
+    console.error(e);
+    toast('USDZ hatası: '+(e.message||e),'err');
+  } finally {
+    _el('loading-ov').classList.remove('show');
+    _el('load-text').textContent='Model yükleniyor...';
+  }
+});
+
+// ── WIREFRAME ──
+function toggleWireframe() {
+  wireMode=!wireMode;
+  _el('btn-wf')?.classList.toggle('active',wireMode);
+  if(currentModel) currentModel.traverse(c=>{ if(c.isMesh) updateMatArray(c,m=>m.wireframe=wireMode); });
+  toast(wireMode?'Wireframe açık':'Wireframe kapalı');
+}
+if(_el('btn-wf')) _el('btn-wf').addEventListener('click',toggleWireframe);
+
+// ── GRİD ──
+if(_el('btn-grid')) _el('btn-grid').addEventListener('click',()=>{
+  gridVis=!gridVis;
+  gridHelper.visible=gridVis;
+  shadowPlane.visible=gridVis;
+  _el('btn-grid').classList.toggle('active',gridVis);
+});
+
+// ── STATİSTİK ──
+if(_el('btn-stats')) _el('btn-stats').addEventListener('click',()=>{
+  statsVisible=!statsVisible;
+  _el('stats-hud')?.classList.toggle('hidden',!statsVisible);
+  _el('btn-stats')?.classList.toggle('active',statsVisible);
+});
+
+// ── TEMA ──
+function toggleTheme() {
+  const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('par_theme',t);
+  const bg=t==='dark'?'#111113':'#e4e4e8';
+  scene.background=new THREE.Color(bg);
+  if(_el('bg-sw')) _el('bg-sw').style.background=bg;
+  if(_el('in-bg')) _el('in-bg').value=bg;
+  if(_el('bg-hex')) _el('bg-hex').value=bg;
+}
+if(_el('btn-theme')) _el('btn-theme').addEventListener('click',toggleTheme);
+
+// ── KISA YOLLAR MODAL ──
+if(_el('btn-keys')) _el('btn-keys').addEventListener('click',()=>_el('modal-keys').classList.add('show'));
+if(_el('modal-keys')) _el('modal-keys').addEventListener('click',e=>{ if(e.target===e.currentTarget) e.currentTarget.classList.remove('show'); });
+
+// ── PRESET KAYDET / YÜKlE ──
+[_el('btn-save'),_el('btn-save2')].forEach(b=>b?.addEventListener('click',savePreset));
+// ── BULUTA KAYDET (SUPABASE ENTEGRASYONU) ──
+[_el('btn-save'), _el('btn-save2')].forEach(b => {
+  if(b) {
+    // Önceki event listener'ı ezmek için klonlayıp değiştirebilirsin veya onclick atayabilirsin
+    b.onclick = publishToCloud; 
+    b.textContent = "☁️ Buluta Kaydet"; // Buton ismini havalı yapalım
+  }
+});
+
+async function publishToCloud() {
+  if (!currentModel) return toast('Önce bir model yükleyin!', 'err');
+  if (!currentUser) return toast('Oturum hatası. Lütfen tekrar giriş yapın.', 'err');
+
+  // Kullanıcıdan model için bir isim isteyelim (Boşlukları tire yapalım)
+  let modelName = prompt("Model için bir isim girin:", currentFileName.replace(/\.[^/.]+$/, ""));
+  if (!modelName) return;
+  modelName = modelName.trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+
+  _el('loading-ov').classList.add('show');
+  _el('load-text').textContent = 'Buluta yükleniyor... Lütfen beklemeye devam edin.';
+
+  try {
+    // 1. Ayarları (Settings) Topla (Viewer.html için)
+    const settings = {
+      exposure: _el('in-exp')?.value || 1,
+      shadow_intensity: _el('in-shad')?.value || 0.2,
+      bg_color: _el('in-bg')?.value || '#f7f5f2',
+      scale: _el('in-sc')?.value / 100 || 1,
+      rotate_y: _el('rx-y')?.value || 0
+      // Gelişmiş PBR ve materyal ayarlarını da buraya JSON formatında ekleyebilirsin
+    };
+
+    // 2. GLB Dosyasını Oluştur
+    const exporter = new GLTFExporter();
+    const exportScene = createExportScene(currentModel, true); // Merkeze alarak export et
+    const glbBuffer = await new Promise((resolve, reject) => {
+      exporter.parse(exportScene, resolve, reject, { binary: true });
+    });
+
+    // 3. USDZ Dosyasını Oluştur (iOS için)
+    let usdzBuffer = null;
+    if (USDZExporter) {
+      exportScene.updateMatrixWorld(true);
+      const usdzExp = new USDZExporter();
+      usdzBuffer = await usdzExp.parse(exportScene, {});
+    }
+
+    // 4. Otomatik Thumbnail (Önizleme) Al
+    renderer.render(scene, camera);
+    const thumbDataUrl = renderer.domElement.toDataURL('image/webp', 0.8);
+    const thumbBlob = await (await fetch(thumbDataUrl)).blob();
+
+    // 5. Supabase Storage'a Yükle
+    // Not: Storage'da aynı isimli dosya varsa üzerine yazılır (upsert: true)
+    await _supabase.storage.from('models').upload(`${modelName}-3d.glb`, new Blob([glbBuffer]), { upsert: true });
+    
+    if (usdzBuffer) {
+      await _supabase.storage.from('models').upload(`${modelName}-3d.usdz`, new Blob([usdzBuffer]), { upsert: true });
+    }
+    
+    await _supabase.storage.from('models').upload(`${modelName}-thumb.webp`, thumbBlob, { upsert: true });
+
+    // 6. Supabase Veritabanına (models tablosuna) Kayıt Ekle
+    const { error: dbError } = await _supabase.from('models').upsert([{
+      user_id: currentUser.id,
+      name: modelName,
+      exposure: settings.exposure,
+      shadow_intensity: settings.shadow_intensity,
+      bg_color: settings.bg_color,
+      scale: settings.scale,
+      rotate_y: settings.rotate_y
+    }], { onConflict: 'name' });
+
+    if (dbError) throw dbError;
+
+    toast('Başarıyla yüklendi! Dashboard\'a yönlendiriliyorsunuz...', 'ok');
+    
+    // İşlem bitince Dashboard'a geri dön
+    setTimeout(() => {
+      window.location.href = '/dashboard.html';
+    }, 1500);
+
+  } catch (err) {
+    console.error("Yükleme Hatası:", err);
+    toast('Yükleme sırasında hata oluştu!', 'err');
+  } finally {
+    _el('loading-ov').classList.remove('show');
+  }
+}
+function loadPreset() {
+  try {
+    const p=JSON.parse(localStorage.getItem('par_preset')||'{}');
+    if(p.exp&&_el('in-exp')){ _el('in-exp').value=p.exp; renderer.toneMappingExposure=+p.exp; if(_el('vb-exp')) _el('vb-exp').textContent=(+p.exp).toFixed(2); }
+    if(p.amb&&_el('in-amb')){ _el('in-amb').value=p.amb; ambLight.intensity=+p.amb; if(_el('vb-amb')) _el('vb-amb').textContent=(+p.amb).toFixed(2); }
+    if(p.dir&&_el('in-dir')){ _el('in-dir').value=p.dir; dirLight.intensity=+p.dir; if(_el('vb-dir')) _el('vb-dir').textContent=(+p.dir).toFixed(2); }
+    if(p.shad&&_el('in-shad')){ _el('in-shad').value=p.shad; shadowPlane.material.opacity=+p.shad; if(_el('vb-shad')) _el('vb-shad').textContent=(+p.shad).toFixed(2); }
+    if(p.bg&&_el('in-bg')){ scene.background=new THREE.Color(p.bg); if(_el('bg-sw')) _el('bg-sw').style.background=p.bg; _el('in-bg').value=p.bg; if(_el('bg-hex')) _el('bg-hex').value=p.bg; }
+    if(p.fov&&_el('in-fov')){ camera.fov=+p.fov; camera.updateProjectionMatrix(); if(_el('vb-fov')) _el('vb-fov').textContent=p.fov+'°'; _el('in-fov').value=p.fov; }
+  } catch(e){}
+}
+
+// ── BULK AR (TOPLU İŞLEM) ──
+const bulkModels = [null,null,null,null,null];
+const bulkNames  = ['','','','',''];
+const bulkUIRefs = [];
+let currentBulkSlot = -1;
+
+function initBulkUI() {
+  const container = _el('bulk-slots');
+  if(!container) return;
+  container.innerHTML='';
+
+  const bulkFileInput=document.createElement('input');
+  bulkFileInput.type='file'; bulkFileInput.accept='.glb,.gltf'; bulkFileInput.style.display='none';
+  document.body.appendChild(bulkFileInput);
+  bulkFileInput.addEventListener('change',e=>{
+    const file=e.target.files[0];
+    if(!file||currentBulkSlot<0) return;
+    loadBulkFile(file,currentBulkSlot);
+    e.target.value='';
+  });
+
+  for(let i=0;i<5;i++){
+    const slot=document.createElement('div'); slot.className='bulk-slot';
+    const title=document.createElement('div'); title.className='bulk-slot-title'; title.textContent=`Kayıt ${i+1}`;
+    const row1=document.createElement('div'); row1.className='btn-row'; row1.style.marginBottom='6px';
+    const btnLoad=document.createElement('button'); btnLoad.className='btn sm'; btnLoad.textContent='Yükle';
+    const btnClear=document.createElement('button'); btnClear.className='btn danger sm'; btnClear.textContent='Kaldır'; btnClear.style.display='none';
+    row1.appendChild(btnLoad); row1.appendChild(btnClear);
+    const nameLbl=document.createElement('span'); nameLbl.className='bulk-file-name'; nameLbl.textContent='Boş';
+    const row2=document.createElement('div'); row2.className='btn-row'; row2.style.display='none';
+    const btnCm=document.createElement('button'); btnCm.className='btn sm'; btnCm.textContent='cm→m';
+    const btnMm=document.createElement('button'); btnMm.className='btn sm'; btnMm.textContent='mm→m';
+    row2.appendChild(btnCm); row2.appendChild(btnMm);
+    slot.appendChild(title); slot.appendChild(row1); slot.appendChild(nameLbl); slot.appendChild(row2);
+    container.appendChild(slot);
+
+    btnLoad.addEventListener('click',()=>{ currentBulkSlot=i; bulkFileInput.click(); });
+    btnClear.addEventListener('click',()=>{
+      if(bulkModels[i]) disposeHierarchy(bulkModels[i]);
+      bulkModels[i]=null; bulkNames[i]='';
+      nameLbl.textContent='Boş'; btnClear.style.display='none';
+      btnLoad.style.display='block'; row2.style.display='none';
+    });
+    btnCm.addEventListener('click',()=>scaleBulkModel(i,0.01,'cm'));
+    btnMm.addEventListener('click',()=>scaleBulkModel(i,0.001,'mm'));
+    bulkUIRefs[i]={btnLoad,btnClear,nameLbl,row2};
+  }
+
+  const cbCenter=_el('cb-bulk-center');
+  if(cbCenter) cbCenter.addEventListener('click',function(){ this.classList.toggle('on'); });
+
+  _el('btn-bulk-glb-export')?.addEventListener('click',()=>exportBulk('glb'));
+  _el('btn-bulk-usdz-export')?.addEventListener('click',()=>exportBulk('usdz'));
+}
+
+function loadBulkFile(file,index) {
+  _el('loading-ov').classList.add('show');
+  _el('load-text').textContent=`Ürün ${index+1} yükleniyor...`;
+  const url=URL.createObjectURL(file);
+  makeLoader().load(url, gltf=>{
+    URL.revokeObjectURL(url);
+    if(bulkModels[index]) disposeHierarchy(bulkModels[index]);
+    bulkModels[index]=gltf.scene;
+    bulkNames[index]=file.name;
+    const refs=bulkUIRefs[index];
+    refs.nameLbl.textContent=file.name.length>20?file.name.substring(0,18)+'…':file.name;
+    refs.btnLoad.style.display='none'; refs.btnClear.style.display='block'; refs.row2.style.display='flex';
+    _el('loading-ov').classList.remove('show');
+    _el('load-text').textContent='Model yükleniyor...';
+    toast(`Ürün ${index+1} hazır`,'ok');
+  }, undefined, err=>{
+    URL.revokeObjectURL(url);
+    _el('loading-ov').classList.remove('show');
+    _el('load-text').textContent='Model yükleniyor...';
+    toast('Yüklenemedi: '+err.message,'err');
+  });
+}
+
+function scaleBulkModel(index,factor,unitName) {
+  const model=bulkModels[index]; if(!model) return;
+  const processedGeoms=new Set();
+  model.traverse(c=>{
+    if(c.isMesh&&c.geometry&&!processedGeoms.has(c.geometry)){
+      c.geometry.scale(factor,factor,factor);
+      c.geometry.computeBoundingBox(); c.geometry.computeBoundingSphere();
+      processedGeoms.add(c.geometry);
+    }
+    if(c!==model){ c.position.multiplyScalar(factor); c.updateMatrix(); }
+  });
+  toast(`Ürün ${index+1}: ${unitName}→m`,'ok');
+}
+
+async function exportBulk(format) {
+  const hasModels=bulkModels.some(m=>m!==null);
+  if(!hasModels) return toast('En az bir ürün yükleyin','err');
+  if(format==='usdz'&&!USDZExporter) return toast('USDZ exporter desteklenmiyor','err');
+
+  _el('loading-ov').classList.add('show');
+  _el('load-text').textContent=`Toplu ${format.toUpperCase()} hazırlanıyor...`;
+
+  const isCenter=_el('cb-bulk-center')?.classList.contains('on');
+
+  for(let i=0;i<5;i++){
+    const model=bulkModels[i]; if(!model) continue;
+    const s=createExportScene(model,isCenter);
+    const safeName=(bulkNames[i]||`Urun_${i+1}`).replace(/\.[^/.]+$/,'').replace(/[^a-z0-9_-]/gi,'_');
+    try {
+      if(format==='glb'){
+        const exp=new GLTFExporter();
+        await new Promise(resolve=>{
+          exp.parse(s,buffer=>{
+            const blob=new Blob([buffer],{type:'application/octet-stream'});
+            const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+            a.download=`${safeName}_AR.glb`; a.click(); resolve();
+          },err=>{ console.error(err); resolve(); },{binary:true});
+        });
+      } else if(format==='usdz'){
+        s.updateMatrixWorld(true);
+        const exp=new USDZExporter();
+        const buf=await exp.parse(s,{});
+        const blob=new Blob([buf],{type:'model/vnd.usdz+zip'});
+        const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+        a.download=`${safeName}_AR.usdz`; a.click();
+      }
+    } catch(e){ console.error(e); toast(`Slot ${i+1} hatası`,'err'); }
+    await new Promise(r=>setTimeout(r,700));
+  }
+
+  _el('loading-ov').classList.remove('show');
+  _el('load-text').textContent='Model yükleniyor...';
+  toast(`Toplu ${format.toUpperCase()} tamamlandı ✓`,'ok');
+}
+
+// ── TABS ──
+document.querySelectorAll('.stab').forEach(t=>{
+  t.addEventListener('click',()=>switchTab(t.dataset.tab,t.dataset.side));
+});
+function switchTab(tabId,side) {
+  const sel=`.sidebar-${side}`;
+  document.querySelectorAll(`${sel} .stab`).forEach(t=>t.classList.toggle('active',t.dataset.tab===tabId));
+  document.querySelectorAll(`${sel} .stab-pane`).forEach(p=>p.classList.toggle('active',p.id===`tab-${tabId}`));
+}
+
+// ── SECTION ACCORDION ──
+document.querySelectorAll('.section-head').forEach(h=>{
+  h.addEventListener('click',()=>h.parentElement.classList.toggle('closed'));
+});
+
+// ── KLAVYE KISA YOLLARI ──
+document.addEventListener('keydown',e=>{
+  const tag=document.activeElement?.tagName;
+  if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
+  if(e.ctrlKey&&e.key==='o'){ e.preventDefault(); _el('file-input')?.click(); return; }
+  switch(e.key){
+    case '?': _el('modal-keys')?.classList.toggle('show'); break;
+    case 'Escape': deselectMesh(); _el('modal-keys')?.classList.remove('show'); isIsolated=false; if(currentModel) currentModel.traverse(c=>{ if(c.isMesh) c.visible=true; }); break;
+    case 'f': case 'F': frameModel(); break;
+    case 'g': case 'G': _el('btn-grid')?.click(); break;
+    case 'w': case 'W': toggleWireframe(); break;
+    case 'p': case 'P': takeScreenshot(); break;
+    case 'i': case 'I': _el('btn-stats')?.click(); break;
+    case 't': case 'T': setGizmo('translate'); break;
+    case 'r': case 'R': if(!e.altKey) setGizmo('rotate'); break;
+    case 's': case 'S': setGizmo('scale'); break;
+    case '1': _el('vc-fr')?.click(); break;
+    case '2': _el('vc-tp')?.click(); break;
+    case '3': _el('vc-rt')?.click(); break;
+    case '4': _el('vc-is')?.click(); break;
+    case 'Delete': deleteSelectedMesh(); break;
+    case 'h': case 'H': if(!e.altKey){ if(selectedMesh) toggleMeshVisibility(selectedMesh); } else toggleIsolate(); break;
+  }
+  if(e.altKey&&e.key==='r') _el('btn-rall')?.click();
+  if(e.altKey&&e.key==='t') toggleTheme();
+});
+
+// ── STATUS / TOAST ──
+function setStatus(type,text){
+  if(_el('sd')) _el('sd').className='status-dot'+(type==='ready'?' ready':type==='err'?' err':'');
+  if(_el('st-txt')) _el('st-txt').textContent=text;
+}
+let toastTmr;
+function toast(msg,type=''){
+  const el=_el('toast'); if(!el) return;
+  el.textContent=msg;
+  el.className='toast show'+(type?' '+type:'');
+  clearTimeout(toastTmr);
+  toastTmr=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// ── RESIZE ──
+function onResize(){
+  const w=container.clientWidth, h=container.clientHeight;
+  if(!w||!h) return;
+  camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h);
+}
+
+// ── FPS ──
+function updateFPS(){
+  fpsFrames++;
+  const now=performance.now();
+  if(now-fpsLast>=1000){
+    if(_el('fps-v')) _el('fps-v').textContent=fpsFrames;
+    fpsFrames=0; fpsLast=now;
+  }
+}
+
+// ── RENDER LOOP ──
+function animate(){
+  requestAnimationFrame(animate);
+  orbit.update();
+  renderer.render(scene,camera);
+  updateFPS();
+}
+
+// ── BAŞLAT ──
+init();
+window._par={scene,camera,renderer};
 </script>
+</body>
+</html>
