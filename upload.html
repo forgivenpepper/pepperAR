@@ -220,7 +220,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
 /* SAVE PANEL */
 .save-panel{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
 
-/* CHECKER PATTERN for transparency preview */
+/* CHECKER PATTERN */
 .checker-bg{background-image:linear-gradient(45deg,#333 25%,transparent 25%),linear-gradient(-45deg,#333 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#333 75%),linear-gradient(-45deg,transparent 75%,#333 75%);background-size:10px 10px;background-position:0 0,0 5px,5px -5px,-5px 0px}
 
 /* PREVIEW INPUT */
@@ -333,6 +333,12 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
           <div class="toggle on" id="cb-bulk-center"></div>
           <span class="toggle-label" title="Dışa aktarım sırasında modeli tam merkeze hizalar">Pivot'u Merkeze Al</span>
         </div>
+        
+        <div class="btn-row" style="margin-bottom:12px">
+          <button class="btn sm" id="btn-bulk-all-cm">📏 Tümünü cm→m</button>
+          <button class="btn sm" id="btn-bulk-all-ground">⬇️ Tümünü Zemine Yapıştır</button>
+        </div>
+
         <div id="bulk-slots"></div>
         <div class="btn-row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
           <button class="btn sm accent" id="btn-bulk-glb-export">↓ Tümünü GLB</button>
@@ -450,29 +456,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
             <span class="label">Emissive Rengi</span>
             <div class="color-row">
               <div class="swatch" id="me-sw" style="background:#000000"></div>
-              <input type="color" id="in-me" value="#000000">
-              <input type="text" class="hex-input" id="me-hex" value="#000000" maxlength="7">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-head"><div class="section-title">🔲 Saydamlık & Alpha</div><span class="section-arrow">▼</span></div>
-        <div class="section-body">
-          <div class="field">
-            <div class="field-row"><span class="label">Opaklık</span><span class="vbadge" id="vb-op">1.00</span></div>
-            <input type="range" id="in-op" min="0" max="1" step="0.01" value="1">
-          </div>
-          <div class="field">
-            <span class="label">Alpha Modu</span>
-            <div class="alpha-pills" id="alpha-pills">
-              <div class="alpha-pill active" data-mode="opaque">Opaque</div>
-              <div class="alpha-pill" data-mode="blend">Blend</div>
-              <div class="alpha-pill" data-mode="mask">Mask</div>
-              <div class="alpha-pill" data-mode="additive">Additive</div>
-              <div class="alpha-pill" data-mode="multiply">Multiply</div>
-              <div class="alpha-pill" data-mode="subtract">Subtract</div>
+              <input type="color" id="in-me" value="#00mode="subtract">Subtract</div>
             </div>
           </div>
           <div class="field" id="alpha-cutoff-wrap" style="display:none">
@@ -654,7 +638,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
       <div class="sc-item">Gizle/Göster <div class="sc-keys"><kbd>H</kbd></div></div>
       <div class="sc-item">Izole Et <div class="sc-keys"><kbd>Alt</kbd><kbd>H</kbd></div></div>
     </div>
-    <button class="btn" style="margin-top:18px" onclick="document.getElementById('modal-keys').classList.remove('show')">Kapat</button>
+    <button class="btn" style="margin-top:18px" id="btn-close-keys">Kapat</button>
   </div>
 </div>
 
@@ -669,7 +653,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
       <input type="text" id="preview-name" class="preview-input" placeholder="Model ismini girin...">
     </div>
     <div style="display:flex; gap:8px; justify-content:flex-end;">
-      <button class="btn" style="flex:none; padding:8px 16px;" onclick="document.getElementById('modal-preview').classList.remove('show')">Vazgeç</button>
+      <button class="btn" style="flex:none; padding:8px 16px;" id="btn-cancel-save">Vazgeç</button>
       <button class="btn accent" style="flex:none; padding:8px 16px;" id="btn-confirm-save">🚀 Onayla ve Yükle</button>
     </div>
   </div>
@@ -699,11 +683,12 @@ async function checkAuth() {
     window.location.href = '/login.html';
   } else {
     currentUser = session.user;
+    checkEditMode(); // Düzenleme modu kontrolü
   }
 }
 checkAuth();
 
-// ── USDZ DİNAMİK YÜKLEME (TOP-LEVEL AWAIT KALDIRILDI) ──
+// ── USDZ DİNAMİK YÜKLEME ──
 let USDZExporter = null;
 import('three/addons/exporters/USDZExporter.js').then(mod => {
   USDZExporter = mod.USDZExporter;
@@ -711,6 +696,10 @@ import('three/addons/exporters/USDZExporter.js').then(mod => {
 
 // ── DOM SEÇİCİ ──
 const _el = id => document.getElementById(id);
+
+// ── MODAL BUTONLARI EVENT BAĞLANTISI (SCOPE FIX) ──
+_el('btn-close-keys').addEventListener('click', () => _el('modal-keys').classList.remove('show'));
+_el('btn-cancel-save').addEventListener('click', () => _el('modal-preview').classList.remove('show'));
 
 // ── GLOBAL STATE ──
 let scene, camera, renderer, orbit, gizmo, dirLight, ambLight, shadowPlane, gridHelper;
@@ -722,9 +711,7 @@ let fpsFrames = 0, fpsLast = performance.now();
 let statsVisible = false;
 let isIsolated = false;
 
-// Texture yönetimi: mesh uuid → {slot: THREE.Texture}
 const meshTextures = new Map();
-// Orijinal malzeme renkleri kaydı
 const origMaterials = new Map();
 
 const container = _el('canvas-container');
@@ -757,7 +744,6 @@ function disposeHierarchy(node) {
   });
 }
 
-// ── AR İÇİN GÜVENLİ EXPORT SAHNESİ ──
 function createExportScene(model, centerPivot) {
   const s = new THREE.Scene();
   const clone = model.clone(true);
@@ -865,9 +851,8 @@ function init() {
     else deselectMesh();
   });
 
-  // Drag & Drop
   vp.addEventListener('dragover', e => { e.preventDefault(); _el('drop-ov').classList.add('show'); });
-  vp.addEventListener('dragleave', () => _el('drop-ov').classList.remove('show'));
+  vp.addEventListener('dragleave', () => _el('drop-ov').classList.remove('show'); });
   vp.addEventListener('drop', e => {
     e.preventDefault(); _el('drop-ov').classList.remove('show');
     const f = e.dataTransfer.files[0]; if (f) loadFile(f);
@@ -881,7 +866,6 @@ function init() {
   loadPreset();
 }
 
-// ── GROUND RECALC ──
 function recalculateGround(model) {
   if (!model) return;
   const box = new THREE.Box3().setFromObject(model);
@@ -891,17 +875,49 @@ function recalculateGround(model) {
   gridHelper.position.y  = by;
 }
 
-// ── LOAD FILE ──
-function loadFile(file) {
-  if (!/\.(glb|gltf)$/i.test(file.name)) { toast('Desteklenmeyen dosya türü!','err'); return; }
+// ── DÜZENLEME MODU (BULUTTAN ÇEKME) ──
+async function checkEditMode() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const editModelName = urlParams.get('edit');
   
-  // Model adını dosya adından al
-  currentFileName = file.name;
-  
-  _el('loading-ov').classList.add('show');
-  setStatus('','Yükleniyor...');
-  deselectMesh();
+  if (editModelName) {
+    _el('loading-ov').classList.add('show');
+    _el('load-text').textContent = 'Buluttan model ve ayarlar indiriliyor...';
+    
+    try {
+      // Veritabanından ayarları çek
+      const { data: dbData, error: dbErr } = await _supabase
+        .from('models')
+        .select('*')
+        .eq('name', editModelName)
+        .eq('user_id', currentUser.id)
+        .single();
+        
+      if (dbErr && dbErr.code !== 'PGRST116') throw dbErr;
 
+      // Storage'dan GLB dosyasını çek
+      const { data: fileData, error: fileErr } = await _supabase.storage
+        .from('models')
+        .download(`${editModelName}-3d.glb`);
+        
+      if (fileErr) throw fileErr;
+
+      currentFileName = `${editModelName}.glb`;
+      const fileUrl = URL.createObjectURL(fileData);
+      
+      // Load fonksiyonunu url üzerinden çağırıyoruz
+      loadFromURL(fileUrl, editModelName, dbData);
+
+    } catch (err) {
+      console.error(err);
+      toast('Model buluttan indirilemedi.', 'err');
+      _el('loading-ov').classList.remove('show');
+    }
+  }
+}
+
+function loadFromURL(url, modelName, dbData) {
+  deselectMesh();
   if (currentModel) {
     gizmo.detach();
     scene.remove(currentModel);
@@ -911,7 +927,6 @@ function loadFile(file) {
     meshTextures.clear();
   }
 
-  const url = URL.createObjectURL(file);
   makeLoader().load(url, gltf => {
     URL.revokeObjectURL(url);
     currentModel = gltf.scene;
@@ -927,24 +942,6 @@ function loadFile(file) {
         if (!m.emissive) m.emissive = new THREE.Color(0);
         if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
       });
-      const pm = mats[0];
-      if (pm) {
-        origMaterials.set(c.uuid, {
-          color: pm.color ? pm.color.clone() : new THREE.Color(1,1,1),
-          opacity: pm.opacity ?? 1,
-          transparent: pm.transparent ?? false,
-          roughness: pm.roughness ?? 0.5,
-          metalness: pm.metalness ?? 0,
-          emissiveIntensity: pm.emissiveIntensity ?? 0,
-          side: pm.side ?? THREE.FrontSide,
-          wireframe: pm.wireframe ?? false,
-          flatShading: pm.flatShading ?? false,
-          depthWrite: pm.depthWrite ?? true,
-          blending: pm.blending ?? THREE.NormalBlending,
-          alphaTest: pm.alphaTest ?? 0,
-        });
-      }
-
       const pos = c.geometry?.attributes?.position;
       if (pos) { verts += pos.count; tris += c.geometry.index ? c.geometry.index.count/3 : pos.count/3; }
       meshCount++;
@@ -952,13 +949,36 @@ function loadFile(file) {
 
     scene.add(currentModel);
 
+    // Ayarları Uygula
+    if (dbData) {
+      if (dbData.exposure) { _el('in-exp').value = dbData.exposure; renderer.toneMappingExposure = dbData.exposure; }
+      if (dbData.shadow_intensity) { _el('in-shad').value = dbData.shadow_intensity; shadowPlane.material.opacity = dbData.shadow_intensity; }
+      if (dbData.bg_color) { 
+        scene.background = new THREE.Color(dbData.bg_color); 
+        if(_el('bg-sw')) _el('bg-sw').style.background = dbData.bg_color;
+        if(_el('bg-hex')) _el('bg-hex').value = dbData.bg_color;
+      }
+      
+      if (dbData.scale) {
+        currentModel.scale.set(dbData.scale, dbData.scale, dbData.scale);
+        _el('in-sc').value = Math.round(dbData.scale * 100);
+      }
+      if (dbData.rotate_y) {
+        currentModel.rotation.y = dbData.rotate_y * (Math.PI / 180);
+        _el('rx-y').value = dbData.rotate_y;
+      }
+    }
+
     const box = new THREE.Box3().setFromObject(currentModel);
     const sz  = box.getSize(new THREE.Vector3());
     const ctr = box.getCenter(new THREE.Vector3());
     if (sz.length() < 0.001) sz.set(1,1,1);
 
-    currentModel.position.sub(ctr);
-    currentModel.position.y += sz.y/2;
+    if(!dbData) {
+      currentModel.position.sub(ctr);
+      currentModel.position.y += sz.y/2;
+    }
+    
     initT.pos.copy(currentModel.position);
     initT.rot.copy(currentModel.rotation);
     initT.sc.copy(currentModel.scale);
@@ -979,31 +999,35 @@ function loadFile(file) {
     _el('st-t').textContent = Math.round(tris).toLocaleString();
 
     buildOutliner(currentModel);
-    buildInfo(file.name, meshCount, verts, tris, sz);
-    _el('st-mod').textContent = file.name.length>22 ? file.name.substring(0,20)+'…' : file.name;
+    buildInfo(modelName, meshCount, verts, tris, sz);
+    _el('st-mod').textContent = modelName.length>22 ? modelName.substring(0,20)+'…' : modelName;
     syncTUI();
 
     _el('loading-ov').classList.remove('show');
-    toast(`Model yüklendi ✓ (${meshCount} mesh, ${Math.round(tris).toLocaleString()} tri)`,'ok');
+    toast(`Model düzenleme için yüklendi ✓`,'ok');
     setStatus('ready','Hazır');
   }, undefined, err => {
     URL.revokeObjectURL(url);
     _el('loading-ov').classList.remove('show');
     toast('Yüklenemedi: '+(err.message||err),'err');
-    setStatus('err','Hata');
-    console.error(err);
   });
 }
 
-// ── OUTLINER ──
+function loadFile(file) {
+  if (!/\.(glb|gltf)$/i.test(file.name)) { toast('Desteklenmeyen dosya türü!','err'); return; }
+  currentFileName = file.name;
+  _el('loading-ov').classList.add('show');
+  setStatus('','Yükleniyor...');
+  const url = URL.createObjectURL(file);
+  loadFromURL(url, file.name, null);
+}
+
 function buildOutliner(model) {
   const ol = _el('outliner');
   if (!ol) return;
   ol.innerHTML = '';
   ol._map = [];
-
   ol.appendChild(makeOLItem('🗂️', model.name||'Sahne', 'Root', false, null));
-
   model.traverse(c => {
     if (!c.isMesh) return;
     const item = makeOLItem('⬟', c.name||'Mesh', 'Mesh', true, c);
@@ -1034,7 +1058,6 @@ function syncOL(mesh) {
   ol._map.forEach(({el, mesh:m}) => el.classList.toggle('selected', m===mesh));
 }
 
-// ── MODEL BİLGİSİ ──
 function buildInfo(name, mc, v, t, sz) {
   const info = _el('info-body');
   if (!info) return;
@@ -1047,7 +1070,6 @@ function buildInfo(name, mc, v, t, sz) {
 }
 const ir = (k,v) => `<div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:var(--text2)">${k}</span><span style="font-family:var(--mono);font-size:10px">${v}</span></div>`;
 
-// ── MALZEME ERİŞİM YARDIMCISI ──
 function getPrimaryMat(mesh) {
   if (!mesh?.material) return null;
   return Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
@@ -1059,7 +1081,6 @@ function updateMatArray(mesh, fn) {
   mats.forEach(m => { if(m) m.needsUpdate = true; });
 }
 
-// ── SELECT / DESELECT ──
 function selectMesh(mesh) {
   if (!mesh?.isMesh || !mesh.material) return;
 
@@ -1119,14 +1140,12 @@ function deselectMesh() {
   if (ol?._map) ol._map.forEach(({el}) => el.classList.remove('selected'));
 }
 
-// ── MESH GİZLE / GÖSTER ──
 function toggleMeshVisibility(mesh) {
   if (!mesh) return;
   mesh.visible = !mesh.visible;
   toast(mesh.visible ? `${mesh.name||'Mesh'} gösterildi` : `${mesh.name||'Mesh'} gizlendi`);
 }
 
-// ── IZOLE ET ──
 function toggleIsolate() {
   if (!currentModel) return toast('Model yüklenmedi','err');
   isIsolated = !isIsolated;
@@ -1138,7 +1157,6 @@ function toggleIsolate() {
   toast(isIsolated ? 'İzole edildi' : 'Tümü gösterildi');
 }
 
-// ── SİL ──
 function deleteSelectedMesh() {
   if (!selectedMesh) return toast('Silmek için bir parça seçin','err');
   const name = selectedMesh.name||'Parça';
@@ -1150,7 +1168,6 @@ function deleteSelectedMesh() {
   toast(`${name} silindi 🗑️`,'ok');
 }
 
-// ── TRANSFORM UI SYNC ──
 function syncTUI() {
   if (!currentModel) return;
   const p=currentModel.position, r=currentModel.rotation, s=currentModel.scale;
@@ -1165,7 +1182,6 @@ function syncTUI() {
   if(_el('vb-sc')) _el('vb-sc').textContent=sp;
 }
 
-// ── UI YARDIMCILARI ──
 function setC(id, hex) {
   const sw=_el(`${id}-sw`), inp=_el(`in-${id}`), hx=_el(`${id}-hex`);
   if(sw)  sw.style.background=hex;
@@ -1183,7 +1199,6 @@ function bindTgl(id, cb) {
   const el=_el(id);
   if(el) el.addEventListener('click',function(){ this.classList.toggle('on'); cb(this.classList.contains('on')); });
 }
-
 function colorSetup(id, cb) {
   const sw=_el(`${id}-sw`), inp=_el(`in-${id}`), hx=_el(`${id}-hex`);
   if(!sw||!inp) return;
@@ -1197,7 +1212,6 @@ function colorSetup(id, cb) {
   });
 }
 
-// ── ALPHA MOD YÖNETİMİ ──
 const ALPHA_MODES = {
   opaque:   { transparent:false, blending:THREE.NormalBlending,       depthWrite:true,  alphaTest:0    },
   blend:    { transparent:true,  blending:THREE.NormalBlending,       depthWrite:false, alphaTest:0    },
@@ -1253,7 +1267,6 @@ if(_el('in-ac')) _el('in-ac').addEventListener('input', e => {
   if(selectedMesh) updateMatArray(selectedMesh, m=>m.alphaTest=v);
 });
 
-// ── TEXTURE YÖNETİMİ ──
 const TEX_SLOTS = {
   albedo:    { matProp: 'map',            colorSpace: THREE.SRGBColorSpace },
   roughness: { matProp: 'roughnessMap',  colorSpace: THREE.LinearSRGBColorSpace },
@@ -1409,7 +1422,6 @@ function applyUVTileToMesh(mesh, tx, ty) {
   });
 }
 
-// ── SAHNE KONTROLLERI ──
 if(_el('in-exp')) _el('in-exp').addEventListener('input', e => {
   renderer.toneMappingExposure=+e.target.value;
   if(_el('vb-exp')) _el('vb-exp').textContent=(+e.target.value).toFixed(2);
@@ -1441,7 +1453,6 @@ if(_el('in-near')) _el('in-near').addEventListener('input', e => {
 });
 colorSetup('bg', hex => { scene.background=new THREE.Color(hex); });
 
-// ── DÖNÜŞÜM KONTROLLERI ──
 ['tx-x','tx-y','tx-z'].forEach((id,i) => {
   if(_el(id)) _el(id).addEventListener('input',()=>{ if(currentModel) currentModel.position[['x','y','z'][i]]=parseFloat(_el(id).value)||0; });
 });
@@ -1480,7 +1491,6 @@ function convertToMeters(factor, unitName) {
 if(_el('btn-unit-cm')) _el('btn-unit-cm').addEventListener('click',()=>convertToMeters(0.01,'cm'));
 if(_el('btn-unit-mm')) _el('btn-unit-mm').addEventListener('click',()=>convertToMeters(0.001,'mm'));
 
-// ── MALZEME KONTROLLERI ──
 colorSetup('mc', hex=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.color) m.color.set(hex); }); });
 colorSetup('me', hex=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.emissive){ m.emissive.set(hex); origEmissive.set(hex); } }); });
 
@@ -1509,7 +1519,6 @@ bindTgl('tgl-dw',   v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>m.depth
 bindTgl('tgl-flat', v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ m.flatShading=v; m.needsUpdate=true; }); });
 bindTgl('tgl-vcol', v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ m.vertexColors=v; m.needsUpdate=true; }); });
 
-// ── TOPLU UYGULA ──
 if(_el('btn-ap-col')) _el('btn-ap-col').addEventListener('click',()=>{
   const mat=getPrimaryMat(selectedMesh); if(!currentModel||!mat?.color) return;
   const c=mat.color.clone();
@@ -1535,12 +1544,10 @@ if(_el('btn-ap-all')) _el('btn-ap-all').addEventListener('click',()=>{
   toast('Tüm ayarlar uygulandı');
 });
 
-// ── DÜZENLEME ──
 if(_el('btn-delete-mesh')) _el('btn-delete-mesh').addEventListener('click', deleteSelectedMesh);
 if(_el('btn-hide-mesh')) _el('btn-hide-mesh').addEventListener('click',()=>{ if(selectedMesh) toggleMeshVisibility(selectedMesh); else toast('Önce bir mesh seçin','err'); });
 if(_el('btn-isolate-mesh')) _el('btn-isolate-mesh').addEventListener('click', toggleIsolate);
 
-// ── VP TOOLBAR ──
 document.querySelectorAll('.vp-btn[data-mode]').forEach(b=>{
   b.addEventListener('click',()=>setGizmo(b.dataset.mode));
 });
@@ -1553,7 +1560,6 @@ function setGizmo(mode) {
   document.querySelectorAll('.vp-btn[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
 }
 
-// ── GÖRÜNÜM PREAYARLARı ──
 function setView(px,py,pz) {
   if(!currentModel){ toast('Model yüklenmedi'); return; }
   const box=new THREE.Box3().setFromObject(currentModel);
@@ -1569,11 +1575,9 @@ if(_el('vc-tp')) _el('vc-tp').addEventListener('click',()=>setView(0,1,0.001));
 if(_el('vc-rt')) _el('vc-rt').addEventListener('click',()=>setView(1,0,0));
 if(_el('vc-is')) _el('vc-is').addEventListener('click',()=>setView(0.6,0.5,0.6));
 
-// ── DOSYA AÇ ──
 if(_el('btn-open')) _el('btn-open').addEventListener('click',()=>_el('file-input').click());
 if(_el('file-input')) _el('file-input').addEventListener('change',e=>{ if(e.target.files[0]){ loadFile(e.target.files[0]); e.target.value=''; } });
 
-// ── ODAKLAN ──
 if(_el('btn-frame')) _el('btn-frame').addEventListener('click', frameModel);
 function frameModel() {
   if(!currentModel){ toast('Model yüklenmedi'); return; }
@@ -1586,7 +1590,6 @@ function frameModel() {
   orbit.update();
 }
 
-// ── SCREENSHOT ──
 function takeScreenshot() {
   renderer.render(scene,camera);
   const a=document.createElement('a');
@@ -1597,7 +1600,6 @@ function takeScreenshot() {
 }
 [_el('btn-ss'),_el('btn-ss2')].forEach(b=>b?.addEventListener('click',takeScreenshot));
 
-// ── GLB EXPORT (YereI) ──
 if(_el('btn-exp-glb')) _el('btn-exp-glb').addEventListener('click',()=>{
   if(!currentModel) return toast('Model yüklenmedi','err');
   const exporter=new GLTFExporter();
@@ -1612,7 +1614,6 @@ if(_el('btn-exp-glb')) _el('btn-exp-glb').addEventListener('click',()=>{
   }, err=>{ console.error(err); toast('GLB Hatası','err'); },{ binary:true });
 });
 
-// ── USDZ EXPORT (Yerel) ──
 if(_el('btn-exp-usdz')) _el('btn-exp-usdz').addEventListener('click', async()=>{
   if(!currentModel) return toast('Model yüklenmedi','err');
   if(!USDZExporter) return toast('USDZ exporter yüklenemedi/desteklenmiyor','err');
@@ -1638,7 +1639,6 @@ if(_el('btn-exp-usdz')) _el('btn-exp-usdz').addEventListener('click', async()=>{
   }
 });
 
-// ── WIREFRAME ──
 function toggleWireframe() {
   wireMode=!wireMode;
   _el('btn-wf')?.classList.toggle('active',wireMode);
@@ -1647,7 +1647,6 @@ function toggleWireframe() {
 }
 if(_el('btn-wf')) _el('btn-wf').addEventListener('click',toggleWireframe);
 
-// ── GRİD ──
 if(_el('btn-grid')) _el('btn-grid').addEventListener('click',()=>{
   gridVis=!gridVis;
   gridHelper.visible=gridVis;
@@ -1655,14 +1654,12 @@ if(_el('btn-grid')) _el('btn-grid').addEventListener('click',()=>{
   _el('btn-grid').classList.toggle('active',gridVis);
 });
 
-// ── STATİSTİK ──
 if(_el('btn-stats')) _el('btn-stats').addEventListener('click',()=>{
   statsVisible=!statsVisible;
   _el('stats-hud')?.classList.toggle('hidden',!statsVisible);
   _el('btn-stats')?.classList.toggle('active',statsVisible);
 });
 
-// ── TEMA ──
 function toggleTheme() {
   const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',t);
@@ -1675,11 +1672,9 @@ function toggleTheme() {
 }
 if(_el('btn-theme')) _el('btn-theme').addEventListener('click',toggleTheme);
 
-// ── KISA YOLLAR MODAL ──
 if(_el('btn-keys')) _el('btn-keys').addEventListener('click',()=>_el('modal-keys').classList.add('show'));
 if(_el('modal-keys')) _el('modal-keys').addEventListener('click',e=>{ if(e.target===e.currentTarget) e.currentTarget.classList.remove('show'); });
 
-// ── AYARLARI KAYDET (Yerel Yedek) ──
 function savePreset() {
   const p={
     exp:_el('in-exp')?.value, amb:_el('in-amb')?.value,
@@ -1701,46 +1696,39 @@ function loadPreset() {
 }
 
 // ── BULUTA KAYDET (ÖNİZLEME VE SUPABASE ENTEGRASYONU) ──
-
-// 1. Adım: Önizleme Modalını Aç
 async function showPreviewModal() {
   if (!currentModel) return toast('Önce bir model yükleyin!', 'err');
   if (!currentUser) return toast('Oturum hatası. Lütfen tekrar giriş yapın.', 'err');
 
-  // Sahnenin anlık görüntüsünü (Thumbnail) al
   renderer.render(scene, camera);
   const thumbDataUrl = renderer.domElement.toDataURL('image/webp', 0.8);
   
-  // Önizleme görselini ve ismini modal içine yerleştir
   _el('preview-img').src = thumbDataUrl;
-  _el('preview-name').value = currentFileName.replace(/\.[^/.]+$/, "");
+  
+  // Eğer Edit modundaysak ismi bozmayalım, değilse varsayılan ismi verelim
+  const urlParams = new URLSearchParams(window.location.search);
+  const editModeName = urlParams.get('edit');
+  _el('preview-name').value = editModeName ? editModeName : currentFileName.replace(/\.[^/.]+$/, "");
   
   _el('modal-preview').classList.add('show');
 }
 
 [_el('btn-save'), _el('btn-save2')].forEach(b => {
-  if(b) {
-    b.addEventListener('click', showPreviewModal);
-  }
+  if(b) b.addEventListener('click', showPreviewModal);
 });
 
-// 2. Adım: Modaldan Onay Alıp Gerçek Yüklemeyi Başlat
 _el('btn-confirm-save').addEventListener('click', async () => {
   let modelName = _el('preview-name').value.trim();
-  if (!modelName) {
-    toast('Lütfen bir model ismi girin!', 'err');
-    return;
-  }
+  if (!modelName) return toast('Lütfen bir model ismi girin!', 'err');
   
-  // Güvenli dosya ismi (Türkçe karakterleri dahil etmiştik)
   modelName = modelName.replace(/[^a-zA-Z0-9_ğüşıöçĞÜŞİÖÇ-]/g, '_');
   
-  _el('modal-preview').classList.remove('show'); // Modalı kapat
-  _el('loading-ov').classList.add('show');       // Yükleme ekranını aç
+  _el('modal-preview').classList.remove('show');
+  _el('loading-ov').classList.add('show');
   _el('load-text').textContent = 'Buluta yükleniyor... (GLB, USDZ ve Render)';
 
   try {
-    savePreset(); // Yerel ayarları da kaybetmeyelim
+    savePreset(); 
 
     const settings = {
       exposure: _el('in-exp')?.value || 1,
@@ -1764,16 +1752,13 @@ _el('btn-confirm-save').addEventListener('click', async () => {
       usdzBuffer = await usdzExp.parse(exportScene, {});
     }
 
-    // Modalda gösterdiğimiz Base64 veriyi Blob'a çevir
     const thumbDataUrl = _el('preview-img').src;
     const thumbBlob = await (await fetch(thumbDataUrl)).blob();
 
     await _supabase.storage.from('models').upload(`${modelName}-3d.glb`, new Blob([glbBuffer]), { upsert: true });
-    
     if (usdzBuffer) {
       await _supabase.storage.from('models').upload(`${modelName}-3d.usdz`, new Blob([usdzBuffer]), { upsert: true });
     }
-    
     await _supabase.storage.from('models').upload(`${modelName}-thumb.webp`, thumbBlob, { upsert: true });
 
     const { error: dbError } = await _supabase.from('models').upsert([{
@@ -1789,10 +1774,7 @@ _el('btn-confirm-save').addEventListener('click', async () => {
     if (dbError) throw dbError;
 
     toast('Başarıyla yüklendi! Dashboard\'a yönlendiriliyorsunuz...', 'ok');
-    
-    setTimeout(() => {
-      window.location.href = '/dashboard.html';
-    }, 1500);
+    setTimeout(() => { window.location.href = '/dashboard.html'; }, 1500);
 
   } catch (err) {
     console.error("Yükleme Hatası:", err);
@@ -1836,7 +1818,8 @@ function initBulkUI() {
     const row2=document.createElement('div'); row2.className='btn-row'; row2.style.display='none';
     const btnCm=document.createElement('button'); btnCm.className='btn sm'; btnCm.textContent='cm→m';
     const btnMm=document.createElement('button'); btnMm.className='btn sm'; btnMm.textContent='mm→m';
-    row2.appendChild(btnCm); row2.appendChild(btnMm);
+    const btnGround=document.createElement('button'); btnGround.className='btn sm'; btnGround.textContent='Zemin';
+    row2.appendChild(btnCm); row2.appendChild(btnMm); row2.appendChild(btnGround);
     slot.appendChild(title); slot.appendChild(row1); slot.appendChild(nameLbl); slot.appendChild(row2);
     container.appendChild(slot);
 
@@ -1849,11 +1832,23 @@ function initBulkUI() {
     });
     btnCm.addEventListener('click',()=>scaleBulkModel(i,0.01,'cm'));
     btnMm.addEventListener('click',()=>scaleBulkModel(i,0.001,'mm'));
+    btnGround.addEventListener('click',()=>snapBulkModelToGround(i));
     bulkUIRefs[i]={btnLoad,btnClear,nameLbl,row2};
   }
 
   const cbCenter=_el('cb-bulk-center');
   if(cbCenter) cbCenter.addEventListener('click',function(){ this.classList.toggle('on'); });
+
+  _el('btn-bulk-all-cm')?.addEventListener('click', () => {
+    let count = 0;
+    for(let i=0; i<5; i++) { if(bulkModels[i]){ scaleBulkModel(i, 0.01, 'cm', true); count++; } }
+    if(count > 0) toast('Tüm modeller cm→m çevrildi', 'ok'); else toast('Model yok', 'err');
+  });
+  _el('btn-bulk-all-ground')?.addEventListener('click', () => {
+    let count = 0;
+    for(let i=0; i<5; i++) { if(bulkModels[i]){ snapBulkModelToGround(i, true); count++; } }
+    if(count > 0) toast('Tüm modeller zemine yapıştırıldı', 'ok'); else toast('Model yok', 'err');
+  });
 
   _el('btn-bulk-glb-export')?.addEventListener('click',()=>exportBulk('glb'));
   _el('btn-bulk-usdz-export')?.addEventListener('click',()=>exportBulk('usdz'));
@@ -1882,7 +1877,7 @@ function loadBulkFile(file,index) {
   });
 }
 
-function scaleBulkModel(index,factor,unitName) {
+function scaleBulkModel(index,factor,unitName,silent=false) {
   const model=bulkModels[index]; if(!model) return;
   const processedGeoms=new Set();
   model.traverse(c=>{
@@ -1893,7 +1888,17 @@ function scaleBulkModel(index,factor,unitName) {
     }
     if(c!==model){ c.position.multiplyScalar(factor); c.updateMatrix(); }
   });
-  toast(`Ürün ${index+1}: ${unitName}→m`,'ok');
+  if(!silent) toast(`Ürün ${index+1}: ${unitName}→m`,'ok');
+}
+
+function snapBulkModelToGround(index, silent=false) {
+  const model = bulkModels[index]; if(!model) return;
+  model.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(model);
+  const minY = box.min.y;
+  model.position.y -= minY;
+  model.updateMatrixWorld(true);
+  if(!silent) toast(`Ürün ${index+1} zemine yapıştırıldı`, 'ok');
 }
 
 async function exportBulk(format) {
