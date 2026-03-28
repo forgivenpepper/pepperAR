@@ -941,6 +941,7 @@ async function checkEditMode() {
     _el('load-text').textContent = 'Buluttan model ve ayarlar indiriliyor...';
     
     try {
+      // 1. Veritabanından renk/ışık ayarlarını çek (Burası zaten çalışıyor)
       const { data: dbData, error: dbErr } = await _supabase
         .from('models')
         .select('*')
@@ -950,19 +951,20 @@ async function checkEditMode() {
         
       if (dbErr && dbErr.code !== 'PGRST116') throw dbErr;
 
-      const { data: fileData, error: fileErr } = await _supabase.storage
+      // 2. İNDİRMEK YERİNE DİREKT PUBLIC URL'Yİ ALIYORUZ (Güvenlik engeline takılmaz)
+      const { data: fileData } = _supabase.storage
         .from('models')
-        .download(`${editModelName}-3d.glb`);
+        .getPublicUrl(`${editModelName}-3d.glb`);
         
-      if (fileErr) throw fileErr;
+      if (!fileData || !fileData.publicUrl) throw new Error("Model URL'i alınamadı");
 
       currentFileName = `${editModelName}.glb`;
-      const fileUrl = URL.createObjectURL(fileData);
       
-      loadFromURL(fileUrl, editModelName, dbData);
+      // 3. Modeli direkt bu URL'den sahneye çekiyoruz
+      loadFromURL(fileData.publicUrl, editModelName, dbData);
 
     } catch (err) {
-      console.error(err);
+      console.error("Düzenleme Modu Hatası:", err);
       toast('Model buluttan indirilemedi.', 'err');
       _el('loading-ov').classList.remove('show');
     }
