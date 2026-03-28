@@ -456,7 +456,29 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
             <span class="label">Emissive Rengi</span>
             <div class="color-row">
               <div class="swatch" id="me-sw" style="background:#000000"></div>
-              <input type="color" id="in-me" value="#00mode="subtract">Subtract</div>
+              <input type="color" id="in-me" value="#000000">
+              <input type="text" class="hex-input" id="me-hex" value="#000000" maxlength="7">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head"><div class="section-title">🔲 Saydamlık & Alpha</div><span class="section-arrow">▼</span></div>
+        <div class="section-body">
+          <div class="field">
+            <div class="field-row"><span class="label">Opaklık</span><span class="vbadge" id="vb-op">1.00</span></div>
+            <input type="range" id="in-op" min="0" max="1" step="0.01" value="1">
+          </div>
+          <div class="field">
+            <span class="label">Alpha Modu</span>
+            <div class="alpha-pills" id="alpha-pills">
+              <div class="alpha-pill active" data-mode="opaque">Opaque</div>
+              <div class="alpha-pill" data-mode="blend">Blend</div>
+              <div class="alpha-pill" data-mode="mask">Mask</div>
+              <div class="alpha-pill" data-mode="additive">Additive</div>
+              <div class="alpha-pill" data-mode="multiply">Multiply</div>
+              <div class="alpha-pill" data-mode="subtract">Subtract</div>
             </div>
           </div>
           <div class="field" id="alpha-cutoff-wrap" style="display:none">
@@ -607,6 +629,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
   <div class="sb-item">Model: <b id="st-mod">—</b></div>
   <div class="sb-item">Seçili: <b id="st-sel">—</b></div>
   <div class="sb-spacer"></div>
+  <div class="sb-item"><kbd>Ctrl+Z</kbd> geri al</div>
   <div class="sb-item"><kbd>Del</kbd> sil</div>
   <div class="sb-item"><kbd>T</kbd><kbd>R</kbd><kbd>S</kbd> gizmo</div>
   <div class="sb-item"><kbd>F</kbd> odak</div>
@@ -619,6 +642,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
     <div class="modal-title">⌨️ Klavye Kısayolları</div>
     <div class="sc-grid">
       <div class="sc-item">Dosya Aç <div class="sc-keys"><kbd>Ctrl</kbd><kbd>O</kbd></div></div>
+      <div class="sc-item">Geri Al (Undo)<div class="sc-keys"><kbd>Ctrl</kbd><kbd>Z</kbd></div></div>
       <div class="sc-item">Odaklan <div class="sc-keys"><kbd>F</kbd></div></div>
       <div class="sc-item">Taşı <div class="sc-keys"><kbd>T</kbd></div></div>
       <div class="sc-item">Döndür <div class="sc-keys"><kbd>R</kbd></div></div>
@@ -710,6 +734,9 @@ let wireMode = false, gridVis = true, worldSpace = true;
 let fpsFrames = 0, fpsLast = performance.now();
 let statsVisible = false;
 let isIsolated = false;
+
+// ── GERİ AL (UNDO) STATE'İ ──
+let transformHistory = [];
 
 const meshTextures = new Map();
 const origMaterials = new Map();
@@ -830,7 +857,12 @@ function init() {
 
   gizmo = new TransformControls(camera, renderer.domElement);
   gizmo.setSpace('world');
-  gizmo.addEventListener('dragging-changed', e => { orbit.enabled = !e.value; });
+  
+  // TransformControls sürükleme başlangıcında history'yi kaydet
+  gizmo.addEventListener('dragging-changed', e => { 
+    orbit.enabled = !e.value; 
+    if(e.value) saveHistoryState(); 
+  });
   gizmo.addEventListener('change', syncTUI);
   scene.add(gizmo);
 
@@ -852,7 +884,7 @@ function init() {
   });
 
   vp.addEventListener('dragover', e => { e.preventDefault(); _el('drop-ov').classList.add('show'); });
-  vp.addEventListener('dragleave', () => _el('drop-ov').classList.remove('show'); });
+  vp.addEventListener('dragleave', () => _el('drop-ov').classList.remove('show'));
   vp.addEventListener('drop', e => {
     e.preventDefault(); _el('drop-ov').classList.remove('show');
     const f = e.dataTransfer.files[0]; if (f) loadFile(f);
@@ -875,6 +907,30 @@ function recalculateGround(model) {
   gridHelper.position.y  = by;
 }
 
+// ── UNDO (GERİ AL) MANTIĞI ──
+function saveHistoryState() {
+  if (!currentModel) return;
+  transformHistory.push({
+    pos: currentModel.position.clone(),
+    rot: currentModel.rotation.clone(),
+    sc: currentModel.scale.clone()
+  });
+  if (transformHistory.length > 30) transformHistory.shift(); // En fazla 30 geri alma adımı
+}
+
+function undoTransform() {
+  if (!currentModel || transformHistory.length === 0) {
+    toast('Geri alınacak bir işlem yok', 'err');
+    return;
+  }
+  const state = transformHistory.pop();
+  currentModel.position.copy(state.pos);
+  currentModel.rotation.copy(state.rot);
+  currentModel.scale.copy(state.sc);
+  syncTUI();
+  toast('Geri alındı ↩️', 'ok');
+}
+
 // ── DÜZENLEME MODU (BULUTTAN ÇEKME) ──
 async function checkEditMode() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -885,7 +941,6 @@ async function checkEditMode() {
     _el('load-text').textContent = 'Buluttan model ve ayarlar indiriliyor...';
     
     try {
-      // Veritabanından ayarları çek
       const { data: dbData, error: dbErr } = await _supabase
         .from('models')
         .select('*')
@@ -895,7 +950,6 @@ async function checkEditMode() {
         
       if (dbErr && dbErr.code !== 'PGRST116') throw dbErr;
 
-      // Storage'dan GLB dosyasını çek
       const { data: fileData, error: fileErr } = await _supabase.storage
         .from('models')
         .download(`${editModelName}-3d.glb`);
@@ -905,7 +959,6 @@ async function checkEditMode() {
       currentFileName = `${editModelName}.glb`;
       const fileUrl = URL.createObjectURL(fileData);
       
-      // Load fonksiyonunu url üzerinden çağırıyoruz
       loadFromURL(fileUrl, editModelName, dbData);
 
     } catch (err) {
@@ -925,6 +978,7 @@ function loadFromURL(url, modelName, dbData) {
     currentModel = null;
     origMaterials.clear();
     meshTextures.clear();
+    transformHistory = []; // Geçmişi sıfırla
   }
 
   makeLoader().load(url, gltf => {
@@ -949,7 +1003,7 @@ function loadFromURL(url, modelName, dbData) {
 
     scene.add(currentModel);
 
-    // Ayarları Uygula
+    // Veritabanındaki Ayarları Uygula
     if (dbData) {
       if (dbData.exposure) { _el('in-exp').value = dbData.exposure; renderer.toneMappingExposure = dbData.exposure; }
       if (dbData.shadow_intensity) { _el('in-shad').value = dbData.shadow_intensity; shadowPlane.material.opacity = dbData.shadow_intensity; }
@@ -1159,6 +1213,7 @@ function toggleIsolate() {
 
 function deleteSelectedMesh() {
   if (!selectedMesh) return toast('Silmek için bir parça seçin','err');
+  saveHistoryState(); // Silme işlemi öncesi durumu kaydet (Geometri silinmesi tam geri alınamaz ama model konumu alınır)
   const name = selectedMesh.name||'Parça';
   selectedMesh.removeFromParent();
   disposeHierarchy(selectedMesh);
@@ -1453,22 +1508,50 @@ if(_el('in-near')) _el('in-near').addEventListener('input', e => {
 });
 colorSetup('bg', hex => { scene.background=new THREE.Color(hex); });
 
+// Modelleri Input Aracılığıyla Düzenlerken History'yi Kaydet
 ['tx-x','tx-y','tx-z'].forEach((id,i) => {
-  if(_el(id)) _el(id).addEventListener('input',()=>{ if(currentModel) currentModel.position[['x','y','z'][i]]=parseFloat(_el(id).value)||0; });
+  const el = _el(id);
+  if(el) {
+    el.addEventListener('focus', saveHistoryState);
+    el.addEventListener('input', () => { 
+      if(currentModel) currentModel.position[['x','y','z'][i]] = parseFloat(el.value)||0; 
+    });
+  }
 });
 ['rx-x','rx-y','rx-z'].forEach((id,i) => {
-  if(_el(id)) _el(id).addEventListener('input',()=>{ if(currentModel) currentModel.rotation[['x','y','z'][i]]=(parseFloat(_el(id).value)||0)*Math.PI/180; });
+  const el = _el(id);
+  if(el) {
+    el.addEventListener('focus', saveHistoryState);
+    el.addEventListener('input', () => { 
+      if(currentModel) currentModel.rotation[['x','y','z'][i]] = (parseFloat(el.value)||0)*Math.PI/180; 
+    });
+  }
 });
-if(_el('in-sc')) _el('in-sc').addEventListener('input', e => {
-  if(!currentModel) return;
-  const s=e.target.value/100; currentModel.scale.set(s,s,s);
-  if(_el('vb-sc')) _el('vb-sc').textContent=e.target.value;
+
+if(_el('in-sc')) {
+  _el('in-sc').addEventListener('mousedown', saveHistoryState);
+  _el('in-sc').addEventListener('touchstart', saveHistoryState, {passive:true});
+  _el('in-sc').addEventListener('input', e => {
+    if(!currentModel) return;
+    const s=e.target.value/100; currentModel.scale.set(s,s,s);
+    if(_el('vb-sc')) _el('vb-sc').textContent=e.target.value;
+  });
+}
+
+if(_el('btn-rpos')) _el('btn-rpos').addEventListener('click',()=>{ 
+  if(!currentModel) return; 
+  saveHistoryState();
+  currentModel.position.copy(initT.pos); syncTUI(); toast('Konum sıfırlandı'); 
 });
-if(_el('btn-rpos')) _el('btn-rpos').addEventListener('click',()=>{ if(!currentModel) return; currentModel.position.copy(initT.pos); syncTUI(); toast('Konum sıfırlandı'); });
-if(_el('btn-rall')) _el('btn-rall').addEventListener('click',()=>{ if(!currentModel) return; currentModel.position.copy(initT.pos); currentModel.rotation.copy(initT.rot); currentModel.scale.copy(initT.sc); syncTUI(); toast('Dönüşüm sıfırlandı'); });
+if(_el('btn-rall')) _el('btn-rall').addEventListener('click',()=>{ 
+  if(!currentModel) return; 
+  saveHistoryState();
+  currentModel.position.copy(initT.pos); currentModel.rotation.copy(initT.rot); currentModel.scale.copy(initT.sc); syncTUI(); toast('Dönüşüm sıfırlandı'); 
+});
 
 function convertToMeters(factor, unitName) {
   if (!currentModel) return toast('Model yüklenmedi','err');
+  saveHistoryState();
   currentModel.position.set(0,0,0);
   currentModel.updateMatrixWorld(true);
   const processedGeoms = new Set();
@@ -1705,7 +1788,6 @@ async function showPreviewModal() {
   
   _el('preview-img').src = thumbDataUrl;
   
-  // Eğer Edit modundaysak ismi bozmayalım, değilse varsayılan ismi verelim
   const urlParams = new URLSearchParams(window.location.search);
   const editModeName = urlParams.get('edit');
   _el('preview-name').value = editModeName ? editModeName : currentFileName.replace(/\.[^/.]+$/, "");
@@ -1957,11 +2039,16 @@ document.querySelectorAll('.section-head').forEach(h=>{
   h.addEventListener('click',()=>h.parentElement.classList.toggle('closed'));
 });
 
-// ── KLAVYE KISA YOLLARI ──
+// ── KLAVYE KISA YOLLARI & CTRL+Z ──
 document.addEventListener('keydown',e=>{
   const tag=document.activeElement?.tagName;
   if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
-  if(e.ctrlKey&&e.key==='o'){ e.preventDefault(); _el('file-input')?.click(); return; }
+  
+  if(e.ctrlKey&&e.key.toLowerCase()==='o'){ e.preventDefault(); _el('file-input')?.click(); return; }
+  
+  // CTRL + Z
+  if(e.ctrlKey&&e.key.toLowerCase()==='z'){ e.preventDefault(); undoTransform(); return; }
+
   switch(e.key){
     case '?': _el('modal-keys')?.classList.toggle('show'); break;
     case 'Escape': deselectMesh(); _el('modal-keys')?.classList.remove('show'); isIsolated=false; if(currentModel) currentModel.traverse(c=>{ if(c.isMesh) c.visible=true; }); break;
