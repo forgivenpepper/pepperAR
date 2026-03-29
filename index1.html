@@ -74,7 +74,7 @@
       100% { transform: translateY(60px) scale(1.1); }
     }
 
-    /* === NAVBAR & LOGO === */
+ /* === HEADER & LOGO STANDARDI === */
     header {
       position: fixed; top: 0; left: 0; width: 100%; height: 72px;
       background: var(--bg-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
@@ -85,32 +85,27 @@
     
     .logo-container { 
       display: flex; align-items: center; justify-content: center; 
-      text-decoration: none; height: auto; 
+      text-decoration: none; height: 100%; 
     }
     
     .main-logo-img {
-      height: 100px !important;
+      height: 100px !important; /* Dev boyut */
       width: auto !important;
-      max-height: none !important;
-      background-color: transparent !important;
-      box-shadow: none !important;
-      transform: translateY(16px); 
-      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.3s;
+      transform: translateY(16px); /* Aşağı sarkma miktarı */
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       transform-origin: top center;
     }
-    .logo-container:hover .main-logo-img { 
-      transform: translateY(16px) scale(1.04);
-      filter: drop-shadow(0 4px 12px var(--accent-glow)); 
-    }
     
-    .nav-links { display: flex; gap: 32px; }
+    .logo-container:hover .main-logo-img { 
+      transform: translateY(16px) scale(1.04); 
+    }
+
+    .nav-links { display: flex; gap: 32px; align-items: center; }
     .nav-links a {
       color: var(--text-muted); text-decoration: none; font-size: 15px; font-weight: 500;
       transition: color 0.2s;
     }
-    .nav-links a:hover { color: var(--accent); }
-    
-    .nav-actions { display: flex; gap: 16px; align-items: center; }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
     .btn {
       padding: 10px 24px; border-radius: 6px; font-family: var(--font-sans);
       font-weight: 700; font-size: 14px; cursor: pointer; text-decoration: none;
