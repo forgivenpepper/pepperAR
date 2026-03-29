@@ -9,6 +9,7 @@
   
   <style>
     :root {
+      /* ANA PALET - Index ile birebir aynı */
       --bg: #000000;
       --bg-card: #0c0c0e;
       --bg-glass: rgba(6, 6, 7, 0.85);
@@ -19,16 +20,15 @@
       --text-main: #ffffff;
       --text-muted: #88888e;
       --font-sans: 'Outfit', sans-serif;
-      --font-mono: 'Space Mono', monospace;
     }
 
-    /* Temel Ayarlar - Merkeze Kilitleme */
+    /* === GLOBAL DÜZELTME & ORTALAMA === */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     html, body {
       width: 100%;
       max-width: 100vw;
-      overflow-x: hidden;
-      margin: 0;
-      padding: 0;
+      overflow-x: hidden; /* Sola kaymayı engelleyen kritik satır */
       background-color: var(--bg);
       color: var(--text-main);
       font-family: var(--font-sans);
@@ -36,77 +36,82 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
 
-    /* Arka Plan Glow Efektleri */
-    .bg-glow {
-      position: absolute; width: 600px; height: 600px;
-      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
-      top: -200px; left: -200px; filter: blur(100px);
-      z-index: -1; opacity: 0.6; pointer-events: none;
-    }
-
-    /* Navbar */
+    /* === HEADER & LOGO STANDARDI (Index ile Milimetrik Aynı) === */
     header {
-      position: fixed; top: 0; left: 0; width: 100%; height: 80px;
-      background: var(--bg-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      position: fixed; top: 0; left: 0; width: 100%; height: 72px;
+      background: var(--bg-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 5%; z-index: 100;
     }
     
-    .logo-container { display: flex; align-items: center; text-decoration: none; height: 100%; }
-    .main-logo-img {
-      height: 90px !important; width: auto !important;
-      transform: translateY(15px);
-      transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    .logo-container { 
+      display: flex; align-items: center; justify-content: center; 
+      text-decoration: none; height: 100%; 
     }
+    
+    .main-logo-img {
+      height: 100px !important;
+      width: auto !important;
+      transform: translateY(16px); /* Sarkma miktarı aynı */
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transform-origin: top center;
+    }
+    .logo-container:hover .main-logo-img { transform: translateY(16px) scale(1.04); }
 
-    .nav-links { display: flex; gap: 30px; }
-    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 15px; transition: 0.2s; }
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none; font-size: 15px; font-weight: 500;
+      transition: color 0.2s;
+    }
     .nav-links a:hover, .nav-links a.active { color: var(--accent); }
-
-    .nav-actions { display: flex; gap: 15px; }
+    
+    .nav-actions { display: flex; gap: 16px; align-items: center; }
     .btn {
-      padding: 10px 22px; border-radius: 6px; font-weight: 700; font-size: 13px;
-      text-transform: uppercase; cursor: pointer; text-decoration: none; transition: 0.2s;
+      padding: 10px 24px; border-radius: 6px; font-weight: 700; font-size: 14px; 
+      cursor: pointer; text-decoration: none; transition: all 0.2s ease; 
+      text-transform: uppercase; letter-spacing: 0.5px;
+      display: inline-flex; align-items: center; justify-content: center;
     }
     .btn-primary { background: var(--accent); color: #000; border: none; box-shadow: 0 4px 15px var(--accent-glow); }
 
-    /* Page Header */
+    /* === CONTENT MERKEZLEME === */
     .page-header {
       padding: 180px 5% 60px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
+      width: 100%;
     }
     .page-header h1 { font-size: clamp(40px, 6vw, 70px); font-weight: 800; margin-bottom: 20px; letter-spacing: -2px; }
     .page-header h1 span { color: var(--accent); }
     .page-header p { font-size: 20px; color: var(--text-muted); max-width: 700px; }
 
-    /* Content Sections - Milimetrik Ortalanmış */
     section { 
       padding: 80px 5%; 
       max-width: 1200px; 
       margin: 0 auto; 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
     }
 
+    /* Sektör Grid Yapısı */
     .sector-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 60px;
       align-items: center;
       margin-top: 40px;
+      width: 100%;
     }
 
     .sector-text { text-align: left; }
-    .sector-text h2 { font-size: 32px; color: var(--accent); margin-bottom: 20px; font-weight: 700; }
+    .sector-text h2 { font-size: clamp(28px, 4vw, 36px); color: var(--accent); margin-bottom: 20px; font-weight: 700; }
     .sector-text p { font-size: 17px; color: var(--text-muted); margin-bottom: 25px; }
     
     .feature-list { list-style: none; padding: 0; }
@@ -122,67 +127,63 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
       position: relative;
       overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    }
-    
-    .sector-image::after {
-        content: "3D PREVIEW";
-        font-family: var(--font-mono);
-        font-size: 12px;
-        color: rgba(255,255,255,0.1);
-        letter-spacing: 5px;
     }
 
-    /* Reverse Grid for Alternating Layout */
+    /* Reverse Grid */
     .sector-grid.reverse { direction: rtl; }
     .sector-grid.reverse .sector-text { direction: ltr; }
 
-    /* CTA Section */
+    /* CTA KUTUSU */
     .cta-box {
-      background: linear-gradient(135deg, #111, #000);
-      border: 1px solid var(--accent-dim);
+      background: linear-gradient(135deg, #0c0c0e, #000);
+      border: 1px solid var(--border-light);
       padding: 80px 40px;
-      border-radius: 30px;
+      border-radius: 24px;
       width: 100%;
-      margin-top: 100px;
+      margin-top: 80px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      text-align: center;
     }
 
-    /* Animasyonlar */
+    /* Reveal */
     .reveal { opacity: 0; transform: translateY(30px); transition: 0.8s all ease; }
     .reveal.active { opacity: 1; transform: translateY(0); }
 
     footer {
       border-top: 1px solid var(--border); padding: 50px 5%;
       text-align: center; color: var(--text-muted); font-size: 14px;
-      margin-top: 100px;
+      margin-top: 80px;
     }
+    footer strong { color: var(--accent); }
 
+    /* MOBİL */
     @media (max-width: 968px) {
+      header { height: 64px; }
+      .main-logo-img { height: 80px !important; transform: translateY(10px); }
+      .nav-links { display: none; }
       .sector-grid, .sector-grid.reverse { grid-template-columns: 1fr; text-align: center; direction: ltr; }
-      .sector-text { text-align: center; display: flex; flex-direction: column; align-items: center; }
+      .sector-text { display: flex; flex-direction: column; align-items: center; }
       .feature-list { display: inline-block; text-align: left; }
     }
   </style>
 </head>
 <body>
 
-  <div class="bg-glow"></div>
-
   <header>
     <a href="index.html" class="logo-container">
-      <img src="https://vdqumssdodfihuovytbs.supabase.co/storage/v1/object/public/web-docs/pepper-ar-logo.png" alt="Logo" class="main-logo-img">
+      <img src="https://vdqumssdodfihuovytbs.supabase.co/storage/v1/object/public/web-docs/pepper-ar-logo.png"
+           alt="pepperAR Logo"
+           class="main-logo-img">
     </a>
     <nav class="nav-links">
       <a href="index.html">Ana Sayfa</a>
       <a href="kullanim-alanlari.html" class="active">Kullanım Alanları</a>
+      <a href="index.html#ozellikler">Özellikler</a>
       <a href="index.html#fiyatlandirma">Fiyatlar</a>
     </nav>
     <div class="nav-actions">
@@ -193,34 +194,17 @@
   <div class="page-header reveal active">
     <div style="font-family: var(--font-mono); font-size: 12px; color: var(--accent); letter-spacing: 2px; margin-bottom: 10px;">// INDUSTRIES</div>
     <h1>Sektörel <span>AR Çözümleri</span></h1>
-    <p>pepperAR Studio, ürünlerinizi sergileme şeklinizi dijital bir devrimle değiştiriyor.</p>
+    <p>Ürünlerinizi sergileme şeklinizi dijital bir devrimle değiştiriyoruz.</p>
   </div>
 
   <section class="reveal">
     <div class="sector-grid">
       <div class="sector-text">
-        <h2>Endüstriyel Üretim & Kent Ekipmanları</h2>
-        <p>Ağır sanayi parçaları, oyun parkları veya şehir mobilyaları... Fiziksel olarak taşınması zor olan her şeyi müşterinizin avucunun içine getirin.</p>
+        <h2>Kent Ekipmanları & Proje</h2>
+        <p>Ağır sanayi parçaları, oyun parkları veya şehir mobilyalarını müşterinizin sahasına saniyeler içinde yerleştirin.</p>
         <ul class="feature-list">
           <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Lojistik maliyetlerini %100 sıfırlayın.</li>
-          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Sahada "Gerçek Boyut" ölçeklendirme.</li>
-          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Teknik detayları 3D üzerinde inceleme.</li>
-        </ul>
-      </div>
-      <div class="sector-image">
-          </div>
-    </div>
-  </section>
-
-  <section class="reveal">
-    <div class="sector-grid reverse">
-      <div class="sector-text">
-        <h2>E-Ticaret & Mobilya</h2>
-        <p>Müşterilerinizin "Bu koltuk odama sığar mı?" sorusunu saniyeler içinde cevaplayın. Satın alma kararını hızlandırın ve iade oranlarını düşürün.</p>
-        <ul class="feature-list">
-          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> %30 daha yüksek dönüşüm oranı.</li>
-          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Renk ve materyal varyasyonlarını anlık değiştirme.</li>
-          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Uygulama indirmeden WebAR deneyimi.</li>
+          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Sahada "Gerçek Boyut" deneyimi.</li>
         </ul>
       </div>
       <div class="sector-image"></div>
@@ -228,13 +212,13 @@
   </section>
 
   <section class="reveal">
-    <div class="sector-grid">
+    <div class="sector-grid reverse">
       <div class="sector-text">
-        <h2>Eğitim & Dijital Müze</h2>
-        <p>Karmaşık mekanizmaları veya tarihi eserleri sınıfa veya eve taşıyın. Öğrenmeyi statik görsellerden çıkarıp interaktif bir serüvene dönüştürün.</p>
+        <h2>E-Ticaret & Mobilya</h2>
+        <p>Müşterilerinizin satın alma kararını hızlandırın ve iade oranlarını ciddi oranda düşürün.</p>
         <ul class="feature-list">
-          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> İnteraktif öğrenme deneyimi.</li>
-          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Her yerden erişilebilen 7/24 dijital sergi.</li>
+          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> %30 daha yüksek dönüşüm oranı.</li>
+          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Uygulama gerekmeden WebAR.</li>
         </ul>
       </div>
       <div class="sector-image"></div>
@@ -243,8 +227,8 @@
 
   <section class="reveal">
     <div class="cta-box">
-      <h2 style="font-size: 40px; margin-bottom: 20px;">Sizin Sektörünüz İçin Ne Yapabiliriz?</h2>
-      <p style="color: var(--text-muted); margin-bottom: 30px;">Hemen ücretsiz bir hesap oluşturun ve 3D dünyasına ilk adımınızı atın.</p>
+      <h2 style="font-size: clamp(28px, 5vw, 40px); margin-bottom: 20px;">Sizin Sektörünüz İçin Hazırız</h2>
+      <p style="color: var(--text-muted); margin-bottom: 30px; max-width: 600px;">Ücretsiz bir hesap oluşturun ve ürünlerinizi 3. boyuta taşıyın.</p>
       <a href="login.html" class="btn btn-primary" style="padding: 18px 50px; font-size: 16px;">ÜCRETSİZ DENEYİN</a>
     </div>
   </section>
