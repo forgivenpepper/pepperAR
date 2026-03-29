@@ -182,22 +182,25 @@
 </head>
 <body>
 
-  <header>
-    <a href="index.html" class="logo-container">
-      <img src="https://vdqumssdodfihuovytbs.supabase.co/storage/v1/object/public/web-docs/pepper-ar-logo.png"
-           alt="pepperAR Logo"
-           class="main-logo-img">
-    </a>
-    <nav class="nav-links">
-      <a href="index.html">Ana Sayfa</a>
-      <a href="ozellikler.html" class="active">Özellikler</a>
-      <a href="kullanim-alanlari.html">Kullanım Alanları</a>
-      <a href="index.html#fiyatlandirma">Fiyatlar</a>
-    </nav>
-    <div class="nav-actions">
-      <a href="login.html" class="btn btn-primary">Başla</a>
-    </div>
-  </header>
+ <div id="header-placeholder"></div>
+
+<script>
+  // Header'ı dış dosyadan çeken sihirli kod
+  fetch('header.html')
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById('header-placeholder').innerHTML = data;
+      
+      // Bulunulan sayfaya göre menüdeki "active" sınıfını otomatik ekle
+      const currentPage = window.location.pathname.split("/").pop() || 'index.html';
+      const navLinks = document.querySelectorAll('.nav-links a');
+      navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPage) {
+          link.classList.add('active');
+        }
+      });
+    });
+</script>
 
   <div class="page-header reveal active">
     <div style="font-family: var(--font-mono); font-size: 12px; color: var(--accent); letter-spacing: 2px; margin-bottom: 10px;">// SYSTEM_CAPABILITIES</div>
