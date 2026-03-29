@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pepperAR — Ürünlerinizi 3D ve AR ile Hayata Geçirin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+  
+  <style>
+    :root {
+      /* ANA PALET */
+      --bg: #000000;
+      --bg-card: #0c0c0e;
+      --bg-glass: rgba(6, 6, 7, 0.85);
+      --border: rgba(255, 255, 255, 0.05);
+      --border-light: rgba(255, 255, 255, 0.1);
+      
+      --text-main: #ffffff;
+      --text-muted: #88888e;
+      
+      /* VURGU RENGİ */
+      --accent: #facc15;
+      --accent-glow: rgba(250, 204, 21, 0.25);
+      --accent-dim: rgba(250, 204, 21, 0.1);
+      
+      --radius: 14px;
+      --font-sans: 'Outfit', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+   /* === BUNLARI BUL VE DEĞİŞTİR === */
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden; /* Dışarı taşan ışıkların sayfayı büyütmesini engeller */
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Ortak Bölüm Stilleri */
+    section { 
+      width: 100%; /* Bunu eklemek hayat kurtarır */
+      padding: 110px 5%; 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      position: relative; 
+    }
+
+    /* === ARKA PLAN EFEKTLERİ === */
+    .bg-glow {
+      position: absolute; width: 700px; height: 700px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      top: -250px; left: -250px; filter: blur(100px);
+      z-index: -1; opacity: 0.6; animation: float 12s ease-in-out infinite alternate;
+    }
+    .bg-glow.right {
+      top: 30%; left: auto; right: -250px;
+      background: radial-gradient(circle, rgba(250, 204, 21, 0.15) 0%, transparent 70%);
+      animation-delay: -6s;
+    }
+    @keyframes float {
+      0% { transform: translateY(0px) scale(1); }
+      100% { transform: translateY(60px) scale(1.1); }
+    }
+
+    /* === NAVBAR & LOGO === */
+    header {
+      position: fixed; top: 0; left: 0; width: 100%; height: 72px;
+      background: var(--bg-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%; z-index: 100;
+    }
+    
+    .logo-container { 
+      display: flex; align-items: center; justify-content: center; 
+      text-decoration: none; height: auto; 
+    }
+    
+    .main-logo-img {
+      height: 100px !important;
+      width: auto !important;
+      max-height: none !important;
+      background-color: transparent !important;
+      box-shadow: none !important;
+      transform: translateY(16px); 
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.3s;
+      transform-origin: top center;
+    }
+    .logo-container:hover .main-logo-img { 
+      transform: translateY(16px) scale(1.04);
+      filter: drop-shadow(0 4px 12px var(--accent-glow)); 
+    }
+    
+    .nav-links { display: flex; gap: 32px; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none; font-size: 15px; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    
+    .nav-actions { display: flex; gap: 16px; align-items: center; }
+    .btn {
+      padding: 10px 24px; border-radius: 6px; font-family: var(--font-sans);
+      font-weight: 700; font-size: 14px; cursor: pointer; text-decoration: none;
+      transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.5px;
+      display: inline-flex; align-items: center; justify-content: center; text-align: center;
+    }
+    .btn-login { color: var(--accent); background: transparent; border: 1px solid var(--accent-dim); }
+    .btn-login:hover { background: var(--accent-dim); border-color: var(--accent-glow); }
+    .btn-primary { background: var(--accent); color: #000; border: none; box-shadow: 0 4px 18px var(--accent-glow); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 25px var(--accent-glow); }
+
+    /* === ORTAK DÜZEN & ORTALAMA === */
+    section { padding: 110px 5%; max-width: 1200px; margin: 0 auto; position: relative; }
+    
+    .section-title {
+      text-align: center; font-size: 38px; font-weight: 800; margin-bottom: 16px;
+      letter-spacing: -1px; text-transform: uppercase; color: var(--accent);
+      width: 100%;
+    }
+    .section-subtitle {
+      text-align: center; color: var(--text-muted); font-size: 18px;
+      max-width: 600px; margin: 0 auto 64px auto; font-weight: 400;
+      display: block;
+    }
+
+    /* === SCROLL ANİMASYONLARI === */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .d-1 { transition-delay: 100ms; }
+    .d-2 { transition-delay: 200ms; }
+    .d-3 { transition-delay: 300ms; }
+
+    /* === HERO SECTION === */
+    .hero {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding-top: 160px; padding-bottom: 70px;
+    }
+    .badge {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 7px 18px; background: rgba(250, 204, 21, 0.05);
+      border: 1px solid var(--accent-dim); border-radius: 4px;
+      font-size: 12px; font-weight: 700; color: var(--accent);
+      margin-bottom: 28px; font-family: var(--font-mono);
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .hero h1 {
+      font-size: clamp(42px, 6.5vw, 76px); font-weight: 800;
+      line-height: 1.05; letter-spacing: -2px; margin-bottom: 28px; max-width: 950px;
+      text-align: center;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: clamp(16px, 2.2vw, 21px); color: var(--text-muted);
+      max-width: 650px; margin: 0 auto 48px auto; font-weight: 400;
+      text-align: center;
+    }
+    .hero-ctas { display: flex; gap: 18px; justify-content: center; align-items: center; width: 100%; }
+    .btn-lg { padding: 16px 36px; font-size: 15px; border-radius: 8px; }
+
+    /* Mockup */
+    .hero-mockup {
+      margin-top: 70px; width: 100%; max-width: 1050px; height: 520px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; box-shadow: 0 30px 90px rgba(0,0,0,0.6);
+      position: relative; overflow: hidden; 
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
+    }
+    .hero-mockup::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 42px;
+      background: rgba(255,255,255,0.01); border-bottom: 1px solid var(--border);
+    }
+    .mockup-dots { position: absolute; top: 16px; left: 20px; display: flex; gap: 7px; }
+    .mockup-dot { width: 10px; height: 10px; border-radius: 50%; background: #27272a; }
+
+    /* === ÖZELLİKLER & KARTLAR (Tam Merkezlendi) === */
+    .grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+      gap: 32px; 
+      justify-content: center; 
+      justify-items: center; /* Tümüyle merkeze bas */
+    }
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 48px 36px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; width: 100%;
+      transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+    .card:hover { transform: translateY(-8px); border-color: var(--accent-glow); box-shadow: 0 10px 30px rgba(250, 204, 21, 0.05); }
+    .card-icon {
+      width: 60px; height: 60px; background: var(--accent-dim);
+      border: 1px solid var(--accent-glow); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px auto; color: var(--accent);
+    }
+    .card h3 { font-size: 22px; font-weight: 700; margin: 0 auto 14px auto; letter-spacing: -0.5px; text-align: center; }
+    .card p { color: var(--text-muted); font-size: 15px; line-height: 1.65; margin: 0 auto; text-align: center; }
+
+    /* === NASIL ÇALIŞIR (Tam Merkezlendi) === */
+    .steps-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 40px;
+      justify-content: center; justify-items: center;
+    }
+    .step-card { 
+      position: relative; z-index: 1; padding: 24px 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; width: 100%;
+    }
+    .step-number {
+      font-family: var(--font-mono); font-size: 80px; font-weight: 800;
+      color: rgba(255,255,255,0.03); line-height: 1; margin: 0 auto -35px auto;
+      user-select: none; letter-spacing: -5px; text-align: center; display: block;
+    }
+    .step-card h3 { font-size: 24px; color: var(--accent); margin: 0 auto 12px auto; font-weight: 700; z-index: 2; text-align: center; }
+    .step-card p { color: var(--text-muted); font-size: 16px; z-index: 2; margin: 0 auto; text-align: center; }
+
+    /* === CANLI DEMO === */
+    .showcase-container {
+      width: 100%; height: 500px; background: var(--bg-card);
+      border: 1px solid var(--accent-dim); border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(250, 204, 21, 0.1);
+      overflow: hidden; position: relative;
+    }
+    model-viewer {
+      width: 100%; height: 100%; background: #0c0c0e; outline: none;
+      --poster-color: transparent;
+    }
+    .demo-hint {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: var(--bg-glass); backdrop-filter: blur(8px);
+      padding: 8px 16px; border-radius: 30px; border: 1px solid var(--border);
+      font-size: 12px; font-weight: 600; color: var(--text-main); letter-spacing: 0.5px;
+      pointer-events: none; text-align: center;
+    }
+
+    /* === FİYATLANDIRMA (Tam Merkezlendi) === */
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 32px;
+      max-width: 900px; margin: 0 auto; justify-content: center; justify-items: center;
+    }
+    .pricing-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 48px 40px; position: relative;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; width: 100%;
+      transition: transform 0.3s;
+    }
+    .pricing-card:hover { transform: translateY(-5px); }
+    .pricing-card.pro { border-color: var(--accent); box-shadow: 0 10px 40px var(--accent-glow); }
+    .pricing-badge {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: #000; padding: 4px 16px;
+      border-radius: 20px; font-weight: 800; font-size: 11px; text-transform: uppercase;
+      letter-spacing: 1px; font-family: var(--font-mono); text-align: center;
+    }
+    .pricing-card h3 { font-size: 24px; font-weight: 700; margin: 0 auto 8px auto; text-align: center; }
+    .price { font-size: 48px; font-weight: 800; color: var(--text-main); margin: 0 auto 24px auto; line-height: 1; text-align: center; }
+    .price span { font-size: 16px; color: var(--text-muted); font-weight: 500; }
+    
+    /* Listenin Sola Yaslanmasını Önleyen Tam Merkezleme Kodu */
+    .pricing-list { 
+      list-style: none; margin: 0 auto 40px auto; padding: 0; 
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 100%;
+    }
+    .pricing-list li {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin: 0 auto 16px auto; color: var(--text-muted); font-size: 15px; text-align: center;
+    }
+    .pricing-list li svg { color: var(--accent); flex-shrink: 0; }
+    .btn-full { width: 100%; margin: 0 auto; display: block; }
+
+    /* === SSS (Ortalandı) === */
+    .faq-container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+    details {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; margin-bottom: 16px; overflow: hidden;
+      transition: border-color 0.3s; width: 100%;
+    }
+    details:hover { border-color: var(--border-light); }
+    summary {
+      padding: 24px; font-size: 18px; font-weight: 600; cursor: pointer;
+      list-style: none; display: flex; justify-content: center; align-items: center; gap: 10px;
+      outline: none; text-align: center; position: relative;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::after {
+      content: '+'; color: var(--accent); font-size: 24px; font-weight: 300;
+      transition: transform 0.3s; position: absolute; right: 24px;
+    }
+    details[open] summary::after { transform: rotate(45deg); }
+    .faq-content {
+      padding: 0 24px 24px; color: var(--text-muted); font-size: 15px; line-height: 1.7;
+      text-align: center; margin: 0 auto;
+    }
+
+    /* === FİNAL CTA === */
+    .final-cta {
+      text-align: center; padding: 120px 5%; margin: 60px auto 0;
+      background: linear-gradient(to bottom, transparent, rgba(250, 204, 21, 0.03));
+      border-top: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .final-cta h2 { font-size: 48px; font-weight: 800; margin: 0 auto 24px auto; letter-spacing: -1px; text-align: center; }
+    .final-cta p { color: var(--text-muted); font-size: 18px; margin: 0 auto 40px auto; max-width: 600px; text-align: center; }
+
+    /* === FOOTER === */
+    footer {
+      border-top: 1px solid var(--border); padding: 50px 5%;
+      text-align: center; color: var(--text-muted); font-size: 14px;
+      display: flex; justify-content: center; align-items: center;
+    }
+    footer strong { color: var(--accent); font-weight: 700; }
+
+    /* === MOBİL UYUMLULUK === */
+    @media (max-width: 768px) {
+      header { height: 64px; }
+      .main-logo-img { height: 80px !important; transform: translateY(10px); } 
+      .nav-links { display: none; }
+      .hero { padding-top: 140px; }
+      .hero h1 { font-size: 38px; letter-spacing: -1px; }
+      .hero-ctas { flex-direction: column; width: 100%; max-width: 320px; gap: 14px; }
+      .hero-mockup, .showcase-container { height: 360px; }
+      .grid, .pricing-grid { grid-template-columns: 1fr; }
+      .final-cta h2 { font-size: 32px; }
+      summary { padding-right: 40px; } 
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-glow"></div>
+  <div class="bg-glow right"></div>
+
+  <header>
+    <a href="index.html" class="logo-container">
+      <img src="https://vdqumssdodfihuovytbs.supabase.co/storage/v1/object/public/web-docs/pepper-ar-logo.png"
+           alt="pepperAR Logo"
+           class="main-logo-img">
+    </a>
+    <nav class="nav-links">
+      <a href="#ozellikler">Özellikler</a>
+      <a href="#nasil-calisir">Nasıl Çalışır?</a>
+      <a href="#kullanim-alanlari">Kullanım Alanları</a>
+      <a href="#fiyatlandirma">Fiyatlar</a>
+    </nav>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-login">Giriş</a>
+      <a href="login.html" class="btn btn-primary">Hemen Başla</a>
+    </div>
+  </header>
+
+  <section class="hero reveal active">
+    <div class="badge">pepperAR v1.0 // ENTER THE 3D STUDIO</div>
+    <h1>Ürünlerinizi <span>3D ve AR</span> ile<br>Hayata Geçirin</h1>
+    <p>
+      pepperAR Studio ile 3D modellerinizi saniyeler içinde buluta yükleyin, web tabanlı gelişmiş editörde düzenleyin ve tek bir linkle müşterilerinizle paylaşın.
+    </p>
+    <div class="hero-ctas">
+      <a href="login.html" class="btn btn-primary btn-lg">Stüdyoya Git →</a>
+      <a href="#demo" class="btn btn-login btn-lg">Canlı Demoyu Gör</a>
+    </div>
+
+    <div class="hero-mockup reveal d-1">
+      <div class="mockup-dots">
+        <div class="mockup-dot" style="background:#404040"></div>
+        <div class="mockup-dot" style="background:#404040"></div>
+        <div class="mockup-dot" style="background:#404040"></div>
+      </div>
+      <div style="text-align: center; color: #404040;">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom:18px; opacity:0.8; color: #303030">
+          <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+        <div style="font-family: var(--font-mono); font-size: 13px; letter-spacing: 3px; color: #303030">PRO 3D EDITOR INTERFACE</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="nasil-calisir" class="reveal">
+    <h2 class="section-title">3 Adımda Sihir</h2>
+    <p class="section-subtitle">Hiçbir kod veya karmaşık yazılım bilgisi gerektirmeden ürünlerinizi yayına alın.</p>
+    <div class="steps-grid">
+      <div class="step-card reveal d-1">
+        <div class="step-number">01</div>
+        <h3>Yükle ve Düzenle</h3>
+        <p>Mevcut GLB veya GLTF dosyanızı buluta sürükleyin. Endüstriyel sınıf editörümüzde materyalleri, yansımaları ve ortam ışıklarını ayarlayın.</p>
+      </div>
+      <div class="step-card reveal d-2">
+        <div class="step-number">02</div>
+        <h3>Otomatik Dönüşüm</h3>
+        <p>Tek bir tıkla modeliniz bulutta işlenir. iOS cihazlar için gerekli olan Apple USDZ formatı arka planda saniyeler içinde otomatik olarak üretilir.</p>
+      </div>
+      <div class="step-card reveal d-3">
+        <div class="step-number">03</div>
+        <h3>Paylaş ve Büyüle</h3>
+        <p>Sistem size özel bir link ve QR kod verir. Müşterileriniz hiçbir uygulama indirmeden tarayıcı üzerinden modeli 360° inceler ve kendi ortamlarına (AR) yerleştirir.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="demo" class="reveal">
+    <h2 class="section-title">Canlı Deneyimleyin</h2>
+    <p class="section-subtitle">Ürününüzü son kullanıcılar tam olarak böyle görecek. Fareyle (veya parmağınızla) 360 derece döndürün.</p>
+    <div class="showcase-container reveal d-1">
+      <model-viewer 
+        src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" 
+        camera-controls 
+        auto-rotate 
+        shadow-intensity="1"
+        exposure="1"
+        environment-image="neutral">
+      </model-viewer>
+      <div class="demo-hint">👆 Tıklayın ve Sürükleyin</div>
+    </div>
+  </section>
+
+  <section id="kullanim-alanlari" class="reveal">
+    <h2 class="section-title">Kimler İçin Tasarlandı?</h2>
+    <p class="section-subtitle">Her sektöre uyum sağlayan, dönüşüm oranlarını artıran WebAR çözümleri.</p>
+    <div class="grid">
+      <div class="card reveal d-1">
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+        </div>
+        <h3>Üreticiler & Endüstriyel Tasarım</h3>
+        <p>Büyük hacimli endüstriyel ürünleri, oyun parklarını veya kent ekipmanlarını doğrudan müşterinizin sahasında sergileyin. Nakliye maliyeti olmadan dijital prototipler sunun.</p>
+      </div>
+      <div class="card reveal d-2">
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+        </div>
+        <h3>E-Ticaret & Mobilya</h3>
+        <p>Müşterilerinizin bir koltuğun odalarına uyup uymadığını satın almadan önce görmelerini sağlayın. İade oranlarını düşürün ve güven inşa edin.</p>
+      </div>
+      <div class="card reveal d-3">
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <h3>Ajanslar & Pazarlama</h3>
+        <p>Müşterileriniz için çarpıcı ve yenilikçi WebAR kampanyaları oluşturun. Basılı broşürlere QR kodlar ekleyerek statik reklamları interaktif hale getirin.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="fiyatlandirma" class="reveal">
+    <h2 class="section-title">Şeffaf Fiyatlandırma</h2>
+    <p class="section-subtitle">Projenizin boyutuna göre ölçeklenen basit ve net planlar.</p>
+    
+    <div class="pricing-grid">
+      <div class="pricing-card reveal d-1">
+        <h3>Başlangıç</h3>
+        <div class="price">0₺ <span>/ ay</span></div>
+        <ul class="pricing-list">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 3 Model kapasitesi</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Standart 3D/AR Görüntüleyici</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Otomatik USDZ çevirisi</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Topluluk desteği</li>
+        </ul>
+        <a href="login.html" class="btn btn-login btn-full">Ücretsiz Başla</a>
+      </div>
+      
+      <div class="pricing-card pro reveal d-2">
+        <div class="pricing-badge">ÇOK YAKINDA</div>
+        <h3>Pro Stüdyo</h3>
+        <div class="price">--₺ <span>/ ay</span></div>
+        <ul class="pricing-list">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Sınırsız model depolama</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> White-label (Kendi logonuz)</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Gelişmiş izlenme istatistikleri</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Öncelikli teknik destek</li>
+        </ul>
+        <a href="#" class="btn btn-primary btn-full" style="opacity:0.7; pointer-events:none;">Kayıt Bırakın</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="sss" class="reveal">
+    <h2 class="section-title">Sıkça Sorulan Sorular</h2>
+    <div class="faq-container reveal d-1">
+      <details>
+        <summary>AR deneyimi için bir uygulama indirmem gerekiyor mu?</summary>
+        <div class="faq-content">
+          Hayır. pepperAR tamamen WebAR teknolojisini kullanır. Müşterileriniz sadece gönderdiğiniz linke tıklar veya QR kodu kameralarına okutarak, cihazlarının kendi tarayıcıları üzerinden anında 3D ve AR deneyimi yaşarlar.
+        </div>
+      </details>
+      <details>
+        <summary>Sisteme hangi 3D formatlarını yükleyebilirim?</summary>
+        <div class="faq-content">
+          Şu anda endüstri standardı olan <b>.glb</b> formatını destekliyoruz. Modelinizi yüklediğiniz anda Apple cihazlar (iOS) için gerekli olan <b>.usdz</b> formatını bulut sunucularımızda sizin için otomatik olarak üretiyoruz.
+        </div>
+      </details>
+      <details>
+        <summary>Görüntüleyiciyi kendi web siteme ekleyebilir miyim?</summary>
+        <div class="faq-content">
+          Kesinlikle. Her model için Dashboard'da size özel bir iFrame entegrasyon kodu verilir. Bu kodu e-ticaret sitenize veya tanıtım sayfanıza yapıştırarak ürünlerinizi anında sergilemeye başlayabilirsiniz.
+        </div>
+      </details>
+      <details>
+        <summary>Verilerim güvende mi?</summary>
+        <div class="faq-content">
+          Evet. pepperAR altyapısı Supabase (PostgreSQL) üzerinde çalışır ve Row Level Security (RLS) ile korunur. Modelleriniz sadece sizin kontrolünüzdedir ve dilediğiniz zaman kalıcı olarak silebilirsiniz.
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="final-cta reveal">
+    <h2>Ürünlerinizi Bir Üst Boyuta Taşıyın.</h2>
+    <p>Kredi kartı gerekmeden hesabınızı oluşturun ve ilk modelinizi hemen yükleyin.</p>
+    <a href="login.html" class="btn btn-primary btn-lg" style="font-size:18px; padding:18px 48px;">Hemen Ücretsiz Başla</a>
+  </section>
+
+  <footer>
+    <p>&copy; 2026 <strong>pepperAR Studio</strong>. // All rights reserved. // powered by <strong>Cemer</strong></p>
+  </footer>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const observerOptions = { root: null, rootMargin: '0px', threshold: 0.15 };
+      
+      const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll('.reveal').forEach((element) => {
+        observer.observe(element);
+      });
+    });
+  </script>
+</body>
+</html>
