@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kullanım Alanları — pepperAR Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #000000;
+      --bg-card: #0c0c0e;
+      --bg-glass: rgba(6, 6, 7, 0.85);
+      --border: rgba(255, 255, 255, 0.05);
+      --border-light: rgba(255, 255, 255, 0.1);
+      --accent: #facc15;
+      --accent-glow: rgba(250, 204, 21, 0.25);
+      --accent-dim: rgba(250, 204, 21, 0.1);
+      --text-main: #ffffff;
+      --text-muted: #88888e;
+      --font-sans: 'Outfit', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+    }
+
+    /* === GLOBAL MERKEZLEME & KAYMA ENGELLEYİCİ === */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    /* HEADER STİLLERİ */
+    header {
+      position: fixed; top: 0; left: 0; width: 100%; height: 72px;
+      background: var(--bg-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%; z-index: 100;
+    }
+    .logo-container { display: flex; align-items: center; justify-content: center; text-decoration: none; height: 100%; }
+    .main-logo-img {
+      height: 100px !important; width: auto !important;
+      transform: translateY(16px);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transform-origin: top center;
+    }
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 15px; font-weight: 500; transition: 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+    .btn {
+      padding: 10px 24px; border-radius: 6px; font-weight: 700; font-size: 14px; 
+      cursor: pointer; text-decoration: none; text-transform: uppercase;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .btn-primary { background: var(--accent); color: #000; border: none; box-shadow: 0 4px 15px var(--accent-glow); }
+
+    /* === İÇERİK MERKEZLEME === */
+    .page-header {
+      padding: 180px 5% 60px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+    .page-header h1 { font-size: clamp(40px, 6vw, 70px); font-weight: 800; margin-bottom: 20px; letter-spacing: -2px; }
+    .page-header h1 span { color: var(--accent); }
+    .page-header p { font-size: 20px; color: var(--text-muted); max-width: 700px; }
+
+    section { 
+      padding: 60px 5%; 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    /* SEKTÖR GRID YAPISI */
+    .sector-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      margin-top: 40px;
+      width: 100%;
+    }
+
+    .sector-text { text-align: left; }
+    .sector-text h2 { font-size: clamp(28px, 4vw, 36px); color: var(--accent); margin-bottom: 20px; font-weight: 700; }
+    .sector-text p { font-size: 17px; color: var(--text-muted); margin-bottom: 25px; }
+    
+    .feature-list { list-style: none; padding: 0; }
+    .feature-list li { 
+      display: flex; align-items: center; gap: 12px; 
+      margin-bottom: 12px; color: #fff; font-weight: 500; font-size: 15px;
+    }
+    .feature-list li svg { color: var(--accent); flex-shrink: 0; }
+
+    .sector-image {
+      width: 100%;
+      aspect-ratio: 16/10;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Görsel içine metin/ikon koymak istersen diye hazırlık */
+    .sector-image::after {
+      content: "3D AR PREVIEW";
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: rgba(255,255,255,0.05);
+      letter-spacing: 4px;
+    }
+
+    /* REVERSE GRID (Alternatif Dizilim) */
+    .sector-grid.reverse { direction: rtl; }
+    .sector-grid.reverse .sector-text { direction: ltr; }
+
+    /* CTA KUTUSU */
+    .cta-box {
+      background: linear-gradient(135deg, #0c0c0e, #000);
+      border: 1px solid var(--border-light);
+      padding: 80px 40px;
+      border-radius: 24px;
+      width: 100%;
+      margin-top: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    /* REVEAL ANİMASYONU */
+    .reveal { opacity: 0; transform: translateY(30px); transition: 0.8s all ease; }
+    .reveal.active { opacity: 1; transform: translateY(0); }
+
+    footer {
+      border-top: 1px solid var(--border); padding: 50px 5%;
+      text-align: center; color: var(--text-muted); font-size: 14px;
+      margin-top: 80px;
+    }
+
+    /* MOBİL UYUM */
+    @media (max-width: 968px) {
+      .main-logo-img { height: 80px !important; transform: translateY(10px); }
+      .sector-grid, .sector-grid.reverse { grid-template-columns: 1fr; text-align: center; direction: ltr; }
+      .sector-text { display: flex; flex-direction: column; align-items: center; text-align: center; }
+      .feature-list { display: inline-block; text-align: left; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="header-placeholder"></div>
+
+  <script>
+    fetch('header.html')
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById('header-placeholder').innerHTML = data;
+        const navLinks = document.querySelectorAll('.nav-links a');
+        navLinks.forEach(link => {
+          if (link.href.includes('kullanim-alanlari.html')) {
+            link.classList.add('active');
+          }
+        });
+      });
+  </script>
+
+  <div class="page-header reveal active">
+    <div style="font-family: var(--font-mono); font-size: 12px; color: var(--accent); letter-spacing: 2px; margin-bottom: 10px;">// INDUSTRIES</div>
+    <h1>Sektörel <span>AR Çözümleri</span></h1>
+    <p>Ürünlerinizi sergileme ve yönetme şeklinizi dijital bir devrimle değiştiriyoruz.</p>
+  </div>
+
+  <section class="reveal">
+    <div class="sector-grid">
+      <div class="sector-text">
+        <h2>Kent Ekipmanları & Proje</h2>
+        <p>Ağır sanayi parçaları, devasa oyun parkları veya şehir mobilyalarını müşterinizin sahasına saniyeler içinde yerleştirin.</p>
+        <ul class="feature-list">
+          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Lojistik maliyetlerini %100 sıfırlayın.</li>
+          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Sahada "Gerçek Boyut" deneyimi sunun.</li>
+        </ul>
+      </div>
+      <div class="sector-image"></div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="sector-grid reverse">
+      <div class="sector-text">
+        <h2>E-Ticaret & Mobilya</h2>
+        <p>Müşterilerinizin satın alma kararını hızlandırın ve uyumsuzluktan kaynaklanan iade oranlarını ciddi oranda düşürün.</p>
+        <ul class="feature-list">
+          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> %30 daha yüksek dönüşüm oranı.</li>
+          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Uygulama indirmeden doğrudan WebAR.</li>
+        </ul>
+      </div>
+      <div class="sector-image"></div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="sector-grid">
+      <div class="sector-text">
+        <h2>Satış Sonrası & Bakım (Exploded View)</h2>
+        <p>Klasik, anlaşılması zor basılı montaj şemalarını unutun. Ürününüzün veya kolisinin üzerine yerleştireceğiniz bir QR kod ile teknik ekibinize sihirli bir rehber sunun.</p>
+        <ul class="feature-list">
+          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> AR ile parçalara ayrılmış (Exploded) gösterim.</li>
+          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Adım adım montaj rehberi ile sıfır hata.</li>
+          <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Model üzerinden anında yedek parça tespiti.</li>
+        </ul>
+      </div>
+      <div class="sector-image"></div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="cta-box">
+      <h2 style="font-size: clamp(28px, 5vw, 40px); margin-bottom: 20px;">Sizin Sektörünüz İçin Hazırız</h2>
+      <p style="color: var(--text-muted); margin-bottom: 30px; max-width: 600px;">Ücretsiz bir hesap oluşturun ve ürünlerinizi 3. boyuta taşıyın.</p>
+      <a href="login.html" class="btn btn-primary" style="padding: 18px 50px; font-size: 16px;">ÜCRETSİZ DENEYİN</a>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2026 <strong>pepperAR Studio</strong> // Powered by <strong>Cemer</strong></p>
+  </footer>
+
+  <script>
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('active'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  </script>
+</body>
+</html>
