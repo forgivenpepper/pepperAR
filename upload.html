@@ -88,6 +88,9 @@ input[type=range]{width:100%;height:4px;-webkit-appearance:none;background:var(-
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg1);box-shadow:0 0 0 2px var(--accent-glow);transition:box-shadow .15s}
 input[type=range]:hover::-webkit-slider-thumb{box-shadow:0 0 0 4px var(--accent-glow)}
 
+.ui-select { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: var(--radius); font-family: var(--sans); font-size: 12px; outline: none; margin-top: 4px; transition: border-color .15s; }
+.ui-select:focus { border-color: var(--accent); }
+
 .xyz-row{display:flex;gap:4px}
 .xyz-field{flex:1;display:flex;flex-direction:column;gap:3px}
 .xyz-label{font-size:10px;font-weight:700;text-align:center}
@@ -275,6 +278,14 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
     <div class="section">
       <div class="section-head"><div class="section-title">💡 Işık</div><span class="section-arrow">▼</span></div>
       <div class="section-body">
+        <div class="field" style="margin-bottom:4px">
+          <div class="field-row"><span class="label">Çevre (HDRI)</span></div>
+          <select id="in-env" class="ui-select">
+            <option value="studio">Stüdyo (Room)</option>
+            <option value="neutral">Doğal Işık</option>
+            <option value="dark">Karanlık (Sıfır HDRI)</option>
+          </select>
+        </div>
         <div class="field">
           <div class="field-row"><span class="label">Exposure</span><span class="vbadge" id="vb-exp">1.00</span></div>
           <input type="range" id="in-exp" min="0.1" max="3" step="0.05" value="1">
@@ -412,6 +423,7 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
         <div class="btn-row">
           <button class="btn sm" id="btn-rpos">Konum ↺</button>
           <button class="btn sm" id="btn-rall">Tümü ↺</button>
+          <button class="btn sm" id="btn-snap-ground">⬇️ Zemine</button>
         </div>
         <div class="field" style="margin-top:8px;border-top:1px dashed var(--border2);padding-top:8px">
           <span class="label">Birim Çevirici (Metreye)</span>
@@ -683,6 +695,20 @@ kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);b
   </div>
 </div>
 
+<div class="modal-bg" id="modal-success">
+  <div class="modal" style="width: 340px; text-align: center;">
+    <div class="modal-title" style="color:var(--green)">🎉 Başarıyla Kaydedildi!</div>
+    <p style="color:var(--text2); font-size:13px; margin-bottom:16px;">Modeliniz buluta yüklendi ve AR görüntülemeye hazır.</p>
+    <div style="background:#fff; padding:16px; border-radius:12px; display:inline-block; margin-bottom:16px;">
+      <img id="qr-img" src="" style="width:160px; height:160px; display:block;">
+    </div>
+    <div class="field">
+      <input type="text" id="share-link" class="preview-input" readonly style="text-align:center; font-family:var(--mono); color:var(--accent);">
+    </div>
+    <button class="btn accent" style="width:100%; margin-top:16px;" id="btn-close-success">Panoya Dön</button>
+  </div>
+</div>
+
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader }        from 'three/addons/loaders/GLTFLoader.js';
@@ -724,9 +750,13 @@ const _el = id => document.getElementById(id);
 // ── MODAL BUTONLARI EVENT BAĞLANTISI (SCOPE FIX) ──
 _el('btn-close-keys').addEventListener('click', () => _el('modal-keys').classList.remove('show'));
 _el('btn-cancel-save').addEventListener('click', () => _el('modal-preview').classList.remove('show'));
+_el('btn-close-success').addEventListener('click', () => {
+  _el('modal-success').classList.remove('show');
+  window.location.href = '/dashboard.html';
+});
 
 // ── GLOBAL STATE ──
-let scene, camera, renderer, orbit, gizmo, dirLight, ambLight, shadowPlane, gridHelper;
+let scene, camera, renderer, orbit, gizmo, dirLight, ambLight, shadowPlane, gridHelper, pmremGen, roomEnvTex;
 let currentModel = null, selectedMesh = null;
 let origEmissive = new THREE.Color();
 let initT = { pos: new THREE.Vector3(), rot: new THREE.Euler(), sc: new THREE.Vector3(1,1,1) };
@@ -779,7 +809,7 @@ function createExportScene(model, centerPivot) {
     const ctr = box.getCenter(new THREE.Vector3());
     const sz  = box.getSize(new THREE.Vector3());
     clone.position.sub(ctr);
-    clone.position.y += sz.y / 2;
+    clone.position.y += sz.y / 2; // Bu kısım USDZ yer altına girme sorununu çözer
   }
   s.add(clone);
   s.updateMatrixWorld(true);
@@ -808,9 +838,9 @@ function init() {
   renderer.sortObjects = true;
   container.appendChild(renderer.domElement);
 
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  pmrem.dispose();
+  pmremGen = new THREE.PMREMGenerator(renderer);
+  roomEnvTex = pmremGen.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environment = roomEnvTex;
 
   ambLight = new THREE.AmbientLight(0xffffff, 0.4);
   scene.add(ambLight);
@@ -907,15 +937,18 @@ function recalculateGround(model) {
   gridHelper.position.y  = by;
 }
 
-// ── UNDO (GERİ AL) MANTIĞI ──
+// ── UNDO (GERİ AL) MANTIĞI GELİŞTİRİLDİ ──
 function saveHistoryState() {
   if (!currentModel) return;
   transformHistory.push({
     pos: currentModel.position.clone(),
     rot: currentModel.rotation.clone(),
-    sc: currentModel.scale.clone()
+    sc: currentModel.scale.clone(),
+    exp: renderer.toneMappingExposure,
+    amb: ambLight.intensity,
+    dir: dirLight.intensity
   });
-  if (transformHistory.length > 30) transformHistory.shift(); // En fazla 30 geri alma adımı
+  if (transformHistory.length > 30) transformHistory.shift();
 }
 
 function undoTransform() {
@@ -927,17 +960,60 @@ function undoTransform() {
   currentModel.position.copy(state.pos);
   currentModel.rotation.copy(state.rot);
   currentModel.scale.copy(state.sc);
+  
+  if(state.exp !== undefined) {
+    renderer.toneMappingExposure = state.exp; _el('in-exp').value = state.exp; if(_el('vb-exp')) _el('vb-exp').textContent = state.exp.toFixed(2);
+    ambLight.intensity = state.amb; _el('in-amb').value = state.amb; if(_el('vb-amb')) _el('vb-amb').textContent = state.amb.toFixed(2);
+    dirLight.intensity = state.dir; _el('in-dir').value = state.dir; if(_el('vb-dir')) _el('vb-dir').textContent = state.dir.toFixed(2);
+  }
+  
   syncTUI();
   toast('Geri alındı ↩️', 'ok');
+}
+
+// ── ZEMİNE YAPIŞTIR (SNAP TO GROUND) ──
+if(_el('btn-snap-ground')) {
+  _el('btn-snap-ground').addEventListener('click', () => {
+    if(!currentModel) return;
+    saveHistoryState();
+    currentModel.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(currentModel);
+    const minY = box.min.y;
+    currentModel.position.y -= minY;
+    currentModel.updateMatrixWorld(true);
+    syncTUI();
+    recalculateGround(currentModel);
+    toast('Model zemine yapıştırıldı ⬇️', 'ok');
+  });
+}
+
+// ── HDRI ÇEVRE (ENVIRONMENT) KONTROLÜ ──
+if(_el('in-env')) {
+  _el('in-env').addEventListener('change', e => {
+    const val = e.target.value;
+    if(val === 'studio') {
+      scene.environment = roomEnvTex;
+    } else if (val === 'neutral') {
+      scene.environment = null;
+      ambLight.intensity = 0.8;
+      _el('in-amb').value = 0.8;
+      if(_el('vb-amb')) _el('vb-amb').textContent = "0.80";
+    } else if (val === 'dark') {
+      scene.environment = null;
+      ambLight.intensity = 0.1;
+      _el('in-amb').value = 0.1;
+      if(_el('vb-amb')) _el('vb-amb').textContent = "0.10";
+    }
+  });
 }
 
 // ── DÜZENLEME MODU (BULUTTAN ÇEKME) ──
 async function checkEditMode() {
   const urlParams = new URLSearchParams(window.location.search);
-  let editModelName = urlParams.get('edit'); // let yapıldı
+  let editModelName = urlParams.get('edit'); 
   
   if (editModelName) {
-    editModelName = decodeURIComponent(editModelName); // shadowing düzeltildi
+    editModelName = decodeURIComponent(editModelName); 
     
     _el('loading-ov').classList.add('show');
     _el('load-text').textContent = 'Buluttan model ve ayarlar indiriliyor...';
@@ -1021,6 +1097,10 @@ function loadFromURL(url, modelName, dbData) {
       if (dbData.rotate_y) {
         currentModel.rotation.y = dbData.rotate_y * (Math.PI / 180);
         _el('rx-y').value = dbData.rotate_y;
+      }
+      if (dbData.environment) {
+        _el('in-env').value = dbData.environment;
+        _el('in-env').dispatchEvent(new Event('change'));
       }
     }
 
@@ -1150,7 +1230,7 @@ function selectMesh(mesh) {
   }
 
   if (mat) {
-    const col = mat.color    ? '#'+mat.color.getHexString()    : '#ffffff';
+    const col = mat.color    ? '#'+mat.color.getHexString()   : '#ffffff';
     const em  = mat.emissive ? '#'+mat.emissive.getHexString() : '#000000';
     setC('mc', col); setC('me', em);
     setSL('in-op','vb-op', mat.opacity??1,              v=>v.toFixed(2));
@@ -1197,6 +1277,7 @@ function deselectMesh() {
 
 function toggleMeshVisibility(mesh) {
   if (!mesh) return;
+  saveHistoryState();
   mesh.visible = !mesh.visible;
   toast(mesh.visible ? `${mesh.name||'Mesh'} gösterildi` : `${mesh.name||'Mesh'} gizlendi`);
 }
@@ -1260,20 +1341,22 @@ function colorSetup(id, cb) {
   if(!sw||!inp) return;
   sw.addEventListener('click', ()=>inp.click());
   inp.addEventListener('input', e=>{
+    saveHistoryState();
     const v=e.target.value; if(sw) sw.style.background=v; if(hx) hx.value=v; cb(v);
   });
   if(hx) hx.addEventListener('change', e=>{
+    saveHistoryState();
     const v=e.target.value;
     if(/^#[0-9a-f]{6}$/i.test(v)){ inp.value=v; if(sw) sw.style.background=v; cb(v); }
   });
 }
 
 const ALPHA_MODES = {
-  opaque:   { transparent:false, blending:THREE.NormalBlending,       depthWrite:true,  alphaTest:0    },
-  blend:    { transparent:true,  blending:THREE.NormalBlending,       depthWrite:false, alphaTest:0    },
-  mask:     { transparent:true,  blending:THREE.NormalBlending,       depthWrite:true,  alphaTest:0.5  },
-  additive: { transparent:true,  blending:THREE.AdditiveBlending,     depthWrite:false, alphaTest:0    },
-  multiply: { transparent:true,  blending:THREE.MultiplyBlending,     depthWrite:false, alphaTest:0    },
+  opaque:   { transparent:false, blending:THREE.NormalBlending,        depthWrite:true,  alphaTest:0    },
+  blend:    { transparent:true,  blending:THREE.NormalBlending,        depthWrite:false, alphaTest:0    },
+  mask:     { transparent:true,  blending:THREE.NormalBlending,        depthWrite:true,  alphaTest:0.5  },
+  additive: { transparent:true,  blending:THREE.AdditiveBlending,      depthWrite:false, alphaTest:0    },
+  multiply: { transparent:true,  blending:THREE.MultiplyBlending,      depthWrite:false, alphaTest:0    },
   subtract: { transparent:true,  blending:THREE.SubtractiveBlending,  depthWrite:false, alphaTest:0    },
 };
 
@@ -1312,6 +1395,7 @@ function updateAlphaPillUI(mat) {
 document.querySelectorAll('.alpha-pill').forEach(pill => {
   pill.addEventListener('click', () => {
     if (!selectedMesh) return toast('Önce bir mesh seçin','err');
+    saveHistoryState();
     document.querySelectorAll('.alpha-pill').forEach(p=>p.classList.remove('active'));
     pill.classList.add('active');
     applyAlphaMode(pill.dataset.mode, selectedMesh, true);
@@ -1376,6 +1460,7 @@ function initTextureUI() {
 }
 
 function loadTextureToMesh(file, slot, mesh) {
+  saveHistoryState();
   const cfg = TEX_SLOTS[slot];
   const url = URL.createObjectURL(file);
   const loader = new THREE.TextureLoader();
@@ -1413,6 +1498,7 @@ function loadTextureToMesh(file, slot, mesh) {
 }
 
 function clearTextureSlot(slot, mesh) {
+  saveHistoryState();
   const cfg = TEX_SLOTS[slot];
   const stored = meshTextures.get(mesh.uuid);
   if (stored?.[slot]) { stored[slot].dispose(); delete stored[slot]; }
@@ -1479,14 +1565,17 @@ function applyUVTileToMesh(mesh, tx, ty) {
 }
 
 if(_el('in-exp')) _el('in-exp').addEventListener('input', e => {
+  saveHistoryState();
   renderer.toneMappingExposure=+e.target.value;
   if(_el('vb-exp')) _el('vb-exp').textContent=(+e.target.value).toFixed(2);
 });
 if(_el('in-amb')) _el('in-amb').addEventListener('input', e => {
+  saveHistoryState();
   ambLight.intensity=+e.target.value;
   if(_el('vb-amb')) _el('vb-amb').textContent=(+e.target.value).toFixed(2);
 });
 if(_el('in-dir')) _el('in-dir').addEventListener('input', e => {
+  saveHistoryState();
   dirLight.intensity=+e.target.value;
   if(_el('vb-dir')) _el('vb-dir').textContent=(+e.target.value).toFixed(2);
 });
@@ -1578,6 +1667,7 @@ colorSetup('mc', hex=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.c
 colorSetup('me', hex=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.emissive){ m.emissive.set(hex); origEmissive.set(hex); } }); });
 
 if(_el('in-op')) _el('in-op').addEventListener('input', e=>{
+  saveHistoryState();
   const v=+e.target.value; if(_el('vb-op')) _el('vb-op').textContent=v.toFixed(2);
   if(selectedMesh) updateMatArray(selectedMesh, m=>{
     m.opacity=v;
@@ -1589,12 +1679,12 @@ if(_el('in-op')) _el('in-op').addEventListener('input', e=>{
     }
   });
 });
-if(_el('in-ro')) _el('in-ro').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ro')) _el('vb-ro').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.roughness!==undefined) m.roughness=v; }); });
-if(_el('in-me2')) _el('in-me2').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-me2')) _el('vb-me2').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.metalness!==undefined) m.metalness=v; }); });
-if(_el('in-ei')) _el('in-ei').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ei')) _el('vb-ei').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.emissiveIntensity!==undefined) m.emissiveIntensity=v; }); });
-if(_el('in-ns')) _el('in-ns').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ns')) _el('vb-ns').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.normalScale) m.normalScale.set(v,v); }); });
-if(_el('in-ao')) _el('in-ao').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ao')) _el('vb-ao').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.aoMapIntensity!==undefined) m.aoMapIntensity=v; }); });
-if(_el('in-ro2')) _el('in-ro2').addEventListener('input',e=>{ const v=+e.target.value; if(_el('vb-ro2')) _el('vb-ro2').textContent=v.toFixed(0); if(selectedMesh){ selectedMesh.renderOrder=v; } });
+if(_el('in-ro')) _el('in-ro').addEventListener('input',e=>{ saveHistoryState(); const v=+e.target.value; if(_el('vb-ro')) _el('vb-ro').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.roughness!==undefined) m.roughness=v; }); });
+if(_el('in-me2')) _el('in-me2').addEventListener('input',e=>{ saveHistoryState(); const v=+e.target.value; if(_el('vb-me2')) _el('vb-me2').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.metalness!==undefined) m.metalness=v; }); });
+if(_el('in-ei')) _el('in-ei').addEventListener('input',e=>{ saveHistoryState(); const v=+e.target.value; if(_el('vb-ei')) _el('vb-ei').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.emissiveIntensity!==undefined) m.emissiveIntensity=v; }); });
+if(_el('in-ns')) _el('in-ns').addEventListener('input',e=>{ saveHistoryState(); const v=+e.target.value; if(_el('vb-ns')) _el('vb-ns').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.normalScale) m.normalScale.set(v,v); }); });
+if(_el('in-ao')) _el('in-ao').addEventListener('input',e=>{ saveHistoryState(); const v=+e.target.value; if(_el('vb-ao')) _el('vb-ao').textContent=v.toFixed(2); if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.aoMapIntensity!==undefined) m.aoMapIntensity=v; }); });
+if(_el('in-ro2')) _el('in-ro2').addEventListener('input',e=>{ saveHistoryState(); const v=+e.target.value; if(_el('vb-ro2')) _el('vb-ro2').textContent=v.toFixed(0); if(selectedMesh){ selectedMesh.renderOrder=v; } });
 
 bindTgl('tgl-wf',   v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>m.wireframe=v); });
 bindTgl('tgl-ds',   v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>m.side=v?THREE.DoubleSide:THREE.FrontSide); });
@@ -1604,18 +1694,21 @@ bindTgl('tgl-vcol', v=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ m.ver
 
 if(_el('btn-ap-col')) _el('btn-ap-col').addEventListener('click',()=>{
   const mat=getPrimaryMat(selectedMesh); if(!currentModel||!mat?.color) return;
+  saveHistoryState();
   const c=mat.color.clone();
   currentModel.traverse(m=>{ if(m.isMesh) updateMatArray(m,mtr=>{ if(mtr.color) mtr.color.copy(c); }); });
   toast('Renk tüm meshlere uygulandı');
 });
 if(_el('btn-ap-pbr')) _el('btn-ap-pbr').addEventListener('click',()=>{
   const mat=getPrimaryMat(selectedMesh); if(!currentModel||!mat) return;
+  saveHistoryState();
   const ro=mat.roughness, me=mat.metalness;
   currentModel.traverse(m=>{ if(m.isMesh) updateMatArray(m,mtr=>{ if(mtr.roughness!==undefined) mtr.roughness=ro; if(mtr.metalness!==undefined) mtr.metalness=me; }); });
   toast('PBR tüm meshlere uygulandı');
 });
 if(_el('btn-ap-alpha')) _el('btn-ap-alpha').addEventListener('click',()=>{
   if(!currentModel||!selectedMesh) return;
+  saveHistoryState();
   const mat=getPrimaryMat(selectedMesh); if(!mat) return;
   const mode = document.querySelector('.alpha-pill.active')?.dataset.mode||'opaque';
   currentModel.traverse(m=>{ if(m.isMesh) applyAlphaMode(mode, m, false); });
@@ -1763,6 +1856,7 @@ function savePreset() {
     exp:_el('in-exp')?.value, amb:_el('in-amb')?.value,
     dir:_el('in-dir')?.value, shad:_el('in-shad')?.value,
     bg:_el('bg-hex')?.value,  fog:_el('in-fog')?.value, fov:_el('in-fov')?.value,
+    env:_el('in-env')?.value
   };
   localStorage.setItem('par_preset',JSON.stringify(p));
 }
@@ -1775,6 +1869,7 @@ function loadPreset() {
     if(p.shad&&_el('in-shad')){ _el('in-shad').value=p.shad; shadowPlane.material.opacity=+p.shad; if(_el('vb-shad')) _el('vb-shad').textContent=(+p.shad).toFixed(2); }
     if(p.bg&&_el('in-bg')){ scene.background=new THREE.Color(p.bg); if(_el('bg-sw')) _el('bg-sw').style.background=p.bg; _el('in-bg').value=p.bg; if(_el('bg-hex')) _el('bg-hex').value=p.bg; }
     if(p.fov&&_el('in-fov')){ camera.fov=+p.fov; camera.updateProjectionMatrix(); if(_el('vb-fov')) _el('vb-fov').textContent=p.fov+'°'; _el('in-fov').value=p.fov; }
+    if(p.env&&_el('in-env')){ _el('in-env').value=p.env; _el('in-env').dispatchEvent(new Event('change')); }
   } catch(e){}
 }
 
@@ -1799,7 +1894,7 @@ async function showPreviewModal() {
   if(b) b.addEventListener('click', showPreviewModal);
 });
 
-// YENİ GÜNCELLENEN KAYDETME (CONFIRM) KODU
+// YENİ GÜNCELLENEN KAYDETME (CONFIRM) VE QR OLUŞTURMA KODU
 _el('btn-confirm-save').addEventListener('click', async () => {
   let modelName = _el('preview-name').value.trim();
   if (!modelName) return toast('Lütfen bir model ismi girin!', 'err');
@@ -1865,21 +1960,25 @@ _el('btn-confirm-save').addEventListener('click', async () => {
       bg_color:         _el('bg-hex')?.value || '#111113',
       scale:            parseFloat(_el('in-sc')?.value || 100) / 100,
       rotate_y:         parseFloat(_el('rx-y')?.value || 0),
-      environment:      'neutral',
+      environment:      _el('in-env')?.value || 'neutral',
       materials:        []
     }], { onConflict: 'name' });
 
     if (dbError) throw new Error('DB hatası: ' + dbError.message);
 
+    _el('loading-ov').classList.remove('show');
     toast(`"${modelName}" yüklendi! ✓`, 'ok');
-    setTimeout(() => { window.location.href = '/dashboard.html'; }, 1500);
+    
+    // QR KOD ve LİNK GÖSTERİMİ
+    const shareUrl = `https://pepperar.vercel.app/view.html?id=${modelName}`;
+    _el('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareUrl)}`;
+    _el('share-link').value = shareUrl;
+    _el('modal-success').classList.add('show');
 
   } catch (err) {
     console.error('Yükleme hatası:', err);
     toast('Hata: ' + err.message, 'err');
-  } finally {
     _el('loading-ov').classList.remove('show');
-    _el('load-text').textContent = 'Model yükleniyor...';
   }
 });
 
