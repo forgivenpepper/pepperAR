@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;">
 <title>pepperAR Studio — Pro 3D Editor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1895,6 +1896,17 @@ async function showPreviewModal() {
 });
 
 // YENİ GÜNCELLENEN KAYDETME (CONFIRM) VE QR OLUŞTURMA KODU
+// 🔥 YENİ: Güvenlik duvarına takılmadan resmi dönüştüren yardımcı fonksiyon
+function dataURItoBlob(dataURI) {
+  const byteString = atob(dataURI.split(',')[1]);
+  const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+  return new Blob([ab], {type: mimeString});
+}
+
+// ── BULUTA KAYDET (ONAYLA) ──
 _el('btn-confirm-save').addEventListener('click', async () => {
   let modelName = _el('preview-name').value.trim();
   if (!modelName) return toast('Lütfen bir model ismi girin!', 'err');
@@ -1913,8 +1925,20 @@ _el('btn-confirm-save').addEventListener('click', async () => {
   try {
     savePreset();
 
-    const exporter = new GLTFExporter();
+    // Export için sahneyi kopyala
     const exportScene = createExportScene(currentModel, true);
+
+    // 🔥 FIX: USDZ Motorunun çökmesini engellemek için tüm materyalleri Tek Yönlü (FrontSide) yapıyoruz
+    exportScene.traverse(child => {
+      if (child.isMesh && child.material) {
+        const mats = Array.isArray(child.material) ? child.material : [child.material];
+        mats.forEach(m => {
+          if (m.side === THREE.DoubleSide) m.side = THREE.FrontSide;
+        });
+      }
+    });
+
+    const exporter = new GLTFExporter();
     const glbBuffer = await new Promise((resolve, reject) => {
       exporter.parse(exportScene, resolve, reject, { binary: true });
     });
@@ -1923,35 +1947,39 @@ _el('btn-confirm-save').addEventListener('click', async () => {
     if (USDZExporter) {
       _el('load-text').textContent = 'USDZ hazırlanıyor...';
       try {
-        const exportScene2 = createExportScene(currentModel, true);
-        exportScene2.updateMatrixWorld(true);
+        exportScene.updateMatrixWorld(true);
         const usdzExp = new USDZExporter();
-        usdzBuffer = await usdzExp.parse(exportScene2, {});
+        usdzBuffer = await usdzExp.parse(exportScene, {});
       } catch(e) { console.warn('USDZ hatası:', e); }
     }
 
+    // 🔥 FIX: fetch() yerine doğrudan çeviri (Güvenlik duvarını aşar)
     const thumbDataUrl = _el('preview-img').src;
-    const thumbBlob = await (await fetch(thumbDataUrl)).blob();
+    const thumbBlob = dataURItoBlob(thumbDataUrl);
 
     _el('load-text').textContent = 'Dosyalar yükleniyor...';
 
+    // GLB Yükle
     const { error: glbErr } = await _supabase.storage.from('models')
       .upload(`${modelName}-3d.glb`, new Blob([glbBuffer], {type:'model/gltf-binary'}), 
         { upsert: true, contentType: 'model/gltf-binary' });
-    if (glbErr) throw new Error('GLB hatası: ' + glbErr.message);
+    if (glbErr) throw new Error('GLB yükleme hatası: ' + glbErr.message);
 
+    // USDZ Yükle
     if (usdzBuffer) {
       await _supabase.storage.from('models')
         .upload(`${modelName}-3d.usdz`, new Blob([usdzBuffer], {type:'model/vnd.usdz+zip'}), 
           { upsert: true, contentType: 'model/vnd.usdz+zip' });
     }
 
+    // Thumbnail Yükle
     await _supabase.storage.from('models')
       .upload(`${modelName}-thumb.webp`, thumbBlob, 
         { upsert: true, contentType: 'image/webp' });
 
     _el('load-text').textContent = 'Veritabanına kaydediliyor...';
 
+    // Veritabanına Yaz
     const { error: dbError } = await _supabase.from('models').upsert([{
       user_id:          currentUser.id,
       name:             modelName,
@@ -1964,10 +1992,23 @@ _el('btn-confirm-save').addEventListener('click', async () => {
       materials:        []
     }], { onConflict: 'name' });
 
-    if (dbError) throw new Error('DB hatası: ' + dbError.message);
+    if (dbError) throw new Error('DB yazma hatası: ' + dbError.message);
 
     _el('loading-ov').classList.remove('show');
-    toast(`"${modelName}" yüklendi! ✓`, 'ok');
+    toast(`"${modelName}" başarıyla yüklendi! ✓`, 'ok');
+    
+    // QR KOD ve LİNK GÖSTERİMİ
+    const shareUrl = `https://pepperar.vercel.app/view.html?id=${modelName}`;
+    _el('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareUrl)}`;
+    _el('share-link').value = shareUrl;
+    _el('modal-success').classList.add('show');
+
+  } catch (err) {
+    console.error('Yükleme hatası:', err);
+    toast('Hata: ' + err.message, 'err');
+    _el('loading-ov').classList.remove('show');
+  }
+});
     
     // QR KOD ve LİNK GÖSTERİMİ
     const shareUrl = `https://pepperar.vercel.app/view.html?id=${modelName}`;
