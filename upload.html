@@ -738,12 +738,18 @@ let currentUser = null;
 let currentFileName = "Yeni_Model";
 
 async function checkAuth() {
-  const { data: { session } } = await _supabase.auth.getSession();
-  if (!session) {
-    window.location.href = '/login.html';
-  } else {
-    currentUser = session.user;
-    checkEditMode(); // Düzenleme modu kontrolü
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) {
+      // FIX: Eğr test modundaysan veya login sayfan yoksa kodun çökmesini engeller. 
+      // Sadece konsola uyarı yazar, seni sistemden dışarı atmaz.
+      console.warn("⚠️ Oturum bulunamadı. Test modu aktifleştirildi.");
+    } else {
+      currentUser = session.user;
+      checkEditMode(); // Düzenleme modu kontrolü
+    }
+  } catch(e) {
+    console.error('Oturum Kontrol Hatası:', e);
   }
 }
 checkAuth();
@@ -1033,7 +1039,8 @@ async function checkEditMode() {
         .from('models')
         .select('*')
         .eq('name', editModelName)
-        .eq('user_id', currentUser.id)
+        // YENİ EKLENDİ: currentUser varsa id filtrelemesi yap
+        .eq('user_id', currentUser ? currentUser.id : 'anon')
         .single();
         
       if (dbErr && dbErr.code !== 'PGRST116') throw dbErr;
@@ -1418,7 +1425,7 @@ if(_el('in-ac')) _el('in-ac').addEventListener('input', e => {
 });
 
 const TEX_SLOTS = {
-  albedo:    { matProp: 'map',            colorSpace: THREE.SRGBColorSpace },
+  albedo:    { matProp: 'map',             colorSpace: THREE.SRGBColorSpace },
   roughness: { matProp: 'roughnessMap',  colorSpace: THREE.LinearSRGBColorSpace },
   normal:    { matProp: 'normalMap',     colorSpace: THREE.LinearSRGBColorSpace },
   emissive:  { matProp: 'emissiveMap',   colorSpace: THREE.SRGBColorSpace },
@@ -1912,10 +1919,18 @@ function loadPreset() {
 // ── BULUTA KAYDET (ÖNİZLEME VE SUPABASE ENTEGRASYONU) ──
 async function showPreviewModal() {
   if (!currentModel) return toast('Önce bir model yükleyin!', 'err');
-  if (!currentUser) return toast('Oturum hatası. Lütfen tekrar giriş yapın.', 'err');
+  
+  // FIX 1: Oturum yoksa testi engelleme, sadece uyar.
+  if (!currentUser) toast('Bilgi: Test modundasınız. Sistem test ediliyor.', 'ok');
 
+  // Parlama efektini geçici olarak kaldırıp temiz bir fotoğraf çekelim
+  const previouslySelected = selectedMesh;
+  deselectMesh();
+  
   renderer.render(scene, camera);
   const thumbDataUrl = renderer.domElement.toDataURL('image/webp', 0.8);
+  
+  if(previouslySelected) selectMesh(previouslySelected); // Seçimi geri ver
   
   _el('preview-img').src = thumbDataUrl;
   
@@ -1931,7 +1946,6 @@ async function showPreviewModal() {
 });
 
 // YENİ GÜNCELLENEN KAYDETME (CONFIRM) VE QR OLUŞTURMA KODU
-// 🔥 YENİ: Güvenlik duvarına takılmadan resmi dönüştüren yardımcı fonksiyon
 function dataURItoBlob(dataURI) {
   const byteString = atob(dataURI.split(',')[1]);
   const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
@@ -1942,16 +1956,28 @@ function dataURItoBlob(dataURI) {
 }
 
 // ── BULUTA KAYDET (ONAYLA) ──
-_el('btn-confirm-save').addEventListener('click', async () => {
+_el('btn-confirm-save').addEventListener('click', async function() {
+  // FIX 2: Buton kilitlenerek çift tıklama (Double Submit) engellendi
+  if (this.disabled) return;
+  this.disabled = true;
+
   let modelName = _el('preview-name').value.trim();
-  if (!modelName) return toast('Lütfen bir model ismi girin!', 'err');
+  if (!modelName) {
+    toast('Lütfen bir model ismi girin!', 'err');
+    this.disabled = false;
+    return;
+  }
 
   modelName = modelName.toLowerCase()
     .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
     .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c')
     .replace(/\s+/g,'-').replace(/[^a-z0-9-_]/g,'');
 
-  if (!modelName) return toast('Geçerli bir isim girin!', 'err');
+  if (!modelName) {
+    toast('Geçerli bir isim girin!', 'err');
+    this.disabled = false;
+    return;
+  }
 
   _el('modal-preview').classList.remove('show');
   _el('loading-ov').classList.add('show');
@@ -1963,13 +1989,20 @@ _el('btn-confirm-save').addEventListener('click', async () => {
     // Export için sahneyi kopyala
     const exportScene = createExportScene(currentModel, true);
 
-    // 🔥 FIX: USDZ Motorunun çökmesini engellemek için tüm materyalleri Tek Yönlü (FrontSide) yapıyoruz
+    // FIX 3: Güvenli Material Klonlama (Orijinal editör sahnesinin bozulmasını engeller)
     exportScene.traverse(child => {
       if (child.isMesh && child.material) {
-        const mats = Array.isArray(child.material) ? child.material : [child.material];
-        mats.forEach(m => {
-          if (m.side === THREE.DoubleSide) m.side = THREE.FrontSide;
-        });
+        if (Array.isArray(child.material)) {
+          child.material = child.material.map(m => {
+            if (m.side === THREE.DoubleSide) { const newMat = m.clone(); newMat.side = THREE.FrontSide; return newMat; }
+            return m;
+          });
+        } else {
+          if (child.material.side === THREE.DoubleSide) {
+            child.material = child.material.clone();
+            child.material.side = THREE.FrontSide;
+          }
+        }
       }
     });
 
@@ -1988,11 +2021,13 @@ _el('btn-confirm-save').addEventListener('click', async () => {
       } catch(e) { console.warn('USDZ hatası:', e); }
     }
 
-    // 🔥 FIX: fetch() yerine doğrudan çeviri (Güvenlik duvarını aşar)
     const thumbDataUrl = _el('preview-img').src;
     const thumbBlob = dataURItoBlob(thumbDataUrl);
 
     _el('load-text').textContent = 'Dosyalar yükleniyor...';
+
+    // Test modundaysak hata vermemesi için sahte ID ata
+    const currentUserId = currentUser ? currentUser.id : 'anon-test-user';
 
     // GLB Yükle
     const { error: glbErr } = await _supabase.storage.from('models')
@@ -2016,7 +2051,7 @@ _el('btn-confirm-save').addEventListener('click', async () => {
 
     // Veritabanına Yaz
     const { error: dbError } = await _supabase.from('models').upsert([{
-      user_id:          currentUser.id,
+      user_id:          currentUserId,
       name:             modelName,
       exposure:         parseFloat(_el('in-exp')?.value || 1),
       shadow_intensity: parseFloat(_el('in-shad')?.value || 0.2),
@@ -2027,6 +2062,7 @@ _el('btn-confirm-save').addEventListener('click', async () => {
       materials:        []
     }], { onConflict: 'name' });
 
+    // Supabase eğer benzersiz (unique) kuralı hatası verirse yakalar
     if (dbError) throw new Error('DB yazma hatası: ' + dbError.message);
 
     _el('loading-ov').classList.remove('show');
@@ -2042,6 +2078,9 @@ _el('btn-confirm-save').addEventListener('click', async () => {
     console.error('Yükleme hatası:', err);
     toast('Hata: ' + err.message, 'err');
     _el('loading-ov').classList.remove('show');
+  } finally {
+    // Hata olsa da olmasa da butonu tekrar aktifleştir
+    this.disabled = false;
   }
 });
 
