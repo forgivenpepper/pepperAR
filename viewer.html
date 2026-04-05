@@ -35,13 +35,15 @@
       width: 100vw; height: 100vh;
       position: relative;
       background: var(--bg-viewer);
+      transition: background 0.4s ease;
     }
 
     model-viewer {
       width: 100%; height: 100%;
       opacity: 0;
       transition: opacity 0.6s ease;
-      --poster-color: #f7f5f2;
+      --poster-color: transparent;
+      outline: none;
     }
     model-viewer.hazir { opacity: 1; }
 
@@ -52,7 +54,7 @@
       position: absolute; inset: 0; z-index: 5;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      background: var(--bg-viewer);
+      background: inherit;
       transition: opacity 0.5s;
     }
     #loadOverlay.gizle { opacity: 0; pointer-events: none; }
@@ -347,7 +349,7 @@
 </head>
 <body>
 
-<div class="cerceve">
+<div class="cerceve" id="anaCerceve">
   <model-viewer id="mv"
     ar
     ar-modes="webxr scene-viewer quick-look"
@@ -357,8 +359,7 @@
     environment-image="neutral"
     exposure="0.95"
     loading="eager"
-    interaction-prompt="none"
-    style="outline:none; background:#f7f5f2; width:100%; height:100%;">
+    interaction-prompt="none">
 
     <div id="loadOverlay">
       <div class="load-ring"></div>
@@ -578,6 +579,8 @@
   /* ─── URL PARAMETRELERİ ─── */
   var p = new URLSearchParams(window.location.search);
   var m = p.get('model');
+  // Yeni editör altyapısında parametre "id" olarak da gelebilir
+  if (!m) m = p.get('id');
 
   /* ─── DİL TESPİT ─── */
   function detectLang() {
@@ -607,7 +610,7 @@
       "<div style='padding:40px;text-align:center;font-family:Poppins,sans-serif;" +
       "color:#1a2e32;background:#f7f5f2;height:100vh;display:flex;align-items:center;justify-content:center;'>" +
       "<div><h2 style='color:#19b0c7;margin-bottom:8px'>" + T.modelMissing + "</h2>" +
-      "<p style='opacity:0.5;font-size:13px'>" + T.modelMissingDesc + "</p></div></div>";
+      "<p style='opacity:0.5;font-size:13px'>" + T.modelMissingDesc + " veya ?id= eksik</p></div></div>";
     return;
   }
 
@@ -672,7 +675,7 @@
 
   function applyMaterialsToMV(materials) {
     var model = mv.model;
-    if (!model || !model.materials) return;
+    if (!model || !model.materials || materials.length === 0) return;
     materials.forEach(function(edit, arrIdx) {
       var i = (edit.index !== undefined) ? edit.index : arrIdx;
       var mat = model.materials[i];
@@ -745,17 +748,24 @@
         var rows = JSON.parse(xhr.responseText);
         if (!rows || rows.length === 0) return;
         var s = rows[0];
+        
+        // SADECE IŞIK VE ÇEVRE (Sahne) AYARLARI
+        // Editör scale ve rotasyonu zaten GLB dosyasının içine BAKE ettiği için (yazdığı için)
+        // burada mv.setAttribute('scale', ...) KULLANILMIYOR. Çift büyüme hatası bu şekilde çözüldü.
         if (s.exposure)         mv.setAttribute('exposure', s.exposure);
         if (s.shadow_intensity) mv.setAttribute('shadow-intensity', s.shadow_intensity);
-        if (s.environment)      mv.setAttribute('environment-image', s.environment);
-        if (s.bg_color)         mv.style.background = s.bg_color;
-        if (s.scale) {
-          applyMVScale(s.scale);
-          syncSliders(Math.round(s.scale * 100));
+        if (s.bg_color) {
+            document.getElementById('anaCerceve').style.background = s.bg_color;
         }
-        if (s.rotate_y) {
-          mv.setAttribute('orientation', '0deg ' + s.rotate_y + 'deg 0deg');
+        if (s.environment) {
+            if(s.environment === 'dark') {
+                mv.setAttribute('environment-image', ''); // Karanlık mod
+            } else {
+                mv.setAttribute('environment-image', 'neutral'); // Stüdyo/Doğal mod
+            }
         }
+        
+        // Geriye dönük uyumluluk (eski modeller için) materials varsa uygula
         if (s.materials && s.materials.length > 0) {
           savedMaterials = s.materials;
           if (mv.loaded) {
@@ -866,7 +876,7 @@
   slOn.addEventListener('input', function() {
     var v = +this.value;
     vlOn.textContent = v + '%';
-    applyMVScale(baseScale * (v / 100));
+    applyMVScale(v / 100);
     syncSliders(v);
   });
 
@@ -920,14 +930,9 @@
   });
 
   /* ══════════════════════════════════════════
-     iOS AR — DÜZELTİLMİŞ
-     Problem: ios-src değiştirip activateAR() çağırmak
-     Quick Look'ta önbellekten açılıyor, yeni URL'i görmüyor.
-     Çözüm: Her seferinde <a rel="ar"> elementi oluşturup
-     programatik tıklıyoruz — Quick Look bunu taze URL olarak işler.
+     iOS AR
   ══════════════════════════════════════════ */
   function iosARLinkTikla(usdzUrl) {
-    /* Varsa önceki linki temizle */
     var eskiLink = document.getElementById('_iosARLink');
     if (eskiLink) eskiLink.remove();
 
@@ -936,7 +941,6 @@
     a.rel   = 'ar';
     a.href  = usdzUrl;
 
-    /* iOS Quick Look, içinde <img> olan <a rel="ar"> elementini tanır */
     var img = document.createElement('img');
     img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     a.appendChild(img);
@@ -950,7 +954,6 @@
     iosARLinkTikla(USDZ_PATH + '#apple_ar_scale=auto&allowsContentScaling=1');
     iosPanel.classList.add('ac');
 
-    /* ar-status: Quick Look kapandığında paneli gizle */
     mv.addEventListener('ar-status', function iosH(e) {
       if (e.detail.status === 'not-presenting') {
         iosPanel.classList.remove('ac');
@@ -971,10 +974,6 @@
       slIos.disabled = true;
       slIos.style.opacity = '0.3';
       set('iosBadge', T.iosBadgeReal);
-      /*
-        apple_ar_scale=fixed   → Quick Look modeli USDZ içindeki gerçek ölçekte gösterir
-        allowsContentScaling=0 → Kullanıcı pinch ile boyut değiştiremez
-      */
       iosARLinkTikla(USDZ_PATH + '#apple_ar_scale=fixed&allowsContentScaling=0');
     } else {
       iosGercekModKapat();
@@ -1133,27 +1132,19 @@
   }
 
   /* ══════════════════════════════════════════
-     Android Gerçek Boyut — DÜZELTİLMİŞ
-     Problem: mScale=1.0 setleniyordu ama cScale güncellenmiyordu,
-     lerp animasyonu baseScale'den 1.0'a doğru gidiyordu — yerleştirme
-     sırasında boyut atlıyordu.
-     Çözüm: tScale, cScale ve mScale hepsini aynı anda setliyoruz.
-     Gerçek boyut = GLB birimlerinde 1 birim = 1 metre demek.
+     Android Gerçek Boyut
   ══════════════════════════════════════════ */
   bGercek.addEventListener('click', function() {
     if (!modelHazir) return;
     gercekMod = !gercekMod;
 
     if (gercekMod) {
-      /* Gerçek boyut: GLB'deki 1 birim → 1 metre.
-         baseScale hesaplamasını bypass et. */
       mScale  = 1.0;
       tScale  = 1.0;
-      cScale  = 1.0; /* lerp'i anında atla, titreme olmasın */
+      cScale  = 1.0; 
       if (modelGrp) modelGrp.scale.setScalar(1.0);
       arGercekAcUI();
     } else {
-      /* Normal boyuta dön */
       mScale  = baseScale;
       tScale  = baseScale;
       cScale  = baseScale;
@@ -1243,7 +1234,6 @@
     slAr.value  = v; vlAr.textContent  = v + '%';
     slOn.value  = v; vlOn.textContent  = v + '%';
     slIos.value = v; vlIos.textContent = v + '%';
-    if (baseScale > 0) applyMVScale(baseScale * v / 100);
   }
 
   /* ─── CLEANUP ─── */
