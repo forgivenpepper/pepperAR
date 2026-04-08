@@ -737,16 +737,94 @@ const _supabase = window.supabase.createClient(
 let currentUser = null;
 let currentFileName = "Yeni_Model";
 
+// ── MULTIPLAYER STATE VE MOTORU ──
+let roomID = new URLSearchParams(window.location.search).get('room');
+let syncChannel = null;
+let isRemoteChange = false;
+
+function initMultiplayer() {
+  if (!roomID) return;
+  if (_el('st-txt')) _el('st-txt').textContent = `Canlı Oturum: ${roomID}`;
+  
+  syncChannel = _supabase.channel(`room_${roomID}`, {
+    config: { broadcast: { self: false } }
+  });
+
+  syncChannel
+    .on('broadcast', { event: 'sync_action' }, ({ payload }) => {
+      applyRemoteAction(payload);
+    })
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') toast('Canlı oturuma bağlanıldı 🚀', 'ok');
+    });
+}
+
+function broadcast(data) {
+  if (syncChannel && !isRemoteChange) {
+    syncChannel.send({
+      type: 'broadcast',
+      event: 'sync_action',
+      payload: data
+    });
+  }
+}
+
+function applyRemoteAction(data) {
+  isRemoteChange = true;
+  switch (data.type) {
+    case 'TRANSFORM':
+      if (currentModel) {
+        currentModel.position.fromArray(data.pos);
+        currentModel.rotation.fromArray(data.rot);
+        currentModel.scale.fromArray(data.scale);
+        syncTUI();
+      }
+      break;
+    case 'MAT_UPDATE':
+      const mesh = scene.getObjectByName(data.meshName);
+      if (mesh) {
+        updateMatArray(mesh, m => {
+          if (data.color && m.color) m.color.set(data.color);
+        });
+      }
+      break;
+    case 'DELETE':
+      const toDel = scene.getObjectByName(data.meshName);
+      if (toDel) {
+        toDel.removeFromParent();
+        if (currentModel) buildOutliner(currentModel);
+      }
+      break;
+  }
+  setTimeout(() => { isRemoteChange = false; }, 50);
+}
+
+// ── HARD BAKE (YERE YAPIŞTIRMA) MOTORU ──
+function bakeModelToGround(model) {
+  model.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(model);
+  const bottomY = box.min.y;
+
+  model.traverse(c => {
+    if (c.isMesh && c.geometry) {
+      c.geometry.translate(0, -bottomY, 0);
+      c.geometry.computeBoundingBox();
+      c.geometry.computeBoundingSphere();
+    }
+  });
+  
+  model.position.set(0, 0, 0);
+  model.updateMatrixWorld(true);
+}
+
 async function checkAuth() {
   try {
     const { data: { session } } = await _supabase.auth.getSession();
     if (!session) {
-      // FIX: Eğr test modundaysan veya login sayfan yoksa kodun çökmesini engeller. 
-      // Sadece konsola uyarı yazar, seni sistemden dışarı atmaz.
       console.warn("⚠️ Oturum bulunamadı. Test modu aktifleştirildi.");
     } else {
       currentUser = session.user;
-      checkEditMode(); // Düzenleme modu kontrolü
+      checkEditMode();
     }
   } catch(e) {
     console.error('Oturum Kontrol Hatası:', e);
@@ -825,7 +903,7 @@ function createExportScene(model, centerPivot) {
     const ctr = box.getCenter(new THREE.Vector3());
     const sz  = box.getSize(new THREE.Vector3());
     clone.position.sub(ctr);
-    clone.position.y += sz.y / 2; // Bu kısım USDZ yer altına girme sorununu çözer
+    clone.position.y += sz.y / 2;
   }
   s.add(clone);
   s.updateMatrixWorld(true);
@@ -904,12 +982,21 @@ function init() {
   gizmo = new TransformControls(camera, renderer.domElement);
   gizmo.setSpace('world');
   
-  // TransformControls sürükleme başlangıcında history'yi kaydet
   gizmo.addEventListener('dragging-changed', e => { 
     orbit.enabled = !e.value; 
     if(e.value) saveHistoryState(); 
   });
-  gizmo.addEventListener('change', syncTUI);
+  gizmo.addEventListener('change', () => {
+    syncTUI();
+    if (currentModel && !isRemoteChange) {
+      broadcast({
+        type: 'TRANSFORM',
+        pos: currentModel.position.toArray(),
+        rot: currentModel.rotation.toArray(),
+        scale: currentModel.scale.toArray()
+      });
+    }
+  });
   scene.add(gizmo);
 
   const ray = new THREE.Raycaster();
@@ -1039,7 +1126,6 @@ async function checkEditMode() {
         .from('models')
         .select('*')
         .eq('name', editModelName)
-        // YENİ EKLENDİ: currentUser varsa id filtrelemesi yap
         .eq('user_id', currentUser ? currentUser.id : 'anon')
         .single();
         
@@ -1314,6 +1400,9 @@ function deleteSelectedMesh() {
   if (!selectedMesh) return toast('Silmek için bir parça seçin','err');
   saveHistoryState();
   const name = selectedMesh.name||'Parça';
+  
+  broadcast({ type: 'DELETE', meshName: selectedMesh.name }); // Multiplayer Senkronizasyonu
+  
   selectedMesh.removeFromParent();
   disposeHierarchy(selectedMesh);
   meshTextures.delete(selectedMesh.uuid);
@@ -1706,7 +1795,12 @@ if(_el('btn-unit-mm')) _el('btn-unit-mm').addEventListener('click',()=>convertTo
 if(_el('btn-unit-m-cm')) _el('btn-unit-m-cm').addEventListener('click',()=>convertToMeters(100,'m → cm'));
 if(_el('btn-unit-m-mm')) _el('btn-unit-m-mm').addEventListener('click',()=>convertToMeters(1000,'m → mm'));
 
-colorSetup('mc', hex=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.color) m.color.set(hex); }); });
+colorSetup('mc', hex=>{ 
+  if(selectedMesh) {
+    updateMatArray(selectedMesh,m=>{ if(m.color) m.color.set(hex); }); 
+    broadcast({ type: 'MAT_UPDATE', meshName: selectedMesh.name, color: hex });
+  }
+});
 colorSetup('me', hex=>{ if(selectedMesh) updateMatArray(selectedMesh,m=>{ if(m.emissive){ m.emissive.set(hex); origEmissive.set(hex); } }); });
 
 if(_el('in-op')) _el('in-op').addEventListener('input', e=>{
@@ -1821,8 +1915,23 @@ function takeScreenshot() {
 
 if(_el('btn-exp-glb')) _el('btn-exp-glb').addEventListener('click',()=>{
   if(!currentModel) return toast('Model yüklenmedi','err');
-  const exporter=new GLTFExporter();
-  const s=createExportScene(currentModel,false);
+  
+  const isCenter = _el('cb-bulk-center')?.classList.contains('on') || false;
+  const s = createExportScene(currentModel, false);
+  
+  // HARD BAKE & AUTO-CENTER
+  if (s.children[0]) {
+    if (isCenter) {
+      const box = new THREE.Box3().setFromObject(s.children[0]);
+      const center = box.getCenter(new THREE.Vector3());
+      s.children[0].traverse(m => {
+        if (m.isMesh && m.geometry) m.geometry.translate(-center.x, 0, -center.z);
+      });
+    }
+    bakeModelToGround(s.children[0]);
+  }
+
+  const exporter = new GLTFExporter();
   exporter.parse(s, buffer=>{
     const blob=new Blob([buffer],{type:'application/octet-stream'});
     const a=document.createElement('a');
@@ -1830,7 +1939,7 @@ if(_el('btn-exp-glb')) _el('btn-exp-glb').addEventListener('click',()=>{
     a.download=`model_export_${Date.now()}.glb`;
     a.click();
     toast('GLB dışa aktarıldı ✓','ok');
-  }, err=>{ console.error(err); toast('GLB Hatası','err'); },{ binary:true });
+  }, err=>{ console.error(err); toast('GLB Hatası','err'); },{ binary:true, maxTextureSize: 1024 });
 });
 
 if(_el('btn-exp-usdz')) _el('btn-exp-usdz').addEventListener('click', async()=>{
@@ -1839,12 +1948,26 @@ if(_el('btn-exp-usdz')) _el('btn-exp-usdz').addEventListener('click', async()=>{
   _el('loading-ov').classList.add('show');
   _el('load-text').textContent='USDZ hazırlanıyor...';
   try {
-    const s=createExportScene(currentModel,true);
+    const isCenter = _el('cb-bulk-center')?.classList.contains('on') || false;
+    const s = createExportScene(currentModel, false);
+    
+    // HARD BAKE & AUTO-CENTER
+    if (s.children[0]) {
+      if (isCenter) {
+        const box = new THREE.Box3().setFromObject(s.children[0]);
+        const center = box.getCenter(new THREE.Vector3());
+        s.children[0].traverse(m => {
+          if (m.isMesh && m.geometry) m.geometry.translate(-center.x, 0, -center.z);
+        });
+      }
+      bakeModelToGround(s.children[0]);
+    }
+
     s.updateMatrixWorld(true);
-    const exporter=new USDZExporter();
-    const arraybuffer=await exporter.parse(s, {});
-    const blob=new Blob([arraybuffer],{type:'model/vnd.usdz+zip'});
-    const a=document.createElement('a');
+    const exporter = new USDZExporter();
+    const arraybuffer = await exporter.parse(s, { maxTextureSize: 1024 });
+    const blob = new Blob([arraybuffer],{type:'model/vnd.usdz+zip'});
+    const a = document.createElement('a');
     a.href=URL.createObjectURL(blob);
     a.download=`model_AR_${Date.now()}.usdz`;
     a.click();
@@ -1919,22 +2042,19 @@ function loadPreset() {
 // ── BULUTA KAYDET (ÖNİZLEME VE SUPABASE ENTEGRASYONU) ──
 async function showPreviewModal() {
   if (!currentModel) return toast('Önce bir model yükleyin!', 'err');
-  
-  // FIX 1: Oturum yoksa testi engelleme, sadece uyar.
   if (!currentUser) toast('Bilgi: Test modundasınız. Sistem test ediliyor.', 'ok');
 
-  // Parlama efektini geçici olarak kaldırıp temiz bir fotoğraf çekelim
   const previouslySelected = selectedMesh;
   deselectMesh();
   
   renderer.render(scene, camera);
   const thumbDataUrl = renderer.domElement.toDataURL('image/webp', 0.8);
   
-  if(previouslySelected) selectMesh(previouslySelected); // Seçimi geri ver
+  if(previouslySelected) selectMesh(previouslySelected);
   
   _el('preview-img').src = thumbDataUrl;
   
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = newSearchParams(window.location.search);
   const editModeName = urlParams.get('edit');
   _el('preview-name').value = editModeName ? editModeName : currentFileName.replace(/\.[^/.]+$/, "");
   
@@ -1945,7 +2065,6 @@ async function showPreviewModal() {
   if(b) b.addEventListener('click', showPreviewModal);
 });
 
-// YENİ GÜNCELLENEN KAYDETME (CONFIRM) VE QR OLUŞTURMA KODU
 function dataURItoBlob(dataURI) {
   const byteString = atob(dataURI.split(',')[1]);
   const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
@@ -1957,7 +2076,6 @@ function dataURItoBlob(dataURI) {
 
 // ── BULUTA KAYDET (ONAYLA) ──
 _el('btn-confirm-save').addEventListener('click', async function() {
-  // FIX 2: Buton kilitlenerek çift tıklama (Double Submit) engellendi
   if (this.disabled) return;
   this.disabled = true;
 
@@ -1981,15 +2099,32 @@ _el('btn-confirm-save').addEventListener('click', async function() {
 
   _el('modal-preview').classList.remove('show');
   _el('loading-ov').classList.add('show');
-  _el('load-text').textContent = 'GLB hazırlanıyor...';
+  _el('load-text').textContent = 'Model Optimizasyonu ve GLB hazırlanıyor...';
 
   try {
     savePreset();
 
-    // Export için sahneyi kopyala
-    const exportScene = createExportScene(currentModel, true);
+    // Export için sahneyi kopyala (centerPivot'u false veriyoruz, manuel halledeceğiz)
+    const exportScene = createExportScene(currentModel, false);
 
-    // FIX 3: Güvenli Material Klonlama (Orijinal editör sahnesinin bozulmasını engeller)
+    // ── HARD BAKE & OTOMATİK MERKEZLEME MANTIĞI ──
+    if (exportScene.children[0]) {
+      const clone = exportScene.children[0];
+      
+      // Toplu AR'daki "Merkeze Al" tiki açıksa önce X ve Z eksenlerinde ortala
+      if (_el('cb-bulk-center') && _el('cb-bulk-center').classList.contains('on')) {
+        const box = new THREE.Box3().setFromObject(clone);
+        const center = box.getCenter(new THREE.Vector3());
+        clone.traverse(m => {
+          if (m.isMesh && m.geometry) m.geometry.translate(-center.x, 0, -center.z);
+        });
+      }
+      
+      // Sonra kesin olarak zemine (Y=0) yapıştır (Havada kalmayı engeller)
+      bakeModelToGround(clone);
+    }
+
+    // Güvenli Material Klonlama
     exportScene.traverse(child => {
       if (child.isMesh && child.material) {
         if (Array.isArray(child.material)) {
@@ -2008,7 +2143,11 @@ _el('btn-confirm-save').addEventListener('click', async function() {
 
     const exporter = new GLTFExporter();
     const glbBuffer = await new Promise((resolve, reject) => {
-      exporter.parse(exportScene, resolve, reject, { binary: true });
+      // DİKKAT: Ciddi boyut küçültme işlemi (Max Texture Size: 1024)
+      exporter.parse(exportScene, resolve, reject, { 
+        binary: true,
+        maxTextureSize: 1024 
+      });
     });
 
     let usdzBuffer = null;
@@ -2017,7 +2156,7 @@ _el('btn-confirm-save').addEventListener('click', async function() {
       try {
         exportScene.updateMatrixWorld(true);
         const usdzExp = new USDZExporter();
-        usdzBuffer = await usdzExp.parse(exportScene, {});
+        usdzBuffer = await usdzExp.parse(exportScene, { maxTextureSize: 1024 });
       } catch(e) { console.warn('USDZ hatası:', e); }
     }
 
@@ -2026,30 +2165,25 @@ _el('btn-confirm-save').addEventListener('click', async function() {
 
     _el('load-text').textContent = 'Dosyalar yükleniyor...';
 
-    // Test modundaysak hata vermemesi için sahte ID ata
     const currentUserId = currentUser ? currentUser.id : 'anon-test-user';
 
-    // GLB Yükle
     const { error: glbErr } = await _supabase.storage.from('models')
       .upload(`${modelName}-3d.glb`, new Blob([glbBuffer], {type:'model/gltf-binary'}), 
         { upsert: true, contentType: 'model/gltf-binary' });
     if (glbErr) throw new Error('GLB yükleme hatası: ' + glbErr.message);
 
-    // USDZ Yükle
     if (usdzBuffer) {
       await _supabase.storage.from('models')
         .upload(`${modelName}-3d.usdz`, new Blob([usdzBuffer], {type:'model/vnd.usdz+zip'}), 
           { upsert: true, contentType: 'model/vnd.usdz+zip' });
     }
 
-    // Thumbnail Yükle
     await _supabase.storage.from('models')
       .upload(`${modelName}-thumb.webp`, thumbBlob, 
         { upsert: true, contentType: 'image/webp' });
 
     _el('load-text').textContent = 'Veritabanına kaydediliyor...';
 
-    // Veritabanına Yaz
     const { error: dbError } = await _supabase.from('models').upsert([{
       user_id:          currentUserId,
       name:             modelName,
@@ -2062,13 +2196,11 @@ _el('btn-confirm-save').addEventListener('click', async function() {
       materials:        []
     }], { onConflict: 'name' });
 
-    // Supabase eğer benzersiz (unique) kuralı hatası verirse yakalar
     if (dbError) throw new Error('DB yazma hatası: ' + dbError.message);
 
     _el('loading-ov').classList.remove('show');
     toast(`"${modelName}" başarıyla yüklendi! ✓`, 'ok');
     
-    // QR KOD ve LİNK GÖSTERİMİ
     const shareUrl = `https://pepperar.vercel.app/view.html?id=${modelName}`;
     _el('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(shareUrl)}`;
     _el('share-link').value = shareUrl;
@@ -2079,13 +2211,12 @@ _el('btn-confirm-save').addEventListener('click', async function() {
     toast('Hata: ' + err.message, 'err');
     _el('loading-ov').classList.remove('show');
   } finally {
-    // Hata olsa da olmasa da butonu tekrar aktifleştir
     this.disabled = false;
   }
 });
 
 
-// ── BULK AR (TOPLU İŞLEM) GÜNCEL BİRİM ÇEVİRİCİ ──
+// ── BULK AR (TOPLU İŞLEM) ──
 const bulkModels = [null,null,null,null,null];
 const bulkNames  = ['','','','',''];
 const bulkUIRefs = [];
@@ -2233,7 +2364,19 @@ async function exportBulk(format) {
 
   for(let i=0;i<5;i++){
     const model=bulkModels[i]; if(!model) continue;
-    const s=createExportScene(model,isCenter);
+    const s=createExportScene(model, false);
+    
+    if (s.children[0]) {
+      if (isCenter) {
+        const box = new THREE.Box3().setFromObject(s.children[0]);
+        const center = box.getCenter(new THREE.Vector3());
+        s.children[0].traverse(m => {
+          if (m.isMesh && m.geometry) m.geometry.translate(-center.x, 0, -center.z);
+        });
+      }
+      bakeModelToGround(s.children[0]);
+    }
+
     const safeName=(bulkNames[i]||`Urun_${i+1}`).replace(/\.[^/.]+$/,'').replace(/[^a-z0-9_-]/gi,'_');
     try {
       if(format==='glb'){
@@ -2243,12 +2386,12 @@ async function exportBulk(format) {
             const blob=new Blob([buffer],{type:'application/octet-stream'});
             const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
             a.download=`${safeName}_AR.glb`; a.click(); resolve();
-          },err=>{ console.error(err); resolve(); },{binary:true});
+          },err=>{ console.error(err); resolve(); },{binary:true, maxTextureSize: 1024});
         });
       } else if(format==='usdz'){
         s.updateMatrixWorld(true);
         const exp=new USDZExporter();
-        const buf=await exp.parse(s,{});
+        const buf=await exp.parse(s,{maxTextureSize: 1024});
         const blob=new Blob([buf],{type:'model/vnd.usdz+zip'});
         const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
         a.download=`${safeName}_AR.usdz`; a.click();
@@ -2262,7 +2405,7 @@ async function exportBulk(format) {
   toast(`Toplu ${format.toUpperCase()} tamamlandı ✓`,'ok');
 }
 
-// ── TABS ──
+// ── TABS VE ACCORDION ──
 document.querySelectorAll('.stab').forEach(t=>{
   t.addEventListener('click',()=>switchTab(t.dataset.tab,t.dataset.side));
 });
@@ -2271,8 +2414,6 @@ function switchTab(tabId,side) {
   document.querySelectorAll(`${sel} .stab`).forEach(t=>t.classList.toggle('active',t.dataset.tab===tabId));
   document.querySelectorAll(`${sel} .stab-pane`).forEach(p=>p.classList.toggle('active',p.id===`tab-${tabId}`));
 }
-
-// ── SECTION ACCORDION ──
 document.querySelectorAll('.section-head').forEach(h=>{
   h.addEventListener('click',()=>h.parentElement.classList.toggle('closed'));
 });
@@ -2283,8 +2424,6 @@ document.addEventListener('keydown',e=>{
   if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
   
   if(e.ctrlKey&&e.key.toLowerCase()==='o'){ e.preventDefault(); _el('file-input')?.click(); return; }
-  
-  // CTRL + Z
   if(e.ctrlKey&&e.key.toLowerCase()==='z'){ e.preventDefault(); undoTransform(); return; }
 
   switch(e.key){
@@ -2309,7 +2448,7 @@ document.addEventListener('keydown',e=>{
   if(e.altKey&&e.key==='t') toggleTheme();
 });
 
-// ── STATUS / TOAST ──
+// ── STATUS / TOAST / RESIZE / FPS / RENDER LOOP ──
 function setStatus(type,text){
   if(_el('sd')) _el('sd').className='status-dot'+(type==='ready'?' ready':type==='err'?' err':'');
   if(_el('st-txt')) _el('st-txt').textContent=text;
@@ -2322,15 +2461,11 @@ function toast(msg,type=''){
   clearTimeout(toastTmr);
   toastTmr=setTimeout(()=>el.classList.remove('show'),2800);
 }
-
-// ── RESIZE ──
 function onResize(){
   const w=container.clientWidth, h=container.clientHeight;
   if(!w||!h) return;
   camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h);
 }
-
-// ── FPS ──
 function updateFPS(){
   fpsFrames++;
   const now=performance.now();
@@ -2339,8 +2474,6 @@ function updateFPS(){
     fpsFrames=0; fpsLast=now;
   }
 }
-
-// ── RENDER LOOP ──
 function animate(){
   requestAnimationFrame(animate);
   orbit.update();
@@ -2350,6 +2483,7 @@ function animate(){
 
 // ── BAŞLAT ──
 init();
+initMultiplayer();
 window._par={scene,camera,renderer};
 </script>
 </body>
