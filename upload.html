@@ -2054,7 +2054,8 @@ async function showPreviewModal() {
   
   _el('preview-img').src = thumbDataUrl;
   
-  const urlParams = newSearchParams(window.location.search);
+  // DÜZELTİLEN KISIM
+  const urlParams = new URLSearchParams(window.location.search);
   const editModeName = urlParams.get('edit');
   _el('preview-name').value = editModeName ? editModeName : currentFileName.replace(/\.[^/.]+$/, "");
   
